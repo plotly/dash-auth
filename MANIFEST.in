@@ -1,0 +1,3 @@
+include dash_auth/login.js
+include dash_auth/oauth-redirect.js
+include README.md
