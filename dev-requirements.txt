@@ -7,7 +7,7 @@ selenium
 mock
 tox
 tox-pyenv
-mock
 six
 plotly>=2.0.8
 requests[security]
+ipdb
