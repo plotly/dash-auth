@@ -138,7 +138,7 @@ class PlotlyAuth(Auth):
             script)
         )
 
-    def login_html(self):
+    def login_request(self):
         return self.html(self.login_bundle)
 
     def serve_oauth_redirect(self):

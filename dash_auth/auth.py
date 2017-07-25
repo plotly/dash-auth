@@ -18,7 +18,7 @@ class Auth(object):
             if self.is_authorized():
                 return original_index(*args, **kwargs)
             else:
-                return self.login_html()
+                return self.login_request()
 
         self.app.server.view_functions['index'] = wrap_index
 
@@ -34,9 +34,9 @@ class Auth(object):
         pass
 
     @abstractmethod
-    def auth_wrapper(self):
+    def auth_wrapper(self, f):
         pass
 
     @abstractmethod
-    def login_html(self):
+    def login_request(self):
         pass
