@@ -87,7 +87,7 @@ class OauthRedirect extends Component {
 
             if (authorizationRequest.status === 403) {
                 content = (
-                    <div>
+                    <div id="dash-auth--authorization__denied">
                         {'You are not authorized to view this app'}
                     </div>
                 );

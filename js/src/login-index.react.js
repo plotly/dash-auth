@@ -74,14 +74,14 @@ class Login extends Component {
     render() {
         const {plotly_domain} = CONFIG;
         return (
-            <div className="container">
+            <div id="dash-auth--login__container" className="container">
                 <h2>{'Dash'}</h2>
 
                 <h4>
                     {'Log in to Plotly to continue'}
                 </h4>
 
-                <button onClick={this.oauthPopUp}>
+                <button id="dash-auth--login__button" onClick={this.oauthPopUp}>
                     {'Log in'}
                 </button>
 
