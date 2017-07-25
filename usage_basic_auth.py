@@ -9,11 +9,9 @@ import plotly
 
 
 app = dash.Dash('auth')
-auth = dash_auth.PlotlyAuth(
+auth = dash_auth.BasicAuth(
     app,
-    'Dash Authentication Sample App',
-    'private',
-    'http://localhost:8050'
+    (('hello', 'world',),)
 )
 
 app.layout = html.Div([
@@ -44,7 +42,7 @@ def update_graph(dropdown_value):
         'data': [{'x': [1, 2, 3], 'y': [4, 1, 2]}]
     }
 
-
+app.scripts.config.serve_locally = True
 app.css.append_css({"external_url": "https://codepen.io/chriddyp/pen/bWLwgP.css"})
 
 if __name__ == '__main__':
