@@ -23,18 +23,11 @@ class Auth(object):
         self.app.server.view_functions['index'] = wrap_index
 
     def _protect_views(self):
-        # TODO - Maybe just whitelist
-        protected_views = [
-            'dependencies',
-            'dispatch',
-            'serve_component_suites',
-            'serve_layout',
-            'serve_routes'
-        ]
-        for view in protected_views:
-            original_view = self.app.server.view_functions[view]
-            self.app.server.view_functions[view] = \
-                self.auth_wrapper(original_view)
+        # TODO - allow users to white list in case they add their own views
+        for view_name, view_method in self.app.server.view_functions.iteritems():
+            if view_name != 'index':
+                self.app.server.view_functions[view_name] = \
+                    self.auth_wrapper(view_method)
 
     @abstractmethod
     def is_authorized(self):
