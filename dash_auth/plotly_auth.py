@@ -154,7 +154,8 @@ def login_api():
         ),
         headers={
             'Authorization': 'Bearer {}'.format(oauth_token)
-        }
+        },
+        verify=plotly.config.get_config()['plotly_ssl_verification']
     )
     res.raise_for_status()
     response = flask.Response(
@@ -236,7 +237,8 @@ def create_or_overwrite_oauth_app(app_url, name):
             'redirect_uris': ' '.join(redirect_uris),
         }),
         'headers': headers,
-        'auth': auth
+        'auth': auth,
+        'verify': plotly.config.get_config()['plotly_ssl_verification']
     }
 
     # Check if app already exists.
@@ -246,7 +248,8 @@ def create_or_overwrite_oauth_app(app_url, name):
         '{}/v2/oauth-apps/lookup'.format(config['plotly_api_domain']),
         auth=auth,
         headers=headers,
-        params={'name': name}
+        params={'name': name},
+        verify=plotly.config.get_config()['plotly_ssl_verification']
     )
     res.raise_for_status()
     apps = res.json()
@@ -281,7 +284,8 @@ def check_view_access(oauth_token, fid):
         ),
         headers={
             'Authorization': 'Bearer {}'.format(oauth_token)
-        }
+        },
+        verify=plotly.config.get_config()['plotly_ssl_verification']
     )
     if res.status_code == 200:
         return True
