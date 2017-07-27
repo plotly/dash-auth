@@ -216,6 +216,8 @@ def create_or_overwrite_oauth_app(app_url, name):
     # TODO - ENV for creds?
     creds = plotly.tools.get_credentials_file()
     config = plotly.tools.get_config_file()
+    print(creds)
+    print(config)
 
     redirect_uris = [
         '{}/_oauth-redirect'.format(i) for i in [
