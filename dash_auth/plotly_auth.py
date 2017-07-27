@@ -30,7 +30,6 @@ class PlotlyAuth(Auth):
         self._app_url = app_url
         self._sharing = sharing
         self._access_codes = self.create_access_codes()
-        self._plotly_domain = plotly.tools.get_config_file()['plotly_domain']
 
         app.server.add_url_rule(
             '{}_dash-login'.format(app.url_base_pathname),
@@ -133,7 +132,9 @@ class PlotlyAuth(Auth):
         '''.format(
             json.dumps({
                 'oauth_client_id': self._oauth_client_id,
-                'plotly_domain': self._plotly_domain
+                'plotly_domain': plotly.tools.get_config_file()[
+                    'plotly_domain'
+                ]
             }),
             script)
         )
