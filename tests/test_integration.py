@@ -7,6 +7,7 @@ from utils import assert_clean_console, invincible, switch_windows, wait_for
 from users import users
 from dash_auth import plotly_auth
 from multiprocessing import Value
+import os
 import time
 import re
 import itertools
@@ -36,7 +37,8 @@ class Tests(IntegrationTests):
         self.driver.quit()
 
     def login_flow(self, username, pw):
-        py.sign_in(users['creator']['username'], users['creator']['api_key'])
+        os.environ['PLOTLY_USERNAME'] = users['creator']['username']
+        os.environ['PLOTLY_API_KEY'] = users['creator']['api_key']
         app = dash.Dash(__name__)
         app.layout = html.Div([
             dcc.Input(

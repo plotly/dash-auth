@@ -3,6 +3,7 @@ import unittest
 import dash
 import plotly
 import dash_html_components as html
+import os
 import six
 from six.moves import http_cookies
 from six import iteritems
@@ -71,10 +72,8 @@ def create_apps():
 
 class ProtectedViewsTest(unittest.TestCase):
     def setUp(self):
-        plotly.plotly.sign_in(
-            users['creator']['username'],
-            users['creator']['api_key']
-        )
+        os.environ['PLOTLY_USERNAME'] = users['creator']['username']
+        os.environ['PLOTLY_API_KEY'] = users['creator']['api_key']
         self.longMessage = True
 
 

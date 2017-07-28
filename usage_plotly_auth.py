@@ -5,8 +5,11 @@ import dash
 import dash_auth
 import dash_html_components as html
 import dash_core_components as dcc
+import os
 import plotly
 
+os.environ['PLOTLY_USERNAME'] = 'dash-test-user'
+os.environ['PLOTLY_API_KEY'] = '9kCBELqYp54Dygjn7zhH'
 
 app = dash.Dash('auth')
 auth = dash_auth.PlotlyAuth(
@@ -15,6 +18,7 @@ auth = dash_auth.PlotlyAuth(
     'private',
     'http://localhost:8050'
 )
+
 
 app.layout = html.Div([
     html.H1('Welcome to the app'),
