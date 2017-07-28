@@ -3,11 +3,10 @@ import flask
 from flask_seasurf import SeaSurf
 import json
 import os
-import plotly
-import requests
 from six import iteritems
 from auth import Auth
 
+import api_requests
 
 AUTH_COOKIE_NAME = 'plotly_auth'
 
@@ -132,9 +131,7 @@ class PlotlyAuth(Auth):
         '''.format(
             json.dumps({
                 'oauth_client_id': self._oauth_client_id,
-                'plotly_domain': plotly.tools.get_config_file()[
-                    'plotly_domain'
-                ]
+                'plotly_domain': api_requests.config('plotly_domain')
             }),
             script)
         )
@@ -148,14 +145,9 @@ class PlotlyAuth(Auth):
 
 def login_api():
     oauth_token = flask.request.get_json()['access_token']
-    res = requests.get(
-        '{}/v2/users/current'.format(
-            plotly.config.get_config()['plotly_api_domain']
-        ),
-        headers={
-            'Authorization': 'Bearer {}'.format(oauth_token)
-        },
-        verify=plotly.config.get_config()['plotly_ssl_verification']
+    res = api_requests.get(
+        '/v2/users/current',
+        headers={'Authorization': 'Bearer {}'.format(oauth_token)},
     )
     res.raise_for_status()
     response = flask.Response(
@@ -188,37 +180,32 @@ def create_or_overwrite_dash_app(filename, sharing, app_url):
             "to 'private' or 'public'.\n"
             "You supplied '{}'".format(sharing)
         )
-    payload = {
+    payload = json.dumps({
         'filename': filename,
         'share_key_enabled': True if sharing == 'secret' else False,
         'world_readable': True if sharing == 'public' else False,
         'app_url': app_url
-    }
+    })
 
+    res_lookup = api_requests.get('/v2/files/lookup?path={}'.format(filename))
     try:
-        # TODO - Handle folders
-        res = plotly.api.v2.files.lookup(filename)
-    except Exception as e:
-        print(e)
-        # TODO - How to check if it is a
-        # plotly.exceptions.PlotlyRequestException?
-        res_create = plotly.api.v2.dash_apps.create(payload)
+        res_lookup.raise_for_status()
+    except:
+        # TODO - Better request handling
+        res_create = api_requests.post('/v2/dash-apps', data=payload)
+        res_create.raise_for_status()
         fid = res_create.json()['file']['fid']
     else:
-        fid = res.json()['fid']
-        # TODO - Does plotly.api call `raise_for_status`?
-        res = plotly.api.v2.dash_apps.update(fid, payload)
-        res.raise_for_status()
+        fid = res_lookup.json()['fid']
+        res_update = api_requests.patch(
+            '/v2/dash-apps/{}'.format(fid),
+            data=payload
+        )
+        res_update.raise_for_status()
     return fid
 
 
 def create_or_overwrite_oauth_app(app_url, name):
-    # TODO - ENV for creds?
-    creds = plotly.tools.get_credentials_file()
-    config = plotly.tools.get_config_file()
-    print(creds)
-    print(config)
-
     redirect_uris = [
         '{}/_oauth-redirect'.format(i) for i in [
             # TODO - variable or app.server.settings port
@@ -226,32 +213,21 @@ def create_or_overwrite_oauth_app(app_url, name):
             app_url
         ]
     ]
-    auth = (creds['username'], creds['api_key'],)
-    headers = {
-        'plotly-client-platform': 'dash-auth',
-        'content-type': 'application/json'
-    }
-    request_parameters = {
+    request_data = {
         'data': json.dumps({
             'name': name,
             'client_type': 'public',
             'authorization_grant_type': 'implicit',
             'redirect_uris': ' '.join(redirect_uris),
-        }),
-        'headers': headers,
-        'auth': auth,
-        'verify': plotly.config.get_config()['plotly_ssl_verification']
+        })
     }
 
     # Check if app already exists.
     # If it does, then update it.
     # If it doesn't, then create a new one.
-    res = requests.get(
-        '{}/v2/oauth-apps/lookup'.format(config['plotly_api_domain']),
-        auth=auth,
-        headers=headers,
+    res = api_requests.get(
+        '/v2/oauth-apps/lookup',
         params={'name': name},
-        verify=plotly.config.get_config()['plotly_ssl_verification']
     )
     res.raise_for_status()
     apps = res.json()
@@ -261,33 +237,21 @@ def create_or_overwrite_oauth_app(app_url, name):
         )
     elif len(apps) == 1:
         oauth_app_id = apps[0]['id']
-        res = requests.patch(
-            '{}/v2/oauth-apps/{}'.format(
-                config['plotly_api_domain'],
-                oauth_app_id
-            ),
-            **request_parameters
+        res = api_requests.patch(
+            '/v2/oauth-apps/{}'.format(oauth_app_id),
+            **request_data
         )
     else:
-        res = requests.post(
-            '{}/v2/oauth-apps'.format(config['plotly_api_domain']),
-            **request_parameters
-        )
+        res = api_requests.post('/v2/oauth-apps', **request_data)
 
     res.raise_for_status()
     return res.json()
 
 
 def check_view_access(oauth_token, fid):
-    res = requests.get(
-        '{}/v2/files/{}'.format(
-            plotly.tools.get_config_file()['plotly_api_domain'],
-            fid
-        ),
-        headers={
-            'Authorization': 'Bearer {}'.format(oauth_token)
-        },
-        verify=plotly.config.get_config()['plotly_ssl_verification']
+    res = api_requests.get(
+        '/v2/files/{}'.format(fid),
+        headers={'Authorization': 'Bearer {}'.format(oauth_token)}
     )
     if res.status_code == 200:
         return True
