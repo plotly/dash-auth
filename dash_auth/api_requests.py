@@ -16,11 +16,19 @@ def credential(key):
 
 def config(key):
     if key in os.environ:
-        return os.environ[key]
+        value = os.environ[key]
     elif key.upper() in os.environ:
-        return os.environ[key.upper()]
+        value = os.environ[key.upper()]
     else:
-        return plotly.tools.get_config_file()[key]
+        value = plotly.tools.get_config_file()[key]
+
+    # Handle PLOTLY_SSL_VERIFICATION which is True or False but a string in environ
+    if value == 'False':
+        return False
+    elif value == 'True':
+        return True
+    else:
+        return value
 
 
 HEADERS = {
