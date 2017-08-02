@@ -47,7 +47,6 @@ def _modify_request_kwargs(request_kwargs):
         copied_kwargs['auth'] = (
             credential('plotly_username'),
             credential('plotly_api_key'),)
-        print(copied_kwargs['auth'])
 
     copied_kwargs['verify'] = config('plotly_ssl_verification')
     return copied_kwargs
