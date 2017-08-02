@@ -210,6 +210,7 @@ def create_or_overwrite_oauth_app(app_url, name):
         '{}/_oauth-redirect'.format(i) for i in [
             # TODO - variable or app.server.settings port
             'http://localhost:8050',
+            'http://127.0.0.1:8050',
             app_url
         ]
     ]
