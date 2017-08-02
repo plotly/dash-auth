@@ -149,7 +149,11 @@ def login_api():
         '/v2/users/current',
         headers={'Authorization': 'Bearer {}'.format(oauth_token)},
     )
-    res.raise_for_status()
+    try:
+        res.raise_for_status()
+    except Exception as e:
+        print(res.content)
+        raise e
     response = flask.Response(
         json.dumps(res.json()),
         mimetype='application/json',
@@ -188,21 +192,32 @@ def create_or_overwrite_dash_app(filename, sharing, app_url):
     })
 
     res_lookup = api_requests.get('/v2/files/lookup?path={}'.format(filename))
-    try:
-        res_lookup.raise_for_status()
-    except:
+    if res_lookup.status_code == 404:
         # TODO - Better request handling
         res_create = api_requests.post('/v2/dash-apps', data=payload)
-        res_create.raise_for_status()
+        try:
+            res_create.raise_for_status()
+        except Exception as e:
+            print(res_create.content)
+            raise e
         fid = res_create.json()['file']['fid']
-    else:
+        return fid
+    elif res_lookup.status_code == 200:
         fid = res_lookup.json()['fid']
         res_update = api_requests.patch(
             '/v2/dash-apps/{}'.format(fid),
             data=payload
         )
-        res_update.raise_for_status()
-    return fid
+        try:
+            res_update.raise_for_status()
+        except Exception as e:
+            print(res_update.content)
+            raise e
+        return fid
+    else:
+        print(res_lookup.content)
+        res_lookup.raise_for_status()
+
 
 
 def create_or_overwrite_oauth_app(app_url, name):
@@ -230,7 +245,11 @@ def create_or_overwrite_oauth_app(app_url, name):
         '/v2/oauth-apps/lookup',
         params={'name': name},
     )
-    res.raise_for_status()
+    try:
+        res.raise_for_status()
+    except Exception as e:
+        print(res.content)
+        raise e
     apps = res.json()
     if len(apps) > 1:
         raise Exception(
@@ -245,7 +264,12 @@ def create_or_overwrite_oauth_app(app_url, name):
     else:
         res = api_requests.post('/v2/oauth-apps', **request_data)
 
-    res.raise_for_status()
+    try:
+        res.raise_for_status()
+    except Exception as e:
+        print(res.content)
+        raise e
+
     return res.json()
 
 
