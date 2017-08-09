@@ -198,6 +198,7 @@ def create_or_overwrite_dash_app(filename, sharing, app_url):
         try:
             res_create.raise_for_status()
         except Exception as e:
+            print(payload)
             print(res_create.content)
             raise e
         fid = res_create.json()['file']['fid']
@@ -211,6 +212,7 @@ def create_or_overwrite_dash_app(filename, sharing, app_url):
         try:
             res_update.raise_for_status()
         except Exception as e:
+            print(payload)
             print(res_update.content)
             raise e
         return fid
