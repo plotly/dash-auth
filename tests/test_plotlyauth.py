@@ -11,7 +11,7 @@ from six import iteritems
 import dash_auth
 from dash_auth import plotly_auth
 from dash_auth.plotly_auth import PlotlyAuth
-from .users import users
+from users import users
 
 if six.PY3:
     from unittest import mock
