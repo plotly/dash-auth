@@ -24,9 +24,6 @@ class IntegrationTests(unittest.TestCase):
         time.sleep(3)
         self.server_process.terminate()
         time.sleep(3)
-        print('Terminated')
-        print(self.server_process)
-        print(self.server_process.is_alive())
 
         if hasattr(self, 'driver'):
             self.driver.quit()
@@ -43,7 +40,6 @@ class IntegrationTests(unittest.TestCase):
 
         # Run on a separate process so that it doesn't block
         self.server_process = multiprocessing.Process(target=run)
-        print('Starting')
         self.server_process.start()
         time.sleep(0.5)
 
