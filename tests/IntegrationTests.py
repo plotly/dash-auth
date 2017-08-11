@@ -26,7 +26,7 @@ class IntegrationTests(unittest.TestCase):
         time.sleep(3)
         print('Terminated')
         print(self.server_process)
-        print(self.server_process.is_alive)
+        print(self.server_process.is_alive())
 
         if hasattr(self, 'driver'):
             self.driver.quit()
