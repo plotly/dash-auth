@@ -2,10 +2,11 @@
 from __future__ import absolute_import
 from abc import ABCMeta, abstractmethod
 import flask
-from six import iteritems, with_metaclass
+from six import iteritems, add_metaclass
 
 
-class Auth(with_metaclass(object, ABCMeta)):
+@add_metaclass(ABCMeta)
+class Auth(object):
     def __init__(self, app):
         self.app = app
         self._overwrite_index()
