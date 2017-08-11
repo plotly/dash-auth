@@ -23,7 +23,7 @@ class IntegrationTests(unittest.TestCase):
     def tearDown(self):
         time.sleep(2)
         self.server_process.terminate()
-        time.sleep(2)
+        time.sleep(5)
 
 
     def startServer(self, app):
