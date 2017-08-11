@@ -31,7 +31,8 @@ class IntegrationTests(unittest.TestCase):
             app.scripts.config.serve_locally = True
             app.run_server(
                 port=8050,
-                debug=False
+                debug=False,
+                threaded=True
             )
 
         # Run on a separate process so that it doesn't block
