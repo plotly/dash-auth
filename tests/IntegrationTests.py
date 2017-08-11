@@ -21,10 +21,12 @@ class IntegrationTests(unittest.TestCase):
         pass
 
     def tearDown(self):
-        time.sleep(2)
+        time.sleep(3)
         self.server_process.terminate()
-        time.sleep(5)
-
+        time.sleep(3)
+        print('Terminated')
+        print(self.server_process)
+        print(self.server_process.is_alive)
 
     def startServer(self, app):
         def run():
@@ -32,11 +34,12 @@ class IntegrationTests(unittest.TestCase):
             app.run_server(
                 port=8050,
                 debug=False,
-                threaded=True
+                processes=4
             )
 
         # Run on a separate process so that it doesn't block
         self.server_process = multiprocessing.Process(target=run)
+        print('Starting')
         self.server_process.start()
         time.sleep(0.5)
 
