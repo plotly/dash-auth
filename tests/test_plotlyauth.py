@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import time
 import unittest
 import dash
@@ -10,7 +11,7 @@ from six import iteritems
 import dash_auth
 from dash_auth import plotly_auth
 from dash_auth.plotly_auth import PlotlyAuth
-from users import users
+from .users import users
 
 if six.PY3:
     from unittest import mock
@@ -55,7 +56,7 @@ def get_cookie(res, cookie_name):
 def create_apps():
     app_permissions = ['public', 'private']
     apps = {k: dash.Dash(k) for k in app_permissions}
-    for app in apps.values():
+    for app in list(apps.values()):
         app.scripts.config.serve_locally = True
     auths = {
         k: PlotlyAuth(
@@ -152,7 +153,7 @@ class ProtectedViewsTest(unittest.TestCase):
 
     def test_protected_endpoints_with_auth_cookie(self):
         apps, auths = create_apps()
-        for user_attributes in users.values():
+        for user_attributes in list(users.values()):
             for app_name, app in iteritems(apps):
                 if app_name != 'unregistered':
                     app.layout = html.Div()
