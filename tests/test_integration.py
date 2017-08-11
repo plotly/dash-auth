@@ -34,9 +34,6 @@ class Tests(IntegrationTests):
         self.wait_for_element_by_css_selector = wait_for_element_by_css_selector
 
 
-    def tearDown(self):
-        self.driver.quit()
-
     def login_flow(self, username, pw):
         os.environ['PLOTLY_USERNAME'] = users['creator']['username']
         os.environ['PLOTLY_API_KEY'] = users['creator']['api_key']

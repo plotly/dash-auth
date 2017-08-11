@@ -28,6 +28,10 @@ class IntegrationTests(unittest.TestCase):
         print(self.server_process)
         print(self.server_process.is_alive)
 
+        if hasattr(self, 'driver'):
+            self.driver.quit()
+
+
     def startServer(self, app):
         def run():
             app.scripts.config.serve_locally = True
