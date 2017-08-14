@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 import importlib
@@ -20,9 +21,12 @@ class IntegrationTests(unittest.TestCase):
         pass
 
     def tearDown(self):
-        time.sleep(2)
+        time.sleep(3)
         self.server_process.terminate()
-        time.sleep(2)
+        time.sleep(3)
+
+        if hasattr(self, 'driver'):
+            self.driver.quit()
 
 
     def startServer(self, app):
