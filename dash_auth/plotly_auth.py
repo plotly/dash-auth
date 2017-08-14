@@ -1,12 +1,13 @@
+from __future__ import absolute_import
 import datetime
 import flask
 from flask_seasurf import SeaSurf
 import json
 import os
 from six import iteritems
-from auth import Auth
+from .auth import Auth
 
-import api_requests
+from . import api_requests
 
 AUTH_COOKIE_NAME = 'plotly_auth'
 
