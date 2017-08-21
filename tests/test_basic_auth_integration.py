@@ -80,5 +80,6 @@ class Tests(IntegrationTests):
         # but it saves the credentials as part of the browser.
         # visiting the page again will use the saved credentials
         self.driver.get('http://localhost:8050')
+        time.sleep(5)
         el = self.wait_for_element_by_id('output')
         self.assertEqual(el.text, 'initial value')
