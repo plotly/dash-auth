@@ -34,7 +34,7 @@ class Tests(IntegrationTests):
         self.wait_for_element_by_css_selector = wait_for_element_by_css_selector
 
 
-    def login_flow(self, username, pw):
+    def plotly_auth_login_flow(self, username, pw):
         os.environ['PLOTLY_USERNAME'] = users['creator']['username']
         os.environ['PLOTLY_API_KEY'] = users['creator']['api_key']
         app = dash.Dash(__name__)
