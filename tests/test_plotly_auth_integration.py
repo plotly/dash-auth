@@ -79,7 +79,7 @@ class Tests(IntegrationTests):
 
 
     def test_private_app_unauthorized(self):
-        self.login_flow(users['viewer']['username'], users['viewer']['pw'])
+        self.plotly_auth_login_flow(users['viewer']['username'], users['viewer']['pw'])
         time.sleep(5)
         el = self.wait_for_element_by_id('dash-auth--authorization__denied')
         self.assertEqual(el.text, 'You are not authorized to view this app')
@@ -90,7 +90,7 @@ class Tests(IntegrationTests):
 
 
     def test_private_app_authorized(self):
-        self.login_flow(users['creator']['username'], users['creator']['pw'])
+        self.plotly_auth_login_flow(users['creator']['username'], users['creator']['pw'])
         switch_windows(self.driver)
         time.sleep(5)
         el = self.wait_for_element_by_id('output')
