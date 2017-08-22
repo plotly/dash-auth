@@ -2,7 +2,7 @@ import json
 import time
 
 
-TIMEOUT = 10  # Seconds
+TIMEOUT = 20  # Seconds
 
 def clean_history(driver, domains):
     temp = driver.get_location()
