@@ -42,7 +42,7 @@ class IntegrationTests(unittest.TestCase):
             app.run_server(
                 port=8050,
                 debug=False,
-                processes=4
+                processes=2
             )
 
         # Run on a separate process so that it doesn't block
