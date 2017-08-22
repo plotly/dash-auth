@@ -28,22 +28,6 @@ TEST_USERS = {
 }
 
 class Tests(IntegrationTests):
-    def setUp(self):
-        def wait_for_element_by_id(id):
-            wait_for(lambda: None is not invincible(
-                lambda: self.driver.find_element_by_id(id)
-            ))
-            return self.driver.find_element_by_id(id)
-        self.wait_for_element_by_id = wait_for_element_by_id
-
-        def wait_for_element_by_css_selector(css_selector):
-            wait_for(lambda: None is not invincible(
-                lambda: self.driver.find_element_by_css_selector(css_selector)
-            ))
-            return self.driver.find_element_by_css_selector(css_selector)
-        self.wait_for_element_by_css_selector = wait_for_element_by_css_selector
-
-
     def test_basic_auth_login_flow(self):
         app = dash.Dash(__name__)
         app.layout = html.Div([

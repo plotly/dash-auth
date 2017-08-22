@@ -16,22 +16,6 @@ from dash_auth import plotly_auth
 
 
 class Tests(IntegrationTests):
-    def setUp(self):
-        def wait_for_element_by_id(id):
-            wait_for(lambda: None is not invincible(
-                lambda: self.driver.find_element_by_id(id)
-            ))
-            return self.driver.find_element_by_id(id)
-        self.wait_for_element_by_id = wait_for_element_by_id
-
-        def wait_for_element_by_css_selector(css_selector):
-            wait_for(lambda: None is not invincible(
-                lambda: self.driver.find_element_by_css_selector(css_selector)
-            ))
-            return self.driver.find_element_by_css_selector(css_selector)
-        self.wait_for_element_by_css_selector = wait_for_element_by_css_selector
-
-
     def plotly_auth_login_flow(self, username, pw):
         os.environ['PLOTLY_USERNAME'] = users['creator']['username']
         os.environ['PLOTLY_API_KEY'] = users['creator']['api_key']
@@ -66,6 +50,7 @@ class Tests(IntegrationTests):
         self.driver.find_element_by_id('dash-auth--login__button').click()
 
         switch_windows(self.driver)
+        time.sleep(10)
         self.wait_for_element_by_id(
             'js-auth-modal-signin-username'
         ).send_keys(username)

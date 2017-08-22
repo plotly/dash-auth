@@ -8,29 +8,46 @@ import time
 import unittest
 from selenium import webdriver
 
+from .utils import assert_clean_console, invincible, switch_windows, wait_for
 
 class IntegrationTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
         super(IntegrationTests, cls).setUpClass()
-        cls.driver = webdriver.Chrome()
 
     @classmethod
     def tearDownClass(cls):
         super(IntegrationTests, cls).tearDownClass()
-        cls.driver.quit()
 
     def setUp(self):
-        pass
+        super(IntegrationTests, self).setUp()
+        self.driver = webdriver.Chrome()
+
+        def wait_for_element_by_id(id):
+            wait_for(lambda: None is not invincible(
+                lambda: self.driver.find_element_by_id(id)
+            ))
+            return self.driver.find_element_by_id(id)
+        self.wait_for_element_by_id = wait_for_element_by_id
+
+        def wait_for_element_by_css_selector(css_selector):
+            wait_for(lambda: None is not invincible(
+                lambda: self.driver.find_element_by_css_selector(css_selector)
+            ))
+            return self.driver.find_element_by_css_selector(css_selector)
+        self.wait_for_element_by_css_selector = wait_for_element_by_css_selector
+
 
     def tearDown(self):
+        super(IntegrationTests, self).tearDown()
         time.sleep(5)
         print('Terminating')
         self.server_process.terminate()
         time.sleep(5)
         print((self.server_process))
         print((self.server_process.is_alive()))
+        self.driver.quit()
 
     def startServer(self, app):
         def run():
