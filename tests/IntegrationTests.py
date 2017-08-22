@@ -24,11 +24,12 @@ class IntegrationTests(unittest.TestCase):
         pass
 
     def tearDown(self):
-        time.sleep(3)
+        time.sleep(5)
         print('Terminating')
         self.server_process.terminate()
+        time.sleep(5)
         print(self.server_process)
-        time.sleep(3)
+        print(self.server_process.is_alive())
 
         if hasattr(self, 'driver'):
             print('Quiting driver')
