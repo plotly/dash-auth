@@ -13,8 +13,8 @@ import requests
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
 
-from IntegrationTests import IntegrationTests
-from utils import assert_clean_console, invincible, switch_windows, wait_for
+from .IntegrationTests import IntegrationTests
+from .utils import assert_clean_console, invincible, switch_windows, wait_for
 from dash_auth import basic_auth
 
 

@@ -9,9 +9,9 @@ import re
 import itertools
 import plotly.plotly as py
 
-from IntegrationTests import IntegrationTests
-from utils import assert_clean_console, invincible, switch_windows, wait_for
-from users import users
+from .IntegrationTests import IntegrationTests
+from .utils import assert_clean_console, invincible, switch_windows, wait_for
+from .users import users
 from dash_auth import plotly_auth
 
 
@@ -94,5 +94,5 @@ class Tests(IntegrationTests):
         try:
             el = self.wait_for_element_by_id('output')
         except:
-            print(self.driver.find_element_by_css_tag_name('body').html)
+            print((self.driver.find_element_by_css_tag_name('body').html))
         self.assertEqual(el.text, 'initial value')
