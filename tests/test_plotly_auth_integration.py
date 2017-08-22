@@ -8,7 +8,6 @@ import time
 import re
 import itertools
 import plotly.plotly as py
-from selenium import webdriver
 
 from IntegrationTests import IntegrationTests
 from utils import assert_clean_console, invincible, switch_windows, wait_for
@@ -18,7 +17,6 @@ from dash_auth import plotly_auth
 
 class Tests(IntegrationTests):
     def setUp(self):
-        self.driver = webdriver.Chrome()
         def wait_for_element_by_id(id):
             wait_for(lambda: None is not invincible(
                 lambda: self.driver.find_element_by_id(id)

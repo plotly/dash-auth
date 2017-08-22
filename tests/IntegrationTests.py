@@ -5,6 +5,7 @@ import importlib
 import multiprocessing
 import time
 import unittest
+from selenium import webdriver
 
 
 class IntegrationTests(unittest.TestCase):
@@ -12,10 +13,12 @@ class IntegrationTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         super(IntegrationTests, cls).setUpClass()
+        cls.driver = webdriver.Chrome()
 
     @classmethod
     def tearDownClass(cls):
         super(IntegrationTests, cls).tearDownClass()
+        cls.driver.quit()
 
     def setUp(self):
         pass

@@ -8,7 +8,6 @@ import time
 import re
 import itertools
 import plotly.plotly as py
-from selenium import webdriver
 import requests
 
 from selenium import webdriver
@@ -30,7 +29,6 @@ TEST_USERS = {
 
 class Tests(IntegrationTests):
     def setUp(self):
-        self.driver = webdriver.Chrome()
         def wait_for_element_by_id(id):
             wait_for(lambda: None is not invincible(
                 lambda: self.driver.find_element_by_id(id)
