@@ -25,10 +25,13 @@ class IntegrationTests(unittest.TestCase):
 
     def tearDown(self):
         time.sleep(3)
+        print('Terminating')
         self.server_process.terminate()
+        print(self.server_process)
         time.sleep(3)
 
         if hasattr(self, 'driver'):
+            print('Quiting driver')
             self.driver.quit()
 
 
@@ -42,9 +45,10 @@ class IntegrationTests(unittest.TestCase):
             )
 
         # Run on a separate process so that it doesn't block
+        print('Running')
         self.server_process = multiprocessing.Process(target=run)
         self.server_process.start()
-        time.sleep(0.5)
+        time.sleep(5)
 
         # Visit the dash page
         self.driver.get('http://localhost:8050')
