@@ -48,7 +48,7 @@ class Tests(IntegrationTests):
             raise e
 
         self.driver.find_element_by_id('dash-auth--login__button').click()
-
+        time.sleep(5)
         switch_windows(self.driver)
         time.sleep(20)
         self.wait_for_element_by_id(
