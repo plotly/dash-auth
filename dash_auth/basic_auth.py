@@ -12,8 +12,9 @@ class BasicAuth(Auth):
         header = flask.request.headers.get('Authorization', None)
         if not header:
             return False
-        username, password = base64.b64decode(
-            header.split('Basic ')[1]).split(':')
+        username_password = base64.b64decode(header.split('Basic ')[1])
+        username_password_utf8 = username_password.decode('utf-8')
+        username, password = username_password_utf8.split(':')
         for pair in self._username_password_list:
             if pair[0] == username and pair[1] == password:
                 return True

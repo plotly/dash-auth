@@ -3,9 +3,12 @@ from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 import importlib
 import multiprocessing
+import requests
 import time
 import unittest
+from selenium import webdriver
 
+from .utils import assert_clean_console, invincible, switch_windows, wait_for
 
 class IntegrationTests(unittest.TestCase):
 
@@ -18,16 +21,33 @@ class IntegrationTests(unittest.TestCase):
         super(IntegrationTests, cls).tearDownClass()
 
     def setUp(self):
-        pass
+        super(IntegrationTests, self).setUp()
+        self.driver = webdriver.Chrome()
+
+        def wait_for_element_by_id(id):
+            wait_for(lambda: None is not invincible(
+                lambda: self.driver.find_element_by_id(id)
+            ))
+            return self.driver.find_element_by_id(id)
+        self.wait_for_element_by_id = wait_for_element_by_id
+
+        def wait_for_element_by_css_selector(css_selector):
+            wait_for(lambda: None is not invincible(
+                lambda: self.driver.find_element_by_css_selector(css_selector)
+            ))
+            return self.driver.find_element_by_css_selector(css_selector)
+        self.wait_for_element_by_css_selector = wait_for_element_by_css_selector
+
 
     def tearDown(self):
-        time.sleep(3)
+        super(IntegrationTests, self).tearDown()
+        time.sleep(5)
+        print('Terminating')
         self.server_process.terminate()
-        time.sleep(3)
-
-        if hasattr(self, 'driver'):
-            self.driver.quit()
-
+        time.sleep(5)
+        print((self.server_process))
+        print((self.server_process.is_alive()))
+        self.driver.quit()
 
     def startServer(self, app):
         def run():
@@ -35,16 +55,26 @@ class IntegrationTests(unittest.TestCase):
             app.run_server(
                 port=8050,
                 debug=False,
-                processes=4
+                processes=2
             )
 
         # Run on a separate process so that it doesn't block
+        print('Running')
         self.server_process = multiprocessing.Process(target=run)
         self.server_process.start()
-        time.sleep(0.5)
+        time.sleep(15)
 
         # Visit the dash page
-        self.driver.get('http://localhost:8050')
+        try:
+            self.driver.get('http://localhost:8050')
+        except:
+            print('Failed attempt to load page, trying again')
+            print(self.server_process)
+            print(self.server_process.is_alive())
+            time.sleep(5)
+            print(requests.get('http://localhost:8050'))
+            self.driver.get('http://localhost:8050')
+
         time.sleep(0.5)
 
         # Inject an error and warning logger

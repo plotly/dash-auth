@@ -8,33 +8,15 @@ import time
 import re
 import itertools
 import plotly.plotly as py
-from selenium import webdriver
 
-from IntegrationTests import IntegrationTests
-from utils import assert_clean_console, invincible, switch_windows, wait_for
-from users import users
+from .IntegrationTests import IntegrationTests
+from .utils import assert_clean_console, invincible, switch_windows, wait_for
+from .users import users
 from dash_auth import plotly_auth
 
 
 class Tests(IntegrationTests):
-    def setUp(self):
-        self.driver = webdriver.Chrome()
-        def wait_for_element_by_id(id):
-            wait_for(lambda: None is not invincible(
-                lambda: self.driver.find_element_by_id(id)
-            ))
-            return self.driver.find_element_by_id(id)
-        self.wait_for_element_by_id = wait_for_element_by_id
-
-        def wait_for_element_by_css_selector(css_selector):
-            wait_for(lambda: None is not invincible(
-                lambda: self.driver.find_element_by_css_selector(css_selector)
-            ))
-            return self.driver.find_element_by_css_selector(css_selector)
-        self.wait_for_element_by_css_selector = wait_for_element_by_css_selector
-
-
-    def login_flow(self, username, pw):
+    def plotly_auth_login_flow(self, username, pw):
         os.environ['PLOTLY_USERNAME'] = users['creator']['username']
         os.environ['PLOTLY_API_KEY'] = users['creator']['api_key']
         app = dash.Dash(__name__)
@@ -58,11 +40,17 @@ class Tests(IntegrationTests):
 
         self.startServer(app)
 
-        el = self.wait_for_element_by_id('dash-auth--login__container')
+        time.sleep(10)
+        try:
+            el = self.wait_for_element_by_id('dash-auth--login__container')
+        except Exception as e:
+            print(self.wait_for_element_by_tag_name('body').html)
+            raise e
 
         self.driver.find_element_by_id('dash-auth--login__button').click()
-
+        time.sleep(5)
         switch_windows(self.driver)
+        time.sleep(20)
         self.wait_for_element_by_id(
             'js-auth-modal-signin-username'
         ).send_keys(username)
@@ -79,7 +67,7 @@ class Tests(IntegrationTests):
 
 
     def test_private_app_unauthorized(self):
-        self.login_flow(users['viewer']['username'], users['viewer']['pw'])
+        self.plotly_auth_login_flow(users['viewer']['username'], users['viewer']['pw'])
         time.sleep(5)
         el = self.wait_for_element_by_id('dash-auth--authorization__denied')
         self.assertEqual(el.text, 'You are not authorized to view this app')
@@ -90,8 +78,11 @@ class Tests(IntegrationTests):
 
 
     def test_private_app_authorized(self):
-        self.login_flow(users['creator']['username'], users['creator']['pw'])
+        self.plotly_auth_login_flow(users['creator']['username'], users['creator']['pw'])
         switch_windows(self.driver)
         time.sleep(5)
-        el = self.wait_for_element_by_id('output')
+        try:
+            el = self.wait_for_element_by_id('output')
+        except:
+            print((self.driver.find_element_by_css_tag_name('body').html))
         self.assertEqual(el.text, 'initial value')
