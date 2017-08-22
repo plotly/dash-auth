@@ -50,7 +50,7 @@ class Tests(IntegrationTests):
         self.driver.find_element_by_id('dash-auth--login__button').click()
 
         switch_windows(self.driver)
-        time.sleep(10)
+        time.sleep(20)
         self.wait_for_element_by_id(
             'js-auth-modal-signin-username'
         ).send_keys(username)
