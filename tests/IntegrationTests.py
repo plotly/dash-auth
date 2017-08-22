@@ -56,6 +56,8 @@ class IntegrationTests(unittest.TestCase):
             self.driver.get('http://localhost:8050')
         except:
             print('Failed attempt to load page, trying again')
+            print(self.server_process)
+            print(self.server_process.is_alive())
             time.sleep(5)
             self.driver.get('http://localhost:8050')
 
