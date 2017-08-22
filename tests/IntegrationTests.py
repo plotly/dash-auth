@@ -49,13 +49,14 @@ class IntegrationTests(unittest.TestCase):
         print('Running')
         self.server_process = multiprocessing.Process(target=run)
         self.server_process.start()
-        time.sleep(5)
+        time.sleep(15)
 
         # Visit the dash page
         try:
             self.driver.get('http://localhost:8050')
         except:
             print('Failed attempt to load page, trying again')
+            time.sleep(5)
             self.driver.get('http://localhost:8050')
 
         time.sleep(0.5)
