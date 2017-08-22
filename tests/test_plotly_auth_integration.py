@@ -56,7 +56,12 @@ class Tests(IntegrationTests):
 
         self.startServer(app)
 
-        el = self.wait_for_element_by_id('dash-auth--login__container')
+        time.sleep(10)
+        try:
+            el = self.wait_for_element_by_id('dash-auth--login__container')
+        except Exception as e:
+            print(self.wait_for_element_by_tag_name('body').html)
+            raise e
 
         self.driver.find_element_by_id('dash-auth--login__button').click()
 
