@@ -91,5 +91,8 @@ class Tests(IntegrationTests):
         self.plotly_auth_login_flow(users['creator']['username'], users['creator']['pw'])
         switch_windows(self.driver)
         time.sleep(5)
-        el = self.wait_for_element_by_id('output')
+        try:
+            el = self.wait_for_element_by_id('output')
+        except:
+            print(self.driver.find_element_by_css_tag_name('body').html)
         self.assertEqual(el.text, 'initial value')
