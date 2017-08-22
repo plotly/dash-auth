@@ -3,6 +3,7 @@ from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 import importlib
 import multiprocessing
+import requests
 import time
 import unittest
 from selenium import webdriver
@@ -59,6 +60,7 @@ class IntegrationTests(unittest.TestCase):
             print(self.server_process)
             print(self.server_process.is_alive())
             time.sleep(5)
+            print(requests.get('http://localhost:8050'))
             self.driver.get('http://localhost:8050')
 
         time.sleep(0.5)
