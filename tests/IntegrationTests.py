@@ -52,7 +52,12 @@ class IntegrationTests(unittest.TestCase):
         time.sleep(5)
 
         # Visit the dash page
-        self.driver.get('http://localhost:8050')
+        try:
+            self.driver.get('http://localhost:8050')
+        except:
+            print('Failed attempt to load page, trying again')
+            self.driver.get('http://localhost:8050')
+
         time.sleep(0.5)
 
         # Inject an error and warning logger
