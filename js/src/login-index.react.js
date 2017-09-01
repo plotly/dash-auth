@@ -50,7 +50,7 @@ class Login extends Component {
         return (
             `${plotly_domain}/o/authorize/?response_type=token&` +
             `client_id=${oauth_client_id}&` +
-            `redirect_uri=${window.location.origin}/${REDIRECT_URI_PATHNAME}`
+            `redirect_uri=${window.location.href}/${REDIRECT_URI_PATHNAME}`
         );
     }
 
