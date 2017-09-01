@@ -47,7 +47,6 @@ class Login extends Component {
 
     buildOauthUrl() {
         const {oauth_client_id, plotly_domain} = CONFIG;
-        console.log(window.location.href)
         return (
             `${plotly_domain}/o/authorize/?response_type=token&` +
             `client_id=${oauth_client_id}&` +
