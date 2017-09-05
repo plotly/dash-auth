@@ -27,6 +27,7 @@ class PlotlyAuth(Auth):
             app_url, app_name
         )['client_id']
 
+        self._app = app
         self._app_url = app_url
         self._sharing = sharing
         self._access_codes = self.create_access_codes()
@@ -132,7 +133,8 @@ class PlotlyAuth(Auth):
         '''.format(
             json.dumps({
                 'oauth_client_id': self._oauth_client_id,
-                'plotly_domain': api_requests.config('plotly_domain')
+                'plotly_domain': api_requests.config('plotly_domain'),
+                'requests_pathname_prefix': self._app.config.requests_pathname_prefix
             }),
             script)
         )
