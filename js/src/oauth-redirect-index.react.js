@@ -8,7 +8,11 @@ import {isEmpty} from 'ramda'
 
 require('../styles/application.scss');
 
+const CONFIG = JSON.parse(document.getElementById('_auth-config').textContent);
+window.CONFIG = CONFIG;
 const OAUTH_COOKIE_NAME = 'plotly_oauth_token';
+const LOGIN_PATHNAME = '_dash-login';
+const IS_AUTHORIZED_PATHNAME = '_is_authorized';
 
 /**
  * OAuth redirect component
@@ -32,11 +36,12 @@ class OauthRedirect extends Component {
     componentDidMount() {
         const params = queryString.parse(window.location.hash);
         const {access_token} = params;
-        // TODO - template in the base URL pathname
         this.setState({loginRequest: {status: 'loading'}});
+        const {requests_pathname_prefix} = CONFIG;
+
 
         // TODO - Polyfill
-        fetch('/_dash-login', {
+        fetch(`${requests_pathname_prefix}${LOGIN_PATHNAME}`, {
             method: 'POST',
             headers: {
                 'Accept': 'application/json',
@@ -53,7 +58,7 @@ class OauthRedirect extends Component {
                     content: json
                 }});
             }).then(() => {
-                return fetch('/_is-authorized', {
+                return fetch(`${requests_pathname_prefix}${IS_AUTHORIZED_PATHNAME}`, {
                     method: 'GET',
                     credentials: 'same-origin',
                     headers: {

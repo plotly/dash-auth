@@ -46,11 +46,32 @@ class Login extends Component {
     }
 
     buildOauthUrl() {
-        const {oauth_client_id, plotly_domain} = CONFIG;
+        const {
+            oauth_client_id,
+            plotly_domain,
+            requests_pathname_prefix
+        } = CONFIG;
+        /*
+         * There are a few things to consider when constructing the redirect_uri:
+         * - Since Dash apps can have URLs (https://plot.ly/dash/urls), e.g.
+         *   `/page-1/another-page`, and so just appending the /_oauth-redirect
+         *   API path to the end of the current URL (window.location.href) isn't
+         *   safe because the API endpoint is `/_oauth-redirect` not e.g.
+         *   `/page-1/another-page/_oauth-redirect`
+         * - Dash apps may be served by a proxy which prefixes a path to them.
+         *   This is what happens in Plotly On-Premise's Path-Based-Routing.
+         *   For example, the dash app may be rendered under `/my-dash-app/`
+         *   In this case, we can't just use window.location.origin because there
+         *   that would skip this pathname prefix. The config variable
+         *   `requests_pathname_prefix` contains this prefix (`/my-dash-app/`)
+         *   and is used to prefix all of the front-end API endpoints.
+         * - Dash apps may be served on a subdomain. window.location.origin picks
+         *   up the subdomain.
+         */
         return (
             `${plotly_domain}/o/authorize/?response_type=token&` +
             `client_id=${oauth_client_id}&` +
-            `redirect_uri=${window.location.origin}/${REDIRECT_URI_PATHNAME}`
+            `redirect_uri=${window.location.origin}${requests_pathname_prefix}${REDIRECT_URI_PATHNAME}`
         );
     }
 
