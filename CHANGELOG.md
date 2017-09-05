@@ -7,11 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ## [0.0.5] - 2017-08-22
-## Added
+### Added
 - Python 3 support for Basic Auth
 
 ## [0.0.4] - 2017-08-17
-## Added
+### Added
 - Integration and continuous integration tests
 - Python 3 support for Plotly Auth
 
