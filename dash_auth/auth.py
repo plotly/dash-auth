@@ -1,7 +1,5 @@
-
 from __future__ import absolute_import
 from abc import ABCMeta, abstractmethod
-import flask
 from six import iteritems, add_metaclass
 
 

@@ -8,6 +8,7 @@ import time
 import unittest
 from selenium import webdriver
 import percy
+import sys
 
 from .utils import assert_clean_console, invincible, switch_windows, wait_for
 
