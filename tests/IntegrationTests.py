@@ -12,10 +12,12 @@ import sys
 
 from .utils import assert_clean_console, invincible, switch_windows, wait_for
 
-class IntegrationTests(unittest.TestCase):
 
-    def percy_snapshot(cls, name=''):
-        snapshot_name = '{} - {}'.format(name, sys.version_info)
+class IntegrationTests(unittest.TestCase):
+    def percy_snapshot(cls, name):
+        snapshot_name = '{} - Py{}'.format(
+            name, sys.version_info.major
+        ).replace('/', '-')
         print(snapshot_name)
         cls.percy_runner.snapshot(
             name=snapshot_name
@@ -61,11 +63,8 @@ class IntegrationTests(unittest.TestCase):
     def tearDown(self):
         super(IntegrationTests, self).tearDown()
         time.sleep(5)
-        print('Terminating')
         self.server_process.terminate()
         time.sleep(5)
-        print((self.server_process))
-        print((self.server_process.is_alive()))
         self.driver.quit()
 
     def startServer(self, app):
@@ -78,7 +77,6 @@ class IntegrationTests(unittest.TestCase):
             )
 
         # Run on a separate process so that it doesn't block
-        print('Running')
         self.server_process = multiprocessing.Process(target=run)
         self.server_process.start()
         time.sleep(15)
