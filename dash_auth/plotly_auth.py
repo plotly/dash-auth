@@ -234,22 +234,14 @@ def create_or_overwrite_dash_app(filename, sharing, app_url):
         res_lookup.raise_for_status()
 
 
-
 def create_or_overwrite_oauth_app(app_url, name):
-    redirect_uris = [
-        '{}/_oauth-redirect'.format(i) for i in [
-            # TODO - variable or app.server.settings port
-            'http://localhost:8050',
-            'http://127.0.0.1:8050',
-            app_url
-        ]
-    ]
+    redirect_uri = '{}/_oauth-redirect'.format(app_url)
     request_data = {
         'data': json.dumps({
             'name': name,
             'client_type': 'public',
             'authorization_grant_type': 'implicit',
-            'redirect_uris': ' '.join(redirect_uris),
+            'redirect_uris': redirect_uri,
         })
     }
 
