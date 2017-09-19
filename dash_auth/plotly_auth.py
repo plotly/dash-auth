@@ -34,7 +34,7 @@ class PlotlyAuth(Auth):
 
         app.server.add_url_rule(
             '{}_dash-login'.format(app.config['routes_pathname_prefix']),
-            view_func=login_api,
+            view_func=self.login_api,
             methods=['post']
         )
 
@@ -177,8 +177,8 @@ class PlotlyAuth(Auth):
             name,
             value=value,
             max_age=max_age,
-            secure=True if 'https:' in self.app_url else False,
-            path=self.app.config['routes_pathname_prefix']
+            secure=True if 'https:' in self._app_url else False,
+            path=self._app.config['routes_pathname_prefix']
         )
 
 
