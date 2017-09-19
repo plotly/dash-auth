@@ -66,7 +66,9 @@ class IntegrationTests(unittest.TestCase):
 
         # Visit the dash page
         try:
-            self.driver.get('http://localhost:8050')
+            self.driver.get('http://localhost:8050{}'.format(
+                app.config['routes_pathname_prefix'])
+            )
         except:
             print('Failed attempt to load page, trying again')
             print(self.server_process)

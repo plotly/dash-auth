@@ -16,10 +16,10 @@ from dash_auth import plotly_auth
 
 
 class Tests(IntegrationTests):
-    def plotly_auth_login_flow(self, username, pw):
+    def plotly_auth_login_flow(self, username, pw, url_base_pathname):
         os.environ['PLOTLY_USERNAME'] = users['creator']['username']
         os.environ['PLOTLY_API_KEY'] = users['creator']['api_key']
-        app = dash.Dash(__name__)
+        app = dash.Dash(__name__, url_base_pathname)
         app.layout = html.Div([
             dcc.Input(
                 id='input',
@@ -35,7 +35,7 @@ class Tests(IntegrationTests):
             app,
             'integration-test',
             'private',
-            'http://localhost:8050'
+            'http://localhost:8050{}'.format(url_base_pathname)
         )
 
         self.startServer(app)
@@ -65,9 +65,12 @@ class Tests(IntegrationTests):
         time.sleep(5)
         self.wait_for_element_by_css_selector('input[name="allow"]').click()
 
-
-    def test_private_app_unauthorized(self):
-        self.plotly_auth_login_flow(users['viewer']['username'], users['viewer']['pw'])
+    def private_app_unauthorized(self, url_base_pathname):
+        self.plotly_auth_login_flow(
+            users['viewer']['username'],
+            users['viewer']['pw'],
+            url_base_pathname
+        )
         time.sleep(5)
         el = self.wait_for_element_by_id('dash-auth--authorization__denied')
         self.assertEqual(el.text, 'You are not authorized to view this app')
@@ -76,9 +79,12 @@ class Tests(IntegrationTests):
         # login screen should still be there
         self.wait_for_element_by_id('dash-auth--login__container')
 
-
-    def test_private_app_authorized(self):
-        self.plotly_auth_login_flow(users['creator']['username'], users['creator']['pw'])
+    def private_app_authorized(self, url_base_pathname):
+        self.plotly_auth_login_flow(
+            users['creator']['username'],
+            users['creator']['pw'],
+            url_base_pathname
+        )
         switch_windows(self.driver)
         time.sleep(5)
         try:
@@ -86,3 +92,15 @@ class Tests(IntegrationTests):
         except:
             print((self.driver.find_element_by_css_tag_name('body').html))
         self.assertEqual(el.text, 'initial value')
+
+    def test_private_app_authorized_index(self):
+        self.private_app_authorized('/')
+
+    def test_private_app_authorized_route(self):
+        self.private_app_authorized('/my-app/')
+
+    def test_private_app_unauthorized_index(self):
+        self.private_app_unauthorized('/')
+
+    def test_private_app_unauthorized_route(self):
+        self.private_app_unauthorized('/my-app/')
