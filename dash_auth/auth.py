@@ -11,6 +11,7 @@ class Auth(object):
         self.app = app
         self._overwrite_index()
         self._protect_views()
+        self._index_view_name = app.config['routes_pathname_prefix']
 
     def _overwrite_index(self):
         original_index = self.app.server.view_functions['index']
@@ -21,7 +22,7 @@ class Auth(object):
             else:
                 return self.login_request()
 
-        self.app.server.view_functions['index'] = wrap_index
+        self.app.server.view_functions[self._index_view_name] = wrap_index
 
     def _protect_views(self):
         # TODO - allow users to white list in case they add their own views
