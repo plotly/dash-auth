@@ -9,12 +9,13 @@ from six import iteritems, add_metaclass
 class Auth(object):
     def __init__(self, app):
         self.app = app
+        self._index_view_name = app.config['routes_pathname_prefix']
         self._overwrite_index()
         self._protect_views()
         self._index_view_name = app.config['routes_pathname_prefix']
 
     def _overwrite_index(self):
-        original_index = self.app.server.view_functions['index']
+        original_index = self.app.server.view_functions[self._index_view_name]
 
         def wrap_index(*args, **kwargs):
             if self.is_authorized():
