@@ -41,6 +41,8 @@ class Tests(IntegrationTests):
         self.startServer(app)
 
         time.sleep(10)
+        self.percy_snapshot('login screen - {} {} {}'.format(
+            username, pw, url_base_pathname))
         try:
             el = self.wait_for_element_by_id('dash-auth--login__container')
         except Exception as e:
@@ -63,6 +65,8 @@ class Tests(IntegrationTests):
 
         # wait for oauth screen
         time.sleep(5)
+        self.percy_snapshot('oauth screen - {} {} {}'.format(
+            username, pw, url_base_pathname))
         self.wait_for_element_by_css_selector('input[name="allow"]').click()
 
     def private_app_unauthorized(self, url_base_pathname):
@@ -72,11 +76,17 @@ class Tests(IntegrationTests):
             url_base_pathname
         )
         time.sleep(5)
+        self.percy_snapshot('private_app_unauthorized 1 - {}'.format(
+            url_base_pathname))
         el = self.wait_for_element_by_id('dash-auth--authorization__denied')
         self.assertEqual(el.text, 'You are not authorized to view this app')
         switch_windows(self.driver)
+        self.percy_snapshot('private_app_unauthorized 2 - {}'.format(
+            url_base_pathname))
         self.driver.refresh()
         # login screen should still be there
+        self.percy_snapshot('private_app_unauthorized 3 - {}'.format(
+            url_base_pathname))
         self.wait_for_element_by_id('dash-auth--login__container')
 
     def private_app_authorized(self, url_base_pathname):
@@ -87,6 +97,8 @@ class Tests(IntegrationTests):
         )
         switch_windows(self.driver)
         time.sleep(5)
+        self.percy_snapshot('private_app_authorized - {}'.format(
+            url_base_pathname))
         try:
             el = self.wait_for_element_by_id('output')
         except:
