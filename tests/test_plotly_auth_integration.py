@@ -19,7 +19,7 @@ class Tests(IntegrationTests):
     def plotly_auth_login_flow(self, username, pw, url_base_pathname):
         os.environ['PLOTLY_USERNAME'] = users['creator']['username']
         os.environ['PLOTLY_API_KEY'] = users['creator']['api_key']
-        app = dash.Dash(__name__, url_base_pathname)
+        app = dash.Dash(__name__, url_base_pathname=url_base_pathname)
         app.layout = html.Div([
             dcc.Input(
                 id='input',
