@@ -7,6 +7,7 @@ import requests
 import time
 import unittest
 from selenium import webdriver
+import percy
 
 from .utils import assert_clean_console, invincible, switch_windows, wait_for
 
