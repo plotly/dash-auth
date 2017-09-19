@@ -105,8 +105,9 @@ class PlotlyAuth(Auth):
             response = f(*args, **kwargs)
             # TODO - should set secure in this cookie, not exposed in flask
             # TODO - should set path or domain
-            response.set_cookie(
-                AUTH_COOKIE_NAME,
+            self.set_cookie(
+                response,
+                name=AUTH_COOKIE_NAME,
                 value=self._access_codes['access_granted'],
                 max_age=(60 * 60 * 24 * 7),  # 1 week
             )
@@ -145,31 +146,40 @@ class PlotlyAuth(Auth):
     def serve_oauth_redirect(self):
         return self.html(self.oauth_redirect_bundle)
 
+    def login_api(self):
+        oauth_token = flask.request.get_json()['access_token']
+        res = api_requests.get(
+            '/v2/users/current',
+            headers={'Authorization': 'Bearer {}'.format(oauth_token)},
+        )
+        try:
+            res.raise_for_status()
+        except Exception as e:
+            print(res.content)
+            raise e
+        response = flask.Response(
+            json.dumps(res.json()),
+            mimetype='application/json',
+            status=res.status_code
+        )
 
-def login_api():
-    oauth_token = flask.request.get_json()['access_token']
-    res = api_requests.get(
-        '/v2/users/current',
-        headers={'Authorization': 'Bearer {}'.format(oauth_token)},
-    )
-    try:
-        res.raise_for_status()
-    except Exception as e:
-        print(res.content)
-        raise e
-    response = flask.Response(
-        json.dumps(res.json()),
-        mimetype='application/json',
-        status=res.status_code
-    )
-    # TODO - set path and secure appropriately
-    response.set_cookie(
-        'plotly_oauth_token',
-        value=oauth_token,
-        max_age=None
-    )
+        self.set_cookie(
+            response=response,
+            name='plotly_oauth_token',
+            value=oauth_token,
+            max_age=None
+        )
 
-    return response
+        return response
+
+    def set_cookie(self, response, name, value, max_age):
+        response.set_cookie(
+            name,
+            value=value,
+            max_age=max_age,
+            secure=True if 'https:' in self.app_url else False,
+            path=self.app.config['routes_pathname_prefix']
+        )
 
 
 def create_or_overwrite_dash_app(filename, sharing, app_url):
