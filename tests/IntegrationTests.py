@@ -12,13 +12,30 @@ from .utils import assert_clean_console, invincible, switch_windows, wait_for
 
 class IntegrationTests(unittest.TestCase):
 
+    def percy_snapshot(cls, name=''):
+        snapshot_name = '{} - {}'.format(name, sys.version_info)
+        print(snapshot_name)
+        cls.percy_runner.snapshot(
+            name=snapshot_name
+        )
+
     @classmethod
     def setUpClass(cls):
         super(IntegrationTests, cls).setUpClass()
+        cls.driver = webdriver.Chrome()
+
+        loader = percy.ResourceLoader(
+          webdriver=cls.driver
+        )
+        cls.percy_runner = percy.Runner(loader=loader)
+
+        cls.percy_runner.initialize_build()
 
     @classmethod
     def tearDownClass(cls):
         super(IntegrationTests, cls).tearDownClass()
+        cls.driver.quit()
+        cls.percy_runner.finalize_build()
 
     def setUp(self):
         super(IntegrationTests, self).setUp()
