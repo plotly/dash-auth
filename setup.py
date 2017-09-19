@@ -1,7 +1,7 @@
 from setuptools import setup
 
 import io
-exec (open('dash_auth/version.py').read())
+exec(open('dash_auth/version.py').read())
 
 setup(
     name='dash_auth',
