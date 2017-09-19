@@ -33,19 +33,19 @@ class PlotlyAuth(Auth):
         self._access_codes = self.create_access_codes()
 
         app.server.add_url_rule(
-            '{}_dash-login'.format(app.url_base_pathname),
+            '{}_dash-login'.format(app.config['routes_pathname_prefix']),
             view_func=login_api,
             methods=['post']
         )
 
         app.server.add_url_rule(
-            '{}_oauth-redirect'.format(app.url_base_pathname),
+            '{}_oauth-redirect'.format(app.config['routes_pathname_prefix']),
             view_func=self.serve_oauth_redirect,
             methods=['get']
         )
 
         app.server.add_url_rule(
-            '{}_is-authorized'.format(app.url_base_pathname),
+            '{}_is-authorized'.format(app.config['routes_pathname_prefix']),
             view_func=self.check_if_authorized,
             methods=['get']
         )
@@ -97,7 +97,6 @@ class PlotlyAuth(Auth):
 
         return flask.Response(status=403)
 
-
     def auth_wrapper(self, f):
         def wrap(*args, **kwargs):
             if not self.is_authorized():
@@ -134,7 +133,8 @@ class PlotlyAuth(Auth):
             json.dumps({
                 'oauth_client_id': self._oauth_client_id,
                 'plotly_domain': api_requests.config('plotly_domain'),
-                'requests_pathname_prefix': self._app.config.requests_pathname_prefix
+                'requests_pathname_prefix':
+                    self._app.config['requests_pathname_prefix']
             }),
             script)
         )
