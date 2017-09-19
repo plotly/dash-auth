@@ -5,7 +5,7 @@ exec (open('dash_auth/version.py').read())
 
 setup(
     name='dash_auth',
-    version=__version__,
+    version=__version__,  # noqa: F821
     author='Christopher Parmer',
     author_email='chris@plot.ly',
     packages=['dash_auth'],
