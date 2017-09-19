@@ -90,7 +90,7 @@ class Tests(IntegrationTests):
         try:
             el = self.wait_for_element_by_id('output')
         except:
-            print((self.driver.find_element_by_css_tag_name('body').html))
+            print((self.driver.find_element_by_tag_name('body').html))
         self.assertEqual(el.text, 'initial value')
 
     def test_private_app_authorized_index(self):
