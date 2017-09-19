@@ -12,7 +12,7 @@ const CONFIG = JSON.parse(document.getElementById('_auth-config').textContent);
 window.CONFIG = CONFIG;
 const OAUTH_COOKIE_NAME = 'plotly_oauth_token';
 const LOGIN_PATHNAME = '_dash-login';
-const IS_AUTHORIZED_PATHNAME = '_is_authorized';
+const IS_AUTHORIZED_PATHNAME = '_is-authorized';
 
 /**
  * OAuth redirect component
