@@ -9,7 +9,7 @@ setup(
     author='Christopher Parmer',
     author_email='chris@plot.ly',
     packages=['dash_auth'],
-    license='Commercial',
+    license='MIT',
     description='Dash Authorization Package.',
     long_description=io.open('README.md', encoding='utf-8').read(),
     install_requires=[
