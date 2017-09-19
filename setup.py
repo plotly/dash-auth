@@ -16,7 +16,8 @@ setup(
         'Flask>=0.12',
         'flask-compress',
         'flask-seasurf',
-        'plotly'
+        'plotly',
+        'dash>=0.18.3'
     ],
     include_package_data=True,
     url='https://plot.ly/dash',
