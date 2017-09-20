@@ -52,10 +52,11 @@ class PlotlyAuth(Auth):
         _current_path = os.path.dirname(os.path.abspath(__file__))
 
         # TODO - Dist files
-        self.oauth_redirect_bundle = open(os.path.join(
-            _current_path, 'oauth-redirect.js')).read()
-        self.login_bundle = open(
-            os.path.join(_current_path, 'login.js')).read()
+        with open(os.path.join(_current_path, 'oauth-redirect.js'), 'r') as f:
+            self.oauth_redirect_bundle = f.read()
+
+        with open(os.path.join(_current_path, 'login.js'), 'r') as f:
+            self.login_bundle = f.read()
 
     def create_access_codes(self):
         token = SeaSurf()._generate_token()
