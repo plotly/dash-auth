@@ -33,29 +33,30 @@ class PlotlyAuth(Auth):
         self._access_codes = self.create_access_codes()
 
         app.server.add_url_rule(
-            '{}_dash-login'.format(app.url_base_pathname),
-            view_func=login_api,
+            '{}_dash-login'.format(app.config['routes_pathname_prefix']),
+            view_func=self.login_api,
             methods=['post']
         )
 
         app.server.add_url_rule(
-            '{}_oauth-redirect'.format(app.url_base_pathname),
+            '{}_oauth-redirect'.format(app.config['routes_pathname_prefix']),
             view_func=self.serve_oauth_redirect,
             methods=['get']
         )
 
         app.server.add_url_rule(
-            '{}_is-authorized'.format(app.url_base_pathname),
+            '{}_is-authorized'.format(app.config['routes_pathname_prefix']),
             view_func=self.check_if_authorized,
             methods=['get']
         )
         _current_path = os.path.dirname(os.path.abspath(__file__))
 
         # TODO - Dist files
-        self.oauth_redirect_bundle = open(os.path.join(
-            _current_path, 'oauth-redirect.js')).read()
-        self.login_bundle = open(
-            os.path.join(_current_path, 'login.js')).read()
+        with open(os.path.join(_current_path, 'oauth-redirect.js'), 'r') as f:
+            self.oauth_redirect_bundle = f.read()
+
+        with open(os.path.join(_current_path, 'login.js'), 'r') as f:
+            self.login_bundle = f.read()
 
     def create_access_codes(self):
         token = SeaSurf()._generate_token()
@@ -97,7 +98,6 @@ class PlotlyAuth(Auth):
 
         return flask.Response(status=403)
 
-
     def auth_wrapper(self, f):
         def wrap(*args, **kwargs):
             if not self.is_authorized():
@@ -106,8 +106,9 @@ class PlotlyAuth(Auth):
             response = f(*args, **kwargs)
             # TODO - should set secure in this cookie, not exposed in flask
             # TODO - should set path or domain
-            response.set_cookie(
-                AUTH_COOKIE_NAME,
+            self.set_cookie(
+                response,
+                name=AUTH_COOKIE_NAME,
                 value=self._access_codes['access_granted'],
                 max_age=(60 * 60 * 24 * 7),  # 1 week
             )
@@ -134,7 +135,8 @@ class PlotlyAuth(Auth):
             json.dumps({
                 'oauth_client_id': self._oauth_client_id,
                 'plotly_domain': api_requests.config('plotly_domain'),
-                'requests_pathname_prefix': self._app.config.requests_pathname_prefix
+                'requests_pathname_prefix':
+                    self._app.config['requests_pathname_prefix']
             }),
             script)
         )
@@ -145,31 +147,40 @@ class PlotlyAuth(Auth):
     def serve_oauth_redirect(self):
         return self.html(self.oauth_redirect_bundle)
 
+    def login_api(self):
+        oauth_token = flask.request.get_json()['access_token']
+        res = api_requests.get(
+            '/v2/users/current',
+            headers={'Authorization': 'Bearer {}'.format(oauth_token)},
+        )
+        try:
+            res.raise_for_status()
+        except Exception as e:
+            print(res.content)
+            raise e
+        response = flask.Response(
+            json.dumps(res.json()),
+            mimetype='application/json',
+            status=res.status_code
+        )
 
-def login_api():
-    oauth_token = flask.request.get_json()['access_token']
-    res = api_requests.get(
-        '/v2/users/current',
-        headers={'Authorization': 'Bearer {}'.format(oauth_token)},
-    )
-    try:
-        res.raise_for_status()
-    except Exception as e:
-        print(res.content)
-        raise e
-    response = flask.Response(
-        json.dumps(res.json()),
-        mimetype='application/json',
-        status=res.status_code
-    )
-    # TODO - set path and secure appropriately
-    response.set_cookie(
-        'plotly_oauth_token',
-        value=oauth_token,
-        max_age=None
-    )
+        self.set_cookie(
+            response=response,
+            name='plotly_oauth_token',
+            value=oauth_token,
+            max_age=None
+        )
 
-    return response
+        return response
+
+    def set_cookie(self, response, name, value, max_age):
+        response.set_cookie(
+            name,
+            value=value,
+            max_age=max_age,
+            secure=True if 'https:' in self._app_url else False,
+            path=self._app.config['routes_pathname_prefix']
+        )
 
 
 def create_or_overwrite_dash_app(filename, sharing, app_url):
@@ -224,22 +235,14 @@ def create_or_overwrite_dash_app(filename, sharing, app_url):
         res_lookup.raise_for_status()
 
 
-
 def create_or_overwrite_oauth_app(app_url, name):
-    redirect_uris = [
-        '{}/_oauth-redirect'.format(i) for i in [
-            # TODO - variable or app.server.settings port
-            'http://localhost:8050',
-            'http://127.0.0.1:8050',
-            app_url
-        ]
-    ]
+    redirect_uri = '{}_oauth-redirect'.format(app_url)
     request_data = {
         'data': json.dumps({
             'name': name,
             'client_type': 'public',
             'authorization_grant_type': 'implicit',
-            'redirect_uris': ' '.join(redirect_uris),
+            'redirect_uris': redirect_uri,
         })
     }
 

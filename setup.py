@@ -1,22 +1,23 @@
 from setuptools import setup
 
 import io
-exec (open('dash_auth/version.py').read())
+exec(open('dash_auth/version.py').read())
 
 setup(
     name='dash_auth',
-    version=__version__,
+    version=__version__,  # noqa: F821
     author='Christopher Parmer',
     author_email='chris@plot.ly',
     packages=['dash_auth'],
-    license='Commercial',
+    license='MIT',
     description='Dash Authorization Package.',
     long_description=io.open('README.md', encoding='utf-8').read(),
     install_requires=[
         'Flask>=0.12',
         'flask-compress',
         'flask-seasurf',
-        'plotly'
+        'plotly',
+        'dash>=0.18.3'
     ],
     include_package_data=True,
     url='https://plot.ly/dash',
