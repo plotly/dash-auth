@@ -108,7 +108,7 @@ class PlotlyAuth(Auth):
             # TODO - should set path or domain
             try:
                 # Python 2
-                if isinstance(response, basestring):
+                if isinstance(response, basestring):  # noqa: F821
                     response = flask.Response(response)
             except:
                 # Python 3
