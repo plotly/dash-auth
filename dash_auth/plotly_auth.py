@@ -106,6 +106,8 @@ class PlotlyAuth(Auth):
             response = f(*args, **kwargs)
             # TODO - should set secure in this cookie, not exposed in flask
             # TODO - should set path or domain
+            if isinstance(response, basestring):
+                response = flask.Response(response)
             self.set_cookie(
                 response,
                 name=AUTH_COOKIE_NAME,
