@@ -5,7 +5,9 @@ import plotly
 import requests
 
 # API requests get their config from the environment.
-# If variables aren't there, then they check the plotly.tools.get_credentials_file
+# If variables aren't there, then they check the
+# plotly.tools.get_credentials_file
+
 
 def credential(key):
     if key in os.environ:
@@ -15,6 +17,7 @@ def credential(key):
     else:
         return plotly.tools.get_credentials_file()[key.replace('plotly_', '')]
 
+
 def config(key):
     if key in os.environ:
         value = os.environ[key]
@@ -23,7 +26,8 @@ def config(key):
     else:
         value = plotly.tools.get_config_file()[key]
 
-    # Handle PLOTLY_SSL_VERIFICATION which is True or False but a string in environ
+    # Handle PLOTLY_SSL_VERIFICATION which is True or False but a
+    # string in environ
     if value == 'False':
         return False
     elif value == 'True':
@@ -36,6 +40,7 @@ HEADERS = {
     'plotly-client-platform': 'dash-auth',
     'content-type': 'application/json'
 }
+
 
 def _modify_request_kwargs(request_kwargs):
     copied_kwargs = copy.deepcopy(request_kwargs)
@@ -61,6 +66,7 @@ def _create_method(method_name):
             **copied_kwargs
         )
     return request
+
 
 post = _create_method('post')
 patch = _create_method('patch')

@@ -7,18 +7,49 @@ import requests
 import time
 import unittest
 from selenium import webdriver
+import percy
+import sys
+import os
 
 from .utils import assert_clean_console, invincible, switch_windows, wait_for
 
+
 class IntegrationTests(unittest.TestCase):
+    def percy_snapshot(cls, name):
+        if ('PERCY_PROJECT' in os.environ and
+                os.environ['PERCY_PROJECT'] == 'plotly/dash-auth'):
+
+            snapshot_name = '{} - Py{}'.format(
+                name, sys.version_info.major
+            ).replace('/', '-')
+            try:
+                cls.percy_runner.snapshot(
+                    name=snapshot_name
+                )
+            except Exception as e:
+                print('Saving "{}" failed'.format(snapshot_name))
 
     @classmethod
     def setUpClass(cls):
         super(IntegrationTests, cls).setUpClass()
+        cls.driver = webdriver.Chrome()
+
+        if ('PERCY_PROJECT' in os.environ and
+                os.environ['PERCY_PROJECT'] == 'plotly/dash-auth'):
+            loader = percy.ResourceLoader(
+              webdriver=cls.driver
+            )
+            cls.percy_runner = percy.Runner(loader=loader)
+
+            cls.percy_runner.initialize_build()
 
     @classmethod
     def tearDownClass(cls):
         super(IntegrationTests, cls).tearDownClass()
+        cls.driver.quit()
+        if ('PERCY_PROJECT' in os.environ and
+                os.environ['PERCY_PROJECT'] == 'plotly/dash-auth'):
+            cls.percy_runner.finalize_build()
 
     def setUp(self):
         super(IntegrationTests, self).setUp()
@@ -38,15 +69,11 @@ class IntegrationTests(unittest.TestCase):
             return self.driver.find_element_by_css_selector(css_selector)
         self.wait_for_element_by_css_selector = wait_for_element_by_css_selector
 
-
     def tearDown(self):
         super(IntegrationTests, self).tearDown()
         time.sleep(5)
-        print('Terminating')
         self.server_process.terminate()
         time.sleep(5)
-        print((self.server_process))
-        print((self.server_process.is_alive()))
         self.driver.quit()
 
     def startServer(self, app):
@@ -59,14 +86,15 @@ class IntegrationTests(unittest.TestCase):
             )
 
         # Run on a separate process so that it doesn't block
-        print('Running')
         self.server_process = multiprocessing.Process(target=run)
         self.server_process.start()
         time.sleep(15)
 
         # Visit the dash page
         try:
-            self.driver.get('http://localhost:8050')
+            self.driver.get('http://localhost:8050{}'.format(
+                app.config['routes_pathname_prefix'])
+            )
         except:
             print('Failed attempt to load page, trying again')
             print(self.server_process)
