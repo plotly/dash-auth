@@ -9,37 +9,45 @@ import unittest
 from selenium import webdriver
 import percy
 import sys
+import os
 
 from .utils import assert_clean_console, invincible, switch_windows, wait_for
 
 
 class IntegrationTests(unittest.TestCase):
     def percy_snapshot(cls, name):
-        snapshot_name = '{} - Py{}'.format(
-            name, sys.version_info.major
-        ).replace('/', '-')
-        print(snapshot_name)
-        cls.percy_runner.snapshot(
-            name=snapshot_name
-        )
+        if ('PERCY_PROJECT' in os.environ and
+                os.environ['PERCY_PROJECT'] == 'plotly/dash-auth'):
+
+            snapshot_name = '{} - Py{}'.format(
+                name, sys.version_info.major
+            ).replace('/', '-')
+            print(snapshot_name)
+            cls.percy_runner.snapshot(
+                name=snapshot_name
+            )
 
     @classmethod
     def setUpClass(cls):
         super(IntegrationTests, cls).setUpClass()
         cls.driver = webdriver.Chrome()
 
-        loader = percy.ResourceLoader(
-          webdriver=cls.driver
-        )
-        cls.percy_runner = percy.Runner(loader=loader)
+        if ('PERCY_PROJECT' in os.environ and
+                os.environ['PERCY_PROJECT'] == 'plotly/dash-auth'):
+            loader = percy.ResourceLoader(
+              webdriver=cls.driver
+            )
+            cls.percy_runner = percy.Runner(loader=loader)
 
-        cls.percy_runner.initialize_build()
+            cls.percy_runner.initialize_build()
 
     @classmethod
     def tearDownClass(cls):
         super(IntegrationTests, cls).tearDownClass()
         cls.driver.quit()
-        cls.percy_runner.finalize_build()
+        if ('PERCY_PROJECT' in os.environ and
+                os.environ['PERCY_PROJECT'] == 'plotly/dash-auth'):
+            cls.percy_runner.finalize_build()
 
     def setUp(self):
         super(IntegrationTests, self).setUp()
@@ -58,7 +66,6 @@ class IntegrationTests(unittest.TestCase):
             ))
             return self.driver.find_element_by_css_selector(css_selector)
         self.wait_for_element_by_css_selector = wait_for_element_by_css_selector
-
 
     def tearDown(self):
         super(IntegrationTests, self).tearDown()
