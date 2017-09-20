@@ -22,10 +22,12 @@ class IntegrationTests(unittest.TestCase):
             snapshot_name = '{} - Py{}'.format(
                 name, sys.version_info.major
             ).replace('/', '-')
-            print(snapshot_name)
-            cls.percy_runner.snapshot(
-                name=snapshot_name
-            )
+            try:
+                cls.percy_runner.snapshot(
+                    name=snapshot_name
+                )
+            except Exception as e:
+                print('Saving "{}" failed'.format(snapshot_name))
 
     @classmethod
     def setUpClass(cls):
