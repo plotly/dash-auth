@@ -3,9 +3,10 @@ machine:
     - echo export PERCY_PARALLEL_NONCE=$CIRCLE_BUILD_NUM >> $HOME/.circlerc
 
   post:
-    - pyenv global 2.7.10 3.6.2
+    - pyenv global 2.7.10 3.4.4 3.6.2
   environment:
     TOX_PYTHON_27: python2.7
+    TOX_PTYHON_34: python3.4
     TOX_PYTHON_36: python3.6
 
 
