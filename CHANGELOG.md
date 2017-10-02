@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.0.9] - 2017-10-02
+### Fixed
+- Allow the version to be imported with `dash_auth.__version__`
+
+## [0.0.8] - 2017-09-26
+### Fixed
+- Wrap string responses in a `flask.Response` so that cookies can be added to it
+
 ## [0.0.7] - 2017-09-19
 ### Fixed
 - Fixed authentication with path based routing with dash==0.18.3
