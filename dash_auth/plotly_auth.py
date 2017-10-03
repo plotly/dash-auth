@@ -76,17 +76,7 @@ class PlotlyAuth(OAuthBase):
         return response
 
     def check_view_access(self, oauth_token):
-        res = api_requests.get(
-            '/v2/files/{}'.format(self._fid),
-            headers={'Authorization': 'Bearer {}'.format(oauth_token)}
-        )
-        if res.status_code == 200:
-            return True
-        elif res.status_code == 404:
-            return False
-        else:
-            # TODO - Dash exception
-            raise Exception('Failed request to plotly')
+        return check_view_access(oauth_token, self._fid)
 
 
 def create_or_overwrite_dash_app(filename, sharing, app_url):
@@ -185,3 +175,17 @@ def create_or_overwrite_oauth_app(app_url, name):
         raise e
 
     return res.json()
+
+
+def check_view_access(oauth_token, fid):
+    res = api_requests.get(
+        '/v2/files/{}'.format(fid),
+        headers={'Authorization': 'Bearer {}'.format(oauth_token)}
+    )
+    if res.status_code == 200:
+        return True
+    elif res.status_code == 404:
+        return False
+    else:
+        # TODO - Dash exception
+        raise Exception('Failed request to plotly')

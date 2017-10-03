@@ -197,7 +197,8 @@ class ProtectedViewsTest(unittest.TestCase):
             # without making an API call to plotly.
             # Include this cookie in the response and verify that it grants
             # the user access up until the expiration date
-            access_granted_cookie = get_cookie(res, plotly_auth.AUTH_COOKIE_NAME)
+            access_granted_cookie = get_cookie(
+                res, PlotlyAuth.AUTH_COOKIE_NAME)
             self.assertEqual(
                 access_granted_cookie,
                 auth._access_codes['access_granted']
@@ -209,7 +210,7 @@ class ProtectedViewsTest(unittest.TestCase):
 
             # Even though the app is private, the viewer will still get 200s
             access_cookie = (
-                {'name': plotly_auth.AUTH_COOKIE_NAME,
+                {'name': PlotlyAuth.AUTH_COOKIE_NAME,
                  'value': access_granted_cookie},
             )
             self.check_endpoints(
@@ -252,9 +253,9 @@ class ProtectedViewsTest(unittest.TestCase):
 
             access_granted_cookie = get_cookie(
                 res,
-                plotly_auth.AUTH_COOKIE_NAME)
+                PlotlyAuth.AUTH_COOKIE_NAME)
             self.check_endpoints(auth, app, creator, (
-                {'name': plotly_auth.AUTH_COOKIE_NAME,
+                {'name': PlotlyAuth.AUTH_COOKIE_NAME,
                  'value': access_granted_cookie},
             ))
             self.assertEqual(wrapped.call_count, n_endpoints * 2)
@@ -271,9 +272,10 @@ class ProtectedViewsTest(unittest.TestCase):
 
             # Using the same auth cookie should prevent an
             # additional access call
-            access_granted_cookie = get_cookie(res, plotly_auth.AUTH_COOKIE_NAME)
+            access_granted_cookie = get_cookie(
+                res, PlotlyAuth.AUTH_COOKIE_NAME)
             self.check_endpoints(auth, app, creator, (
-                {'name': plotly_auth.AUTH_COOKIE_NAME,
+                {'name': PlotlyAuth.AUTH_COOKIE_NAME,
                  'value': access_granted_cookie},
             ))
             self.assertEqual(
