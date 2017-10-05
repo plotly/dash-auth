@@ -244,7 +244,7 @@ def create_or_overwrite_dash_app(filename, sharing, app_url):
 
 
 def create_or_overwrite_oauth_app(app_url, name):
-    redirect_uri = '{}_oauth-redirect'.format(app_url)
+    redirect_uri = '{}/_oauth-redirect'.format(app_url.strip('/'))
     request_data = {
         'data': json.dumps({
             'name': name,
