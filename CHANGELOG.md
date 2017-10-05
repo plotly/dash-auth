@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [0.0.10] - 2017-10-05
 ### Fixed
-- The oauth redirect URL is no trailing-backslash insensitive
+- The oauth redirect URL is no longer trailing-backslash insensitive
 
 ## [0.0.9] - 2017-10-02
 ### Fixed
