@@ -8,7 +8,9 @@ from .auth import Auth
 
 
 class OAuthBase(Auth):
-    AUTH_COOKIE_NAME = 'plotly_auth'
+    # Name of the cookie containing the cached permission token
+    AUTH_COOKIE_NAME = 'dash_token'
+    # Name of the cookie containing the OAuth2 access token
     TOKEN_COOKIE_NAME = 'oauth_token'
 
     def __init__(self, app, app_url, client_id=None):
@@ -76,7 +78,7 @@ class OAuthBase(Auth):
 
         access_cookie = flask.request.cookies[self.AUTH_COOKIE_NAME]
 
-        # If there access was previously declined,
+        # If access was previously declined,
         # check access again in case it has changed
         if access_cookie != self._access_codes['access_granted']:
             return self.check_view_access(oauth_token)
