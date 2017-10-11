@@ -72,9 +72,6 @@ class PlotlyAuth(Auth):
         return self._access_codes
 
     def is_authorized(self):
-        if 'plotly_oauth_token' not in flask.request.cookies:
-            return False
-
         oauth_token = flask.request.cookies['plotly_oauth_token']
 
         if (datetime.datetime.now() > self._access_codes['expiration']):
