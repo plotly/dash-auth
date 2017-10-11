@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.1.0] - 2017-10-10
+### Added
+- `PlotlyAuth` - Support for "secret" apps. These are apps that cannot be viewed unless you
+have a URL with a random string attached to it. The permission can changed
+through the file interface at https://plot.ly/organize
+- `PlotlyAuth` - The login screen now displays "Plotly On-Premises" rather
+than just "Plotly" if applicable
+- `PlotlyAuth` - The header of the login screen is now customizable by setting
+`auth.config['login_display_name']`. It defaults to 'Dash'.
+
+### Changed
+- `PlotlyAuth` - `public` apps now do not require the user to log in to their
+Plotly account
+
+
 ## [0.0.10] - 2017-10-05
 ### Fixed
 - The oauth redirect URL is now trailing-backslash insensitive
