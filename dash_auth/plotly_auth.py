@@ -5,11 +5,12 @@ from flask_seasurf import SeaSurf
 import json
 import os
 from six import iteritems
-from .auth import Auth
 
+from .auth import Auth
 from . import api_requests
 
 AUTH_COOKIE_NAME = 'plotly_auth'
+SHARE_KEY_COOKIE_NAME = 'dash-share-key'
 
 
 class PlotlyAuth(Auth):
@@ -72,20 +73,21 @@ class PlotlyAuth(Auth):
         return self._access_codes
 
     def is_authorized(self):
-        oauth_token = flask.request.cookies['plotly_oauth_token']
+        # if app is public or secret, oauth_token will not be provided
+        oauth_token = flask.request.cookies.get('plotly_oauth_token', '')
 
         if (datetime.datetime.now() > self._access_codes['expiration']):
             self.create_access_codes()
 
         if AUTH_COOKIE_NAME not in flask.request.cookies:
-            return check_view_access(oauth_token, self._fid)
+            return check_view_access(oauth_token, self._fid, self._sharing)
 
         access_cookie = flask.request.cookies[AUTH_COOKIE_NAME]
 
         # If there access was previously declined,
         # check access again in case it has changed
         if access_cookie != self._access_codes['access_granted']:
-            return check_view_access(oauth_token, self._fid)
+            return check_view_access(oauth_token, self._fid, self._sharing)
 
         return True
 
@@ -117,6 +119,15 @@ class PlotlyAuth(Auth):
                 value=self._access_codes['access_granted'],
                 max_age=(60 * 60 * 24 * 7),  # 1 week
             )
+
+            if 'share_key' in flask.request.args:
+                self.set_cookie(
+                    response=response,
+                    name=SHARE_KEY_COOKIE_NAME,
+                    value=flask.request.args['share_key'],
+                    # by not specifying max-age, this will be session-only
+                    max_age=None
+                )
             return response
         return wrap
 
@@ -197,11 +208,11 @@ def create_or_overwrite_dash_app(filename, sharing, app_url):
     for arg_name, arg_value in iteritems(required_args):
         if arg_value is None:
             raise Exception('{} is required'.format(arg_name))
-    if sharing not in ['private', 'public']:
+    if sharing not in ['private', 'public', 'secret']:
         raise Exception(
             "The privacy argument must be equal "
-            "to 'private' or 'public'.\n"
-            "You supplied '{}'".format(sharing)
+            "to 'private', 'public', or 'secret'.\n"
+            "You provided '{}'".format(sharing)
         )
     payload = json.dumps({
         'filename': filename,
@@ -286,15 +297,31 @@ def create_or_overwrite_oauth_app(app_url, name):
     return res.json()
 
 
-def check_view_access(oauth_token, fid):
-    res = api_requests.get(
-        '/v2/files/{}'.format(fid),
-        headers={'Authorization': 'Bearer {}'.format(oauth_token)}
-    )
+def check_view_access(oauth_token, fid, sharing):
+    if sharing == 'private':
+        headers = {'Authorization': 'Bearer {}'.format(oauth_token)}
+    else:
+        headers = {}
+
+    url = '/v2/files/{}'.format(fid)
+    if sharing == 'secret':
+        if 'share_key' in flask.request.args:
+            share_key = flask.request.args.get('share_key')
+        elif SHARE_KEY_COOKIE_NAME in flask.request.cookies:
+            share_key = flask.request.cookies[SHARE_KEY_COOKIE_NAME]
+        else:
+            # Note - we don't just return False here because the user
+            # could have changed the settings on the web interface
+            # from secret to public
+            share_key = ''
+        url += '?share_key={}'.format(share_key)
+
+    res = api_requests.get(url, headers=headers, api_key_auth=False)
     if res.status_code == 200:
         return True
     elif res.status_code == 404:
         return False
     else:
         # TODO - Dash exception
-        raise Exception('Failed request to plotly')
+        raise Exception('Unhandled response code: {}'.format(
+            res.status_code))

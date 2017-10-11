@@ -42,14 +42,14 @@ HEADERS = {
 }
 
 
-def _modify_request_kwargs(request_kwargs):
+def _modify_request_kwargs(request_kwargs, api_key_auth=True):
     copied_kwargs = copy.deepcopy(request_kwargs)
     if 'headers' in request_kwargs:
         copied_kwargs['headers'].update(HEADERS)
     else:
         copied_kwargs['headers'] = HEADERS
 
-    if 'Authorization' not in copied_kwargs['headers']:
+    if 'Authorization' not in copied_kwargs['headers'] and api_key_auth:
         copied_kwargs['auth'] = (
             credential('plotly_username'),
             credential('plotly_api_key'),)
@@ -60,10 +60,11 @@ def _modify_request_kwargs(request_kwargs):
 
 def _create_method(method_name):
     def request(path, api_key_auth=True, **request_kwargs):
-        copied_kwargs = _modify_request_kwargs(request_kwargs)
+        copied_kwargs = _modify_request_kwargs(
+            request_kwargs, api_key_auth=api_key_auth)
+        url = '{}{}'.format(config('plotly_api_domain'), path)
         return getattr(requests, method_name)(
-            '{}{}'.format(config('plotly_api_domain'), path),
-            **copied_kwargs
+            url, **copied_kwargs
         )
     return request
 
