@@ -18,7 +18,8 @@ class PlotlyAuth(Auth):
         Auth.__init__(self, app)
 
         self.config = {
-            'permissions_cache_expiry': 5 * 60
+            'permissions_cache_expiry': 5 * 60,
+            'login_display_name': 'Dash'
         }
 
         self._fid = create_or_overwrite_dash_app(
@@ -152,7 +153,8 @@ class PlotlyAuth(Auth):
                 'oauth_client_id': self._oauth_client_id,
                 'plotly_domain': api_requests.config('plotly_domain'),
                 'requests_pathname_prefix':
-                    self._app.config['requests_pathname_prefix']
+                    self._app.config['requests_pathname_prefix'],
+                'login_display_name': self.config['login_display_name']
             }),
             script)
         )
