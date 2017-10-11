@@ -120,8 +120,7 @@ class Login extends Component {
                         {' Create an account '}
                     </a>
                     <span>
-                    {` (it's free)
-                      and then request access from the owner of this app.`}
+                    {`and then request access from the owner of this app.`}
                     </span>
                 </div>
             </div>
