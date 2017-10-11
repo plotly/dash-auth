@@ -16,10 +16,11 @@ class Auth(object):
         original_index = self.app.server.view_functions[self._index_view_name]
 
         def wrap_index(*args, **kwargs):
-            if self.is_authorized():
-                return original_index(*args, **kwargs)
-            else:
+            response = self.auth_wrapper(original_index)(*args, **kwargs)
+            if response.status_code == 403:
                 return self.login_request()
+            else:
+                return response
 
         self.app.server.view_functions[self._index_view_name] = wrap_index
 
@@ -30,10 +31,6 @@ class Auth(object):
             if view_name != self._index_view_name:
                 self.app.server.view_functions[view_name] = \
                     self.auth_wrapper(view_method)
-
-    @abstractmethod
-    def is_authorized(self):
-        pass
 
     @abstractmethod
     def auth_wrapper(self, f):
