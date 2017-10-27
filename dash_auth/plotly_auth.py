@@ -110,7 +110,7 @@ class PlotlyAuth(Auth):
                 # Python 2
                 if isinstance(response, basestring):  # noqa: F821
                     response = flask.Response(response)
-            except:
+            except:  # noqa: E722
                 # Python 3
                 if isinstance(response, str):
                     response = flask.Response(response)
