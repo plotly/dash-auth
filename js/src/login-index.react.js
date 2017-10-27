@@ -77,7 +77,7 @@ class Login extends Component {
 
     oauthPopUp() {
         const popupWindow = PopupCenter(
-            this.buildOauthUrl(), 'Authorization', '600', '670'
+            this.buildOauthUrl(), 'Authorization', '600', '700'
         );
         if (window.focus) {
             popupWindow.focus();
