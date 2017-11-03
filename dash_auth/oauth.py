@@ -4,6 +4,7 @@ import flask
 from flask_seasurf import SeaSurf
 import json
 import os
+
 from .auth import Auth
 
 
@@ -78,7 +79,7 @@ class OAuthBase(Auth):
 
         access_cookie = flask.request.cookies[self.AUTH_COOKIE_NAME]
 
-        # If access was previously declined,
+        # If there access was previously declined,
         # check access again in case it has changed
         if access_cookie != self._access_codes['access_granted']:
             return self.check_view_access(oauth_token)
@@ -96,7 +97,17 @@ class OAuthBase(Auth):
             if not self.is_authorized():
                 return flask.Response(status=403)
 
-            response = f(*args, **kwargs)
+            try:
+                response = f(*args, **kwargs)
+            except Exception as err:
+                # Clear the cookie if auth fail
+                if getattr(err, 'status_code', None) in [401, 403]:
+                    response = flask.Response(status=403)
+                    self.clear_cookies(response)
+                    return response
+                else:
+                    raise
+
             # TODO - should set secure in this cookie, not exposed in flask
             # TODO - should set path or domain
             try:
@@ -154,6 +165,20 @@ class OAuthBase(Auth):
             max_age=max_age,
             secure=True if 'https:' in self._app_url else False,
             path=self._app.config['routes_pathname_prefix']
+        )
+
+    def clear_cookies(self, response):
+        response.set_cookie(
+            self.TOKEN_COOKIE_NAME,
+            value='',
+            expires=0,
+            secure=True if 'https:' in self._app_url else False
+        )
+        response.set_cookie(
+            self.AUTH_COOKIE_NAME,
+            value='',
+            expires=0,
+            secure=True if 'https:' in self._app_url else False
         )
 
     def check_view_access(self, oauth_token):
