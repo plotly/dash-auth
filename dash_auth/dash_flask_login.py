@@ -30,7 +30,7 @@ class DashFlaskLogin(Dash):
                 name = 'dash'
             self.server = Flask(name, static_folder=static_folder)
 
-        def add_url(name, view_func, methods=['GET'], authentication_required):
+        def add_url(name, view_func, methods=['GET'], authentication_required=False):
             
             if authentication_required:
                 view_func = login_required(view_func)
