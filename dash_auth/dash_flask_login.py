@@ -30,7 +30,14 @@ class DashFlaskLogin(Dash):
                 name = 'dash'
             self.server = Flask(name, static_folder=static_folder)
 
-        def add_url(name, view_func, methods=['GET']):
+        def add_url(name, view_func, methods=['GET'], authentication_required):
+            
+            if authentication_required:
+                view_func = login_required(view_func)
+
+            else:
+                view_func = view_func
+            
             self.server.add_url_rule(
                 name,
                 view_func=view_func,
@@ -40,19 +47,25 @@ class DashFlaskLogin(Dash):
 
         add_url(
             '{}_dash-layout'.format(self.config['routes_pathname_prefix']),
-            self.serve_layout if not authentication_required else login_required(self.serve_layout))
+            self.serve_layout,
+            authentication_required = authentication_required
+        )
 
         add_url(
             '{}_dash-dependencies'.format(
                 self.config['routes_pathname_prefix']),
-            self.dependencies if not authentication_required else login_required(self.dependencies))
+            self.dependencies,
+            authentication_required = authentication_required
+        )
 
         add_url(
             '{}_dash-update-component'.format(
-                self.config['routes_pathname_prefix']
-            ),
-            self.dispatch if not authentication_required else login_required(self.dispatch),
-            ['POST'])
+                                            self.config['routes_pathname_prefix']
+                                       ),
+            self.dispatch,
+            ['POST'],
+            authentication_required = authentication_required,
+        )
 
         add_url((
             '{}_dash-component-suites'
@@ -60,20 +73,28 @@ class DashFlaskLogin(Dash):
             '/<path:path_in_package_dist>').format(
                 self.config['routes_pathname_prefix']
             ),
-            self.serve_component_suites if not authentication_required else login_required(self.serve_component_suites))
+            self.serve_component_suites,
+            authentication_required = authentication_required
+        )
 
         add_url(
             '{}_dash-routes'.format(self.config['routes_pathname_prefix']),
-            self.serve_routes if not authentication_required else login_required(self.serve_routes))
+            self.serve_routes,
+            authentication_required = authentication_required
+        )
 
         add_url(
             self.config['routes_pathname_prefix'],
-            self.index if not authentication_required else login_required(self.index))
+            self.index,
+            authentication_required = authentication_required
+        )
 
         # catch-all for front-end routes
         add_url(
             '{}<path:path>'.format(self.config['routes_pathname_prefix']),
-            self.index if not authentication_required else login_required(self.index))
+            self.index,
+            authentication_required = authentication_required
+        )
 
         self.server.before_first_request(self._setup_server)
 
