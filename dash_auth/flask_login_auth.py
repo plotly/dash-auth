@@ -1,10 +1,17 @@
 import os
+import jinja2
 from dash import Dash
 from flask import Flask, request, render_template, flash
 try:
     from flask_login import login_required, LoginManager, UserMixin
 except ImportError:
     print('Please run "pip install flask_login" to proceed')
+
+TEMPLATE_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
+
+default_loader = jinja2.ChoiceLoader([
+    jinja2.FileSystemLoader([TEMPLATE_FOLDER])
+])
 
 
 class FlaskLoginAuth():
@@ -25,6 +32,7 @@ class FlaskLoginAuth():
         self.__protect_views()
 
         if use_default_views:
+            self.initial_app.server.jinja_loader = default_loader
             self.serve_default_views()
         else:pass
 
