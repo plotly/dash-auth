@@ -1,6 +1,6 @@
 import os
 from dash import Dash
-from flask import Flask
+from flask import Flask, request, render_template, flash
 try:
     from flask_login import login_required, LoginManager, UserMixin
 except ImportError:
@@ -53,8 +53,8 @@ class FlaskLoginAuth():
 
         self.initial_app.server.add_url_rule(
             '/login',
-            self.__default_login_view,
-            ['GET', 'POST']
+            view_func=self.__default_login_view,
+            methods=['GET', 'POST']
         )
 
     def __default_login_view(self):
