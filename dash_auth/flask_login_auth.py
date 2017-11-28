@@ -1,7 +1,7 @@
 import os
 import jinja2
 from dash import Dash
-from flask import Flask, request, render_template, flash, Response
+from flask import Flask, request, render_template, flash
 try:
     from flask_login import login_required, LoginManager, UserMixin
 except ImportError:
@@ -66,7 +66,26 @@ class FlaskLoginAuth():
         )
 
     def __default_login_view(self):
-        Response('This is a test.')
+        if request.method == 'POST':
+            username = request.form['username'].lower()
+            password = request.form['password']
+            password = hash_str(password)
+
+            user = DefaultUser(username)
+            if user.name:
+                if password == user.password:
+
+                    login_user(user)
+                    session['username'] = user.name
+                    return redirect('/app1')
+                else:
+                    flash('Login Failed!  Please try again.')
+                    return abort(401)
+            else:
+                flash('Login Failed!  Please try again.')
+                return abort(401)
+        else:
+            return render_template('default_login.html')
 
 class DefaultUser(UserMixin):
 
