@@ -1,18 +1,14 @@
 import os
 import jinja2
+import hashlib
 from dash import Dash
-from flask import Flask, request, render_template, flash
+from flask import Flask, request, render_template, flash, abort, session, redirect
 try:
-    from flask_login import login_required, LoginManager, UserMixin
+    from flask_login import login_required, LoginManager, UserMixin, login_user, logout_user, current_user
 except ImportError:
     print('Please run "pip install flask_login" to proceed')
 
 TEMPLATE_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
-
-default_loader = jinja2.ChoiceLoader([
-    jinja2.FileSystemLoader([TEMPLATE_FOLDER])
-])
-
 
 class FlaskLoginAuth():
     def __init__(self, app, use_default_views=False, users=None):
@@ -32,8 +28,25 @@ class FlaskLoginAuth():
         self.__protect_views()
 
         if use_default_views:
+            # Setup the LoginManager for the server
+            self.login_manager = LoginManager()
+            self.login_manager.init_app(self.initial_app.server)
+            self.login_manager.login_view = "/login"
+
+            # callback to reload the user object
+            @self.login_manager.user_loader
+            def load_user(userid):
+                return DefaultUser(userid)
+
+            # Add a FileSystemLoader for the default templates
+            default_loader = jinja2.ChoiceLoader([
+                self.initial_app.server.jinja_loader,
+                jinja2.FileSystemLoader([TEMPLATE_FOLDER])
+            ])
+
             self.initial_app.server.jinja_loader = default_loader
             self.serve_default_views()
+
         else:pass
 
     def add_app(self, app):
@@ -65,6 +78,12 @@ class FlaskLoginAuth():
             methods=['GET', 'POST']
         )
 
+        self.initial_app.server.add_url_rule(
+            '/logout',
+            view_func=self.__default_logout_view,
+            methods=['GET', 'POST']
+        )
+
     def __default_login_view(self):
         if request.method == 'POST':
             username = request.form['username'].lower()
@@ -73,7 +92,7 @@ class FlaskLoginAuth():
 
             user = DefaultUser(username)
             if user.name:
-                if password == user.password:
+                if password == hash_str('password'):
 
                     login_user(user)
                     session['username'] = user.name
@@ -87,12 +106,25 @@ class FlaskLoginAuth():
         else:
             return render_template('default_login.html')
 
+    @login_required
+    def __default_logout_view(self):
+        logout_user()
+        flash('You have logged out!')
+        return render_template('default_logout.html')
+
 class DefaultUser(UserMixin):
 
     def __init__(self, id):
         self.id = id
         self.name = "user" + str(id)
-        self.password = self.name + "_secret"
+        self.password = hash_str(self.name + "_secret")
 
     def __repr__(self):
         return "%d/%s/%s" % (self.id, self.name, self.password)
+
+
+def hash_str(string):
+    hasher = hashlib.md5()
+    hasher.update(string.encode('utf-8'))
+    hashed = hasher.hexdigest()
+    return hashed

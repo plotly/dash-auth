@@ -6,31 +6,26 @@
 
 {% block body %}
 <body>
-  <div id=login-div>   
-
-
-
+  <div id=login-div>
+		<h1>Please Log in to view the application</h1> 
+		<div>
+		{% with messages = get_flashed_messages() %}
+			{% if messages %}
+				{% for message in messages %}
+					{% if 'success' in message %}
+						<h2 id=pwd-change-success>{{ message }}</h2>
+					{% else %}
+						<h2 id=wrong-password>{{ message }}</h2>
+					{% endif %}
+				{% endfor %}
+			{% endif %}
+		{% endwith %}
+		</div>
   <form method=post>
-    
-	<div>
-	{% with messages = get_flashed_messages() %}
-		{% if messages %}
-			{% for message in messages %}
-				{% if 'success' in message %}
-					<h2 id=pwd-change-success>{{ message }}</h2>
-				{% else %}
-					<h2 id=wrong-password>{{ message }}</h2>
-				{% endif %}
-			{% endfor %}
-		{% endif %}
-	{% endwith %}
-	</div>
     <div id=username>Username: </div>
-    <input id=uname-box type=text name=username value="{{
-          request.form.username }}">
+    <input id=uname-box type=text name=username value="{{request.form.username }}">
     <div> Password:</div>
     <input id=pwd-box type=password name=password>
-    
     <p><input id=login-button type=submit value=Login href="/cataract">
   </form>
   </div>
