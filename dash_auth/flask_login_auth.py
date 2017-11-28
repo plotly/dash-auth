@@ -6,8 +6,6 @@ try:
 except ImportError:
     print('Please run "pip install flask_login" to proceed')
 
-TEMPLATE_FOLDER = '../templates'
-
 
 class FlaskLoginAuth():
     def __init__(self, app, use_default_views=False, users=None):
@@ -28,9 +26,6 @@ class FlaskLoginAuth():
 
         if use_default_views:
             self.serve_default_views()
-            self.server.config.update(
-                TEMPLATE_FOLDER=TEMPLATE_FOLDER
-            )
         else:pass
 
     def add_app(self, app):
