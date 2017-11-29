@@ -7,7 +7,7 @@
 {% block body %}
 <body>
   <div id=login-div>
-		<h1>Please Log in to view the application</h1> 
+		<h1>Please Log in to view the application</h1>
 		<div>
 		{% with messages = get_flashed_messages() %}
 			{% if messages %}
@@ -26,7 +26,7 @@
     <input id=uname-box type=text name=username value="{{request.form.username }}">
     <div> Password:</div>
     <input id=pwd-box type=password name=password>
-    <p><input id=login-button type=submit value=Login href="/cataract">
+    <p><input id=login-button type=submit value=Login href="/app1">
   </form>
   </div>
 </body>
