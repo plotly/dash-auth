@@ -22,13 +22,17 @@ login_manager = LoginManager()
 login_manager.init_app(server)
 login_manager.login_view = "/login"
 
-# callback to reload the user object        
+# callback to reload the user object
 @login_manager.user_loader
 def load_user(userid):
     return User(userid)
 
 # Create our initial Dash App
 app = Dash(name='app1', url_base_pathname='/app1', server=server)
+
+app.css.append_css({
+    'external_url': 'https://codepen.io/chriddyp/pen/bWLwgP.css',
+})
 
 app.layout = html.Div(children=[
     html.H1(children='Hello Dash'),
@@ -55,11 +59,15 @@ app.layout = html.Div(children=[
 # Create Login Dash App with a login form
 login_app = Dash(name='login-app', url_base_pathname='/login', server=server)
 
+login_app.css.append_css({
+    'external_url': 'https://codepen.io/chriddyp/pen/bWLwgP.css',
+})
+
 login_app.layout = html.Div([
     html.H1('Please log in to continue.', id='h1'),
     html.Form(
         method='Post',
-        children=[      
+        children=[
             dcc.Input(
                 placeholder='Enter your username',
                 type='text',
@@ -79,32 +87,35 @@ login_app.layout = html.Div([
 
         ]
     ),
-    html.A(html.Button('app1'), href='/app1', style={'display':'none'}, id='hidden-link')        
+    html.A(html.Button('app1'), href='/app1', style={'display':'none'}, id='hidden-link')
 ]
 )
 
 # This callback to the login app should encapsulate the login functionality
 # Set the output to a non-visible location
 @login_app.callback(
-            Output('h1', 'n_clicks'), 
+            Output('h1', 'n_clicks'),
             [Input('submit-button', 'n_clicks')],
             [State('uname-box', 'value'),
              State('pwd-box', 'value')]
         )
 def login(n_clicks, uname, pwd):
-    
+
     if uname == 'user' and pwd == 'password':
         login_user(load_user(users[0].name))
 
-    else:pass        
-        
-  
+    else:pass
+
 # Create logout Dash App
 logout_app = Dash(name='logout-app', url_base_pathname='/logout', server=server)
 
+logout_app.css.append_css({
+    'external_url': 'https://codepen.io/chriddyp/pen/bWLwgP.css',
+})
+
 logout_app.layout = html.Div([
     html.H1('You have successfully logged out!', id='h1'),
-    
+
     # Since we've logged out, this will force a redirect to the login page with a next page of /app1
     html.A(html.Button('Log Back In'), href='/app1', id='login-button'),
 ]
@@ -131,7 +142,7 @@ class User(UserMixin):
         self.id = id
         self.name = "user" + str(id)
         self.password = self.name + "_secret"
-        
+
     def __repr__(self):
         return "%d/%s/%s" % (self.id, self.name, self.password)
 
