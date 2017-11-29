@@ -64,6 +64,7 @@ class FlaskLoginAuth():
 
         # Check if users is a list, if so, check if it's a list of string or list of User objects
         elif isinstance(users, list):
+            warnings.warn('''By simply supplying a list of authorized users, your users will be unable to change their passwords.''')
             # If all objects are strings, create a UserMap from the strings
             if all(isinstance(users[i], tuple) for i in range(len(users))):
                 self.users = UserMap([DefaultUser(users[i][0], users[i][1]) for i in range(len(users))])
