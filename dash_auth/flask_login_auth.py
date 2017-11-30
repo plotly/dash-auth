@@ -17,16 +17,22 @@ except ImportError:
 TEMPLATE_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 
 class FlaskLoginAuth():
-    def __init__(self, app, use_default_views=False, users=None):
+    def __init__(self, app, use_default_views=False, users=None, auto_hash=True, hash_function=None):
         """
         app: A Dash object to be login-protected
-        use_default_views: If set to True, default views will be set for login, logout, and user management
+        use_default_views: If set to True, default views will be set for login and logout
         users: Should be one of -
-                A) A valid SQLAlchemy connection string or SQLAlchemy/sqlite compatible Connection object for a database containing a USERS table
-                   with a list of application users.
-                B) A list of tuples of the format (<USER_NAME>, <PASSWORD>) where each element is a unicode string. This will be used to create a list of DefaultUser objects.
-                C) A list of objects which subclass flask_login.UserMixin
-                D) None - in which case the application will have only one user with USER_NAME = 'admin' and PASSWORD = 'admin'.
+            #TODO: add SQLAlchemy compatibility
+            A) A valid SQLAlchemy connection string or SQLAlchemy/sqlite compatible Connection object for a database containing a USERS table
+               with a list of application users.  The USERS table must contain two string columns: USERNAME and PASSWORD
+            B) A list of tuples of the format (<USERNAME>, <PASSWORD>) where each element is a unicode string. This will be used to create a list of DefaultUser objects.
+            C) A list of objects which subclass flask_login.UserMixin
+            D) None - in which case the application will have only one user with USERNAME = 'admin' and PASSWORD = 'admin'.
+        auto_hash: boolean - True if you would like FlaskLoginAuth to hash passwords for you, False otherwise.  If False, and your passwords
+        have been hashed previously, you should provide the same hash function that was used to hash the passwords in the hash_function parameter.
+        If your passwords are not hashed and auto_hash is set to false, you must pass None to the hash_function.
+        hash_function: callable - A hashing function to be used in the login view.  If auto_hash = True, you can pass a custom hash function
+        to be used in user creation and login.
         """
         self.initial_app = app
         self.server = self.initial_app.server
@@ -55,35 +61,61 @@ class FlaskLoginAuth():
             self.server.jinja_loader = default_loader
             self.serve_default_views()
 
-        else:pass
+            self.auto_hash = auto_hash
 
-        # Check if users was provided, if not set a single admin user
-        if not users:
-            warnings.warn('''No connection string or list of users supplied, defaulting to single user environment with USER_NAME: admin and PASSWORD: admin.\nYou will be unable to change this password or add other users.''')
-            self.users = UserMap([DefaultUser('admin', 'admin')])
-
-        # Check if users is a list, if so, check if it's a list of string or list of User objects
-        elif isinstance(users, list):
-            warnings.warn('''By simply supplying a list of authorized users, your users will be unable to change their passwords.''')
-            # If all objects are strings, create a UserMap from the strings
-            if all(isinstance(users[i], tuple) for i in range(len(users))):
-                self.users = UserMap([DefaultUser(users[i][0], users[i][1]) for i in range(len(users))])
-
-            # If all objects are a subclass of UserMixin, create a UserMap of the objects
-            elif all(issubclass(type(users[i]), UserMixin) for i in range(len(users))):
-                self.users = UserMap(users)
+            # If they have elected to not have FlaskLoginAuth automatically hash passwords
+            # set the hash_function to the function provided or to simply return x
+            if not self.auto_hash:
+                if hash_function:
+                    self.hash_function = hash_function
+                else:
+                    def return_val(x):return x
+                    self.hash_function = return_val
 
             else:
-                raise TypeError("All objects in the list must be a tuple of form (USER_NAME, PASSWORD) or a subclass of flask_login.UserMixin")
+                if hash_function:
+                    self.hash_function = hash_function
+                else:
+                    self.hash_function = hash_str
 
-        elif isinstance(users, str) or isinstance(users, sqlite3.Connection):
-            pass
-        else:
-            raise TypeError('''
-The "users" parameter provided in __init__ is not a valid type.
-"users" must be one of %s, %s, %s, or %s.  Provided type was %s''' % (type('s'), type([]), sqlite3.Connection, type(None), type(users))
-                    )
+            # Check if users was provided, if not set a single admin user
+            if not users:
+                warnings.warn('''No connection string or list of users supplied, defaulting to single user environment with USER_NAME: admin and PASSWORD: admin.\nYou will be unable to change this password or add other users.''')
+                self.users = UserMap([DefaultUser('admin', 'admin', self.auto_hash, self.hash_function)])
 
+            # Check if users is a list, if so, check if it's a list of string or list of User objects
+            elif isinstance(users, list):
+
+                warnings.warn('''By simply supplying a list of authorized users, your users will be unable to change their passwords.''')
+                # If all objects are strings, create a UserMap from the strings
+                if all(isinstance(users[i], tuple) for i in range(len(users))):
+                    self.users = UserMap([DefaultUser(users[i][0], users[i][1], self.auto_hash, self.hash_function) for i in range(len(users))])
+
+                # If all objects are a subclass of UserMixin, create a UserMap of the objects
+                elif all(issubclass(type(users[i]), UserMixin) for i in range(len(users))):
+                    if self.auto_hash:
+                        warnings.warn('''Supplying a list of UserMixin subclass objects does not allow automated password hashing.  Please ensure passwords are safely stored''')
+                    self.users = UserMap(users)
+
+                else:
+                    raise TypeError("All objects in the list must be a tuple of form (USER_NAME, PASSWORD) or a subclass of flask_login.UserMixin")
+
+            elif isinstance(users, str):
+                pass
+
+            elif isinstance(users, sqlite3.Connection):
+                cursor = users.execute("SELECT * FROM USERS")
+                result_set = cursor.fetchall()
+
+                self.users = UserMap([DefaultUser(result_set[i][0], result_set[i][1], self.auto_hash, self.hash_function) for i in range(len(result_set))])
+
+            else:
+                raise TypeError('''
+    The "users" parameter provided in __init__ is not a valid type.
+    "users" must be one of %s, %s, %s, or %s.  Provided type was %s''' % (type('s'), type([]), sqlite3.Connection, type(None), type(users))
+                        )
+
+        else:pass
 
     def add_app(self, app):
         """
@@ -124,9 +156,11 @@ The "users" parameter provided in __init__ is not a valid type.
         if request.method == 'POST':
             username = request.form['username'].lower()
             password = request.form['password']
-            password = hash_str(password)
+            password = self.hash_function(password)
 
             user = self.users.get_user(username)
+            print(password)
+            print(user.password)
 
             if user:
                 if password == user.password:
@@ -149,13 +183,19 @@ The "users" parameter provided in __init__ is not a valid type.
 
 class DefaultUser(UserMixin):
 
-    def __init__(self, name=None, password=None):
-        self.id = name
-        self.name = name
-        if password:
-            self.password = hash_str(password)
+    def __init__(self, name, password=None, auto_hash=True, hash_function=None):
+        self.id = name.lower()
+        self.username = name.lower()
+        if auto_hash:
+            if password:
+                self.password = hash_function(password)
+            else:
+                self.password = hash_function('password')
         else:
-            self.password = hash_str('password')
+            if password:
+                self.password = password
+            else:
+                self.password = 'password'
 
     def __eq__(self, other):
         return self.id == other.id
@@ -176,7 +216,6 @@ class UserMap():
             return self.user_map[id]
         except:
             return None
-
 
 def hash_str(string):
     hasher = hashlib.md5()

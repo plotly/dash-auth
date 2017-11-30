@@ -5,6 +5,15 @@ import dash_html_components as html
 from dash.dependencies import Input, Output, State
 from dash import Dash
 from dash_auth import FlaskLoginAuth
+import sqlite3
+import hashlib
+
+def hash_str(string):
+    hasher = hashlib.md5()
+    hasher.update(string.encode('utf-8'))
+    hashed = hasher.hexdigest()
+
+    return hashed
 
 # Setup the Flask server
 server = Flask(__name__)
@@ -17,9 +26,13 @@ server.config.update(
 # Create our initial Dash App
 app = Dash(name='app1', url_base_pathname='/app1', server=server)
 
-users = [('steve', 'password'), ('sally', 'password')]
+conn = sqlite3.connect('H:\\documents\\dashboards\\cataract_dash - flask-login-test\\data\\app_data.db')
 
-auth = FlaskLoginAuth(app, use_default_views=True, users=users)
+#auth = FlaskLoginAuth(app, use_default_views=True, users=conn, auto_hash=False, hash_function=hash_str)
+
+users = [('Steve', 'password'), ('sally', 'password')]
+
+auth = FlaskLoginAuth(app, use_default_views=True, users=users, auto_hash=False, hash_function=None)
 
 app.layout = html.Div(children=[
     html.H1(children='Hello Dash'),
