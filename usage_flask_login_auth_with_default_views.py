@@ -7,6 +7,13 @@ from dash import Dash
 from dash_auth import FlaskLoginAuth
 import sqlite3
 import hashlib
+from flask_login import UserMixin
+
+class User(UserMixin):
+
+    def __init__(self, id):
+        self.id = id.lower()
+        self.password = 'password'
 
 def hash_str(string):
     hasher = hashlib.md5()
@@ -14,6 +21,9 @@ def hash_str(string):
     hashed = hasher.hexdigest()
 
     return hashed
+
+def hasher(string):
+    return string
 
 # Setup the Flask server
 server = Flask(__name__)
@@ -30,9 +40,9 @@ conn = sqlite3.connect('H:\\documents\\dashboards\\cataract_dash - flask-login-t
 
 #auth = FlaskLoginAuth(app, use_default_views=True, users=conn, auto_hash=False, hash_function=hash_str)
 
-users = [('Steve', 'password'), ('sally', 'password')]
+users = [User('Steve'), User('sally')]
 
-auth = FlaskLoginAuth(app, use_default_views=True, users=users, auto_hash=False, hash_function=None)
+auth = FlaskLoginAuth(app, use_default_views=True, users=None, auto_hash=True, hash_function=hasher)
 
 app.layout = html.Div(children=[
     html.H1(children='Hello Dash'),

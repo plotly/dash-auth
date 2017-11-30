@@ -26,7 +26,7 @@ class FlaskLoginAuth():
             A) A valid SQLAlchemy connection string or SQLAlchemy/sqlite compatible Connection object for a database containing a USERS table
                with a list of application users.  The USERS table must contain two string columns: USERNAME and PASSWORD
             B) A list of tuples of the format (<USERNAME>, <PASSWORD>) where each element is a unicode string. This will be used to create a list of DefaultUser objects.
-            C) A list of objects which subclass flask_login.UserMixin
+            C) A list of objects which subclass flask_login.UserMixin, these objects must have an id and password.
             D) None - in which case the application will have only one user with USERNAME = 'admin' and PASSWORD = 'admin'.
         auto_hash: boolean - True if you would like FlaskLoginAuth to hash passwords for you, False otherwise.  If False, and your passwords
         have been hashed previously, you should provide the same hash function that was used to hash the passwords in the hash_function parameter.
@@ -96,6 +96,9 @@ class FlaskLoginAuth():
                     if self.auto_hash:
                         warnings.warn('''Supplying a list of UserMixin subclass objects does not allow automated password hashing.  Please ensure passwords are safely stored''')
                     self.users = UserMap(users)
+                    if auto_hash:
+                        for user in self.users.user_map.values():
+                            user.password = self.hash_function(user.password)
 
                 else:
                     raise TypeError("All objects in the list must be a tuple of form (USER_NAME, PASSWORD) or a subclass of flask_login.UserMixin")
@@ -160,9 +163,10 @@ class FlaskLoginAuth():
 
             user = self.users.get_user(username)
             print(password)
-            print(user.password)
+
 
             if user:
+                print(user.password)
                 if password == user.password:
                     login_user(user)
                     return redirect('/app1')
