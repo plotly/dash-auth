@@ -82,7 +82,7 @@ class FlaskLoginAuthTest(unittest.TestCase):
 
         auth = FlaskLoginAuth(self.app, use_default_views=True, auto_hash=False, hash_function=self.custom_hash)
 
-        self.login_logout('admin', self.custom_hash('admin'))
+        self.login_logout('admin', 'admin')
 
 if __name__ == "__main__":
     unittest.main()

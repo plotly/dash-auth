@@ -82,7 +82,7 @@ class FlaskLoginAuth():
             # Check if users was provided, if not set a single admin user
             if not users:
                 warnings.warn('''No connection string or list of users supplied, defaulting to single user environment with USER_NAME: admin and PASSWORD: admin.\nYou will be unable to change this password or add other users.''')
-                self.users = UserMap([DefaultUser('admin', 'admin', False, None)])
+                self.users = UserMap([DefaultUser('admin', 'admin', True, self.hash_function)])
 
             # Check if users is a list, if so, check if it's a list of string or list of User objects
             elif isinstance(users, list):
