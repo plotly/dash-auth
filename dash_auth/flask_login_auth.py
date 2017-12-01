@@ -42,6 +42,7 @@ class FlaskLoginAuth():
         self.__protect_views()
 
         if use_default_views:
+
             # Setup the LoginManager for the server
             self.login_manager = LoginManager()
             self.login_manager.init_app(self.server)
@@ -81,7 +82,7 @@ class FlaskLoginAuth():
             # Check if users was provided, if not set a single admin user
             if not users:
                 warnings.warn('''No connection string or list of users supplied, defaulting to single user environment with USER_NAME: admin and PASSWORD: admin.\nYou will be unable to change this password or add other users.''')
-                self.users = UserMap([DefaultUser('admin', 'admin', self.auto_hash, self.hash_function)])
+                self.users = UserMap([DefaultUser('admin', 'admin', False, None)])
 
             # Check if users is a list, if so, check if it's a list of string or list of User objects
             elif isinstance(users, list):
@@ -162,11 +163,8 @@ class FlaskLoginAuth():
             password = self.hash_function(password)
 
             user = self.users.get_user(username)
-            print(password)
-
 
             if user:
-                print(user.password)
                 if password == user.password:
                     login_user(user)
                     return redirect('/app1')
