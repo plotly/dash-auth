@@ -39,11 +39,11 @@ app = Dash(name='app1', url_base_pathname='/app1', server=server)
 
 conn = sqlite3.connect('H:\\documents\\dashboards\\cataract_dash - flask-login-test\\data\\app_data.db')
 
-auth = FlaskLoginAuth(app, use_default_views=True, users=conn, auto_hash=False, hash_function=hash_str)
+#auth = FlaskLoginAuth(app, use_default_views=True, users=conn, auto_hash=False, hash_function=hash_str)
 
 users = [User('Steve'), User('sally')]
 
-#auth = FlaskLoginAuth(app, use_default_views=True, users=None, auto_hash=True, hash_function=hasher)
+auth = FlaskLoginAuth(app, use_default_views=True, users=users, auto_hash=True, hash_function=hasher)
 
 app.layout = html.Div(children=[
     html.H1(children='Hello Dash'),
