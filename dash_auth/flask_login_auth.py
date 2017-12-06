@@ -109,7 +109,13 @@ class FlaskLoginAuth():
                     raise TypeError("All objects in the list must be a tuple of form (USER_NAME, PASSWORD) or a subclass of flask_login.UserMixin")
 
             elif isinstance(users, str):
-                pass
+                self.sqlite_connection_string = users
+                conn = sqlite3.connect(self.sqlite_connection_string)
+
+                cursor = conn.execute("SELECT * FROM USERS")
+                result_set = cursor.fetchall()
+
+                self.users = UserMap([DefaultUser(result_set[i][0], result_set[i][1], self.auto_hash, self.hash_function) for i in range(len(result_set))])
 
             elif isinstance(users, sqlite3.Connection):
                 cursor = users.execute("SELECT * FROM USERS")
@@ -171,7 +177,7 @@ class FlaskLoginAuth():
             if user:
                 if password == user.password:
                     login_user(user)
-#TODO: make this more logical, maybe this should redirect to an index view?                    
+#TODO: make this more logical, maybe this should redirect to an index view?
                     return redirect(request.args.get('next') or '/login')
                 else:
                     flash('Login Failed!  Please try again.')
