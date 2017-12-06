@@ -48,6 +48,10 @@ class FlaskLoginAuth():
             self.login_manager.init_app(self.server)
             self.login_manager.login_view = "/login"
 
+            self.server.config.update(
+                SECRET_KEY = os.urandom(12),
+            )
+
             # callback to reload the user object
             @self.login_manager.user_loader
             def load_user(userid):
