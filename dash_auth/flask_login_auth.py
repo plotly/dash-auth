@@ -171,7 +171,8 @@ class FlaskLoginAuth():
             if user:
                 if password == user.password:
                     login_user(user)
-                    return redirect(request.args.get('next'))
+#TODO: make this more logical, maybe this should redirect to an index view?                    
+                    return redirect(request.args.get('next') or '/login')
                 else:
                     flash('Login Failed!  Please try again.')
                     return render_template('default_login.html')
