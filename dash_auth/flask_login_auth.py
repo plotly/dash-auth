@@ -171,7 +171,7 @@ class FlaskLoginAuth():
             if user:
                 if password == user.password:
                     login_user(user)
-                    return redirect('/app1')
+                    return redirect(request.args.get('next'))
                 else:
                     flash('Login Failed!  Please try again.')
                     return render_template('default_login.html')
