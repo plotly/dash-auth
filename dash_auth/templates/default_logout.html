@@ -1,0 +1,24 @@
+<head>
+	<link rel="stylesheet" href="https://codepen.io/chriddyp/pen/bWLwgP.css">
+	<title>Dash</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+</head>
+
+{% block body %}
+<body>
+  <div id=login-div>
+		<div>
+		{% with messages = get_flashed_messages() %}
+			{% if messages %}
+				{% for message in messages %}
+					<h2 id=message>{{ message }}</h2>
+				{% endfor %}
+			{% endif %}
+		{% endwith %}
+		</div>
+		<form action="/login">
+    	<input id=login-button type=submit value="Log Back In">
+		</form>
+  </div>
+</body>
+{% endblock %}

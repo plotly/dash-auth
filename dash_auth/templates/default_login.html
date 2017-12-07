@@ -1,0 +1,33 @@
+<head>
+	<link rel="stylesheet" href="https://codepen.io/chriddyp/pen/bWLwgP.css">
+	<title>Dash</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+</head>
+
+{% block body %}
+<body>
+  <div id=login-div>
+		<h1>Please Log in to view the application</h1>
+		<div>
+		{% with messages = get_flashed_messages() %}
+			{% if messages %}
+				{% for message in messages %}
+					{% if 'success' in message %}
+						<h2 id=pwd-change-success>{{ message }}</h2>
+					{% else %}
+						<h2 id=wrong-password>{{ message }}</h2>
+					{% endif %}
+				{% endfor %}
+			{% endif %}
+		{% endwith %}
+		</div>
+  <form method=post>
+    <div id=username>Username: </div>
+    <input id=uname-box type=text name=username value="{{request.form.username }}">
+    <div> Password:</div>
+    <input id=pwd-box type=password name=password>
+    <p><input id=login-button type=submit value=Login>
+  </form>
+  </div>
+</body>
+{% endblock %}
