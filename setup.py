@@ -1,11 +1,13 @@
 from setuptools import setup
 
 import io
-exec(open('dash_auth/version.py').read())
+
+main_ns = {}
+exec(open('dash_auth/version.py').read(), main_ns)
 
 setup(
     name='dash_auth',
-    version=__version__,  # noqa: F821
+    version=main_ns['__version__'],
     author='Christopher Parmer',
     author_email='chris@plot.ly',
     packages=['dash_auth'],
