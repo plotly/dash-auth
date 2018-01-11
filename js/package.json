@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "babel-loader": "^7.0.0",
+    "ramda": "^0.25.0",
     "react": "^15.5.4",
     "react-dom": "^15.5.4"
   },
