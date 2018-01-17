@@ -23,7 +23,7 @@ class BasicAuth(Auth):
         username_password = base64.b64decode(header.split('Basic ')[1])
         username_password_utf8 = username_password.decode('utf-8')
         username, password = username_password_utf8.split(':')
-        if self._hash_type in VALID_HASH_TYPES:
+        if self._hash_type in self.VALID_HASH_TYPES:
             username = hashlib.new(self._hash_type, username.encode()).hexdigest()
             password = hashlib.new(self._hash_type, password.encode()).hexdigest()
         for pair in self._username_password_list:
