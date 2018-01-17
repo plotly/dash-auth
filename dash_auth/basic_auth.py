@@ -1,7 +1,10 @@
 from .auth import Auth
 import base64
 import flask
+<<<<<<< HEAD
 import hashlib
+=======
+>>>>>>> parent of 3666ba3... Added HashAuth class with ability to match user/pass with sha hashed environment variables.
 
 
 class BasicAuth(Auth):
@@ -11,6 +14,7 @@ class BasicAuth(Auth):
         'md5','sha3_224','sha3_256','sha3_512','shake_128','shake_256'
     ]
 
+<<<<<<< HEAD
     def __init__(self, app, username_password_list, hash_type=None):
         Auth.__init__(self, app)
         self._username_password_list = username_password_list
@@ -30,6 +34,8 @@ class BasicAuth(Auth):
             if pair[0] == username and pair[1] == password:
                 return True
 
+=======
+>>>>>>> parent of 3666ba3... Added HashAuth class with ability to match user/pass with sha hashed environment variables.
         return False
 
     def login_request(self):
@@ -45,4 +51,8 @@ class BasicAuth(Auth):
 
             response = f(*args, **kwargs)
             return response
+<<<<<<< HEAD
         return wrap
+=======
+        return wrap
+>>>>>>> parent of 3666ba3... Added HashAuth class with ability to match user/pass with sha hashed environment variables.
