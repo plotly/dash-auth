@@ -38,7 +38,7 @@ class TestRequestsCall(unittest.TestCase):
     @mock.patch(
         'requests.get',
         side_effect=create_mock_response())
-    def test_google_query(self, mock_get):
+    def test_plotly_query(self, mock_get):
         result = plotly_query()
         self.assertEqual(result.json(), JSON_DATA)
         self.failUnless(result.raise_for_status.called)
