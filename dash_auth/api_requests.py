@@ -117,14 +117,14 @@ def _create_method(method_name):
 
         request_method = getattr(requests, method_name)
 
-        valid_4xx_status_codes = [404]
+        VALID_4XX_STATUS_CODES = [404]
 
         def check_request_before_returning(url, **kwargs):
             resp = request_method(url, **kwargs)
 
             # 404's are the only accepted "error" code
             # as we use this to check if a file exists or not
-            if resp.status_code not in valid_4xx_status_codes:
+            if resp.status_code not in VALID_4XX_STATUS_CODES:
                 resp.raise_for_status()
             return resp
 
