@@ -2,10 +2,21 @@ import mock
 import os
 import requests
 from requests.exceptions import HTTPError
+import sys
 import unittest
 
 import dash_auth.api_requests as api_requests
-from utils import captured_output
+
+if (sys.version_info > (3, 0)):
+    from io import StringIO as IO
+else:
+    from io import BytesIO as IO
+
+try:
+    from contextlib import redirect_stdout as captured_output
+except ImportError:
+    from .utils import captured_output
+
 
 def plotly_query():
     """
@@ -15,7 +26,9 @@ def plotly_query():
     resp.raise_for_status()
     return resp
 
+
 JSON_DATA = {'username': 'chris'}
+
 
 def create_mock_response(
         status=200,
@@ -82,32 +95,35 @@ class TestRequestsCall(unittest.TestCase):
                 'Caused by SSLError(SSLError("bad handshake: Error([(',
                 'SSL routines', 'tls_process_server_certificate',
                 'certificate verify failed',
-                ("gettaddrinfo: [(2, 2, 17, '', ('104.154.89.105', 443)), "
-                 "(2, 1, 6, '', ('104.154.89.105', 443))]")
+                'gettaddrinfo: ',
+                "'104.154.89.105', 443"
             ]],
             ['https://self-signed.badssl.com', [
                 'Caused by SSLError(SSLError("bad handshake: Error([(',
                 'SSL routines', 'tls_process_server_certificate',
                 'certificate verify failed',
-                ("gettaddrinfo: [(2, 2, 17, '', ('104.154.89.105', 443)), "
-                 "(2, 1, 6, '', ('104.154.89.105', 443))]")
+                'gettaddrinfo',
+                "'104.154.89.105', 443"
             ]]
         ]
         for test_case in test_cases:
             url, expected_messages = test_case
             os.environ['plotly_api_domain'] = url
-            with captured_output() as (out, err):
+            f = IO()
+            with captured_output(f) as out:
                 try:
                     api_requests.post('/dash-apps')
-                except:
+                except Exception:
                     pass
-
+            # import ipdb; ipdb.set_trace()
             for expected_message in [url] + expected_messages:
+                stdout = out.getvalue()
                 self.assertTrue(
-                    expected_message in out.getvalue(),
+                    expected_message in stdout,
                     'Expected "{}" to be in:\n{}\n'.format(
-                        expected_message, out.getvalue())
+                        expected_message, stdout)
                 )
+
 
 if __name__ == '__main__':
     unittest.main()
