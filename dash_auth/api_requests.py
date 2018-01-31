@@ -146,7 +146,7 @@ def _create_method(method_name):
                 # do the request one last time with logs
                 debug_requests_on(url)
                 resp = request_method(url, **kwargs)
-                if resp.status_code not in valid_4xx_status_codes:
+                if resp.status_code not in VALID_4XX_STATUS_CODES:
                     resp.raise_for_status()
 
                 # in the off chance that it succeeded on its last request
