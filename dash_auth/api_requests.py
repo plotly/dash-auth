@@ -54,15 +54,23 @@ def _modify_request_kwargs(request_kwargs):
             credential('plotly_username'),
             credential('plotly_api_key'),)
 
-    copied_kwargs['verify'] = config('plotly_ssl_verification')
+    if 'DASH_STREAMBED_DIRECT_IP' in os.environ:
+        copied_kwargs['verify'] = False
+    else:
+        copied_kwargs['verify'] = config('plotly_ssl_verification')
+
     return copied_kwargs
 
 
 def _create_method(method_name):
     def request(path, api_key_auth=True, **request_kwargs):
         copied_kwargs = _modify_request_kwargs(request_kwargs)
+        if 'DASH_STREAMBED_DIRECT_IP' in os.environ:
+            base_url = 'https://{}'.format(config('dash_streambed_direct_ip'))
+        else:
+            base_url = config('plotly_api_domain')
         return getattr(requests, method_name)(
-            '{}{}'.format(config('plotly_api_domain'), path),
+            '{}{}'.format(base_url, path),
             **copied_kwargs
         )
     return request
