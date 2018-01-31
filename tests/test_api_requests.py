@@ -2,6 +2,7 @@ import mock
 import os
 import requests
 from requests.exceptions import HTTPError
+import six
 import sys
 import unittest
 
@@ -79,33 +80,39 @@ class TestRequestsCall(unittest.TestCase):
                 'Invalid URL',
                 'No schema supplied',
                 'gettaddrinfo failed',
-                'nodename nor servname provided, or not known'
+                ['nodename nor servname provided, or not known',
+                 'Name or service not known']
             ]],
             ['typo://plotly.acme.com', [
                 'No connection adapters were found',
                 'gettaddrinfo failed',
-                'nodename nor servname provided, or not known'
+                ['nodename nor servname provided, or not known',
+                 'Name or service not known']
             ]],
             ['https://doesntexist.plotly.systems', [
                 'Failed to establish a new connection',
                 'gettaddrinfo failed',
-                'nodename nor servname provided, or not known',
+                ['nodename nor servname provided, or not known',
+                 'Name or service not known']
             ]],
             ['https://expired.badssl.com', [
                 'Caused by SSLError(SSLError("bad handshake: Error([(',
-                'SSL routines', 'tls_process_server_certificate',
+                'SSL routines',
+                'tls_process_server_certificate',
                 'certificate verify failed',
                 'gettaddrinfo: ',
                 "'104.154.89.105', 443"
             ]],
             ['https://self-signed.badssl.com', [
                 'Caused by SSLError(SSLError("bad handshake: Error([(',
-                'SSL routines', 'tls_process_server_certificate',
+                'SSL routines',
+                'tls_process_server_certificate',
                 'certificate verify failed',
                 'gettaddrinfo',
                 "'104.154.89.105', 443"
             ]]
         ]
+
         for test_case in test_cases:
             url, expected_messages = test_case
             os.environ['plotly_api_domain'] = url
@@ -115,15 +122,22 @@ class TestRequestsCall(unittest.TestCase):
                     api_requests.post('/dash-apps')
                 except Exception:
                     pass
-            # import ipdb; ipdb.set_trace()
+
             for expected_message in [url] + expected_messages:
                 stdout = out.getvalue()
-                self.assertTrue(
-                    expected_message in stdout,
-                    'Expected "{}" to be in:\n{}\n'.format(
-                        expected_message, stdout)
-                )
-
+                if isinstance(expected_message, six.string_types):
+                    self.assertTrue(
+                        expected_message in stdout,
+                        'Expected "{}" to be in:\n{}\n'.format(
+                            expected_message, stdout)
+                    )
+                else:
+                    self.assertTrue(
+                        (expected_message[0] in stdout)
+                        or (expected_message[1] in stdout),
+                        'Expected\n"{}"\nor"{}"\nto be in:\n{}\n'.format(
+                            expected_message[0], expected_message[1], stdout)
+                    )
 
 if __name__ == '__main__':
     unittest.main()
