@@ -87,7 +87,7 @@ class TestRequestsCall(unittest.TestCase):
                 'No connection adapters were found',
                 'gettaddrinfo failed',
                 ['nodename nor servname provided, or not known',
-                 'Name or service not known']
+                 'No connection adapters were found']
             ]],
             ['https://doesntexist.plotly.systems', [
                 'Failed to establish a new connection',
