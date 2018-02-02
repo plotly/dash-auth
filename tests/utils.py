@@ -1,8 +1,11 @@
+from contextlib import contextmanager
 import json
+import sys
 import time
 
 
 TIMEOUT = 20  # Seconds
+
 
 def clean_history(driver, domains):
     temp = driver.get_location()
@@ -98,3 +101,13 @@ def assert_clean_console(TestClass):
 
     assert_no_console_warnings(TestClass)
     assert_no_console_errors(TestClass)
+
+
+@contextmanager
+def captured_output(f):
+    old_out = sys.stdout
+    try:
+        sys.stdout = f
+        yield sys.stdout
+    finally:
+        sys.stdout = old_out
