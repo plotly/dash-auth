@@ -154,7 +154,7 @@ def _create_method(method_name):
                 return resp
 
         return retry_request_with_logs(
-            '{}{}'.format(config('plotly_api_domain'), path),
+            '{}{}'.format(base_url, path),
             **copied_kwargs
         )
 
