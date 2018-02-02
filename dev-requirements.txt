@@ -12,3 +12,4 @@ plotly>=2.0.8
 requests[security]
 ipdb
 flake8
+retrying

@@ -2,6 +2,7 @@ from __future__ import absolute_import
 import copy
 import os
 import plotly
+from retrying import retry
 import requests
 
 # API requests get their config from the environment.
@@ -69,7 +70,26 @@ def _create_method(method_name):
             base_url = 'https://{}'.format(config('dash_streambed_direct_ip'))
         else:
             base_url = config('plotly_api_domain')
-        return getattr(requests, method_name)(
+
+        request_method = getattr(requests, method_name)
+
+        def check_request_before_returning(*args, **kwargs):
+            resp = request_method(*args, **kwargs)
+
+            # 404's are the only accepted "error" code
+            # as we use this to check if a file exists or not
+            if resp.status_code != 404:
+                resp.raise_for_status()
+            return resp
+
+        request_with_retry = retry(
+            wait_random_min=100,
+            wait_random_max=1000,
+            wait_exponential_max=10000,
+            stop_max_delay=30000
+        )(check_request_before_returning)
+
+        return request_with_retry(
             '{}{}'.format(base_url, path),
             **copied_kwargs
         )
