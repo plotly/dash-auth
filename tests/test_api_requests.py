@@ -1,15 +1,17 @@
 import mock
+import os
 import requests
 from requests.exceptions import HTTPError
 import unittest
 
 import dash_auth.api_requests as api_requests
+from utils import captured_output
 
 def plotly_query():
     """
     Simple query against plotly API this is mocked in tests
     """
-    resp = api_requests.get('https://plot.ly/v2/users/current')
+    resp = api_requests.get('/v2/users/current')
     resp.raise_for_status()
     return resp
 
@@ -57,6 +59,55 @@ class TestRequestsCall(unittest.TestCase):
             instead it was called {} times'''.format(
                 mock_get.call_count)
         )
+
+    def test_request_logs(self):
+        test_cases = [
+            ['', [
+                'Invalid URL',
+                'No schema supplied',
+                'gettaddrinfo failed',
+                'nodename nor servname provided, or not known'
+            ]],
+            ['typo://plotly.acme.com', [
+                'No connection adapters were found',
+                'gettaddrinfo failed',
+                'nodename nor servname provided, or not known'
+            ]],
+            ['https://doesntexist.plotly.systems', [
+                'Failed to establish a new connection',
+                'gettaddrinfo failed',
+                'nodename nor servname provided, or not known',
+            ]],
+            ['https://expired.badssl.com', [
+                'Caused by SSLError(SSLError("bad handshake: Error([(',
+                'SSL routines', 'tls_process_server_certificate',
+                'certificate verify failed',
+                ("gettaddrinfo: [(2, 2, 17, '', ('104.154.89.105', 443)), "
+                 "(2, 1, 6, '', ('104.154.89.105', 443))]")
+            ]],
+            ['https://self-signed.badssl.com', [
+                'Caused by SSLError(SSLError("bad handshake: Error([(',
+                'SSL routines', 'tls_process_server_certificate',
+                'certificate verify failed',
+                ("gettaddrinfo: [(2, 2, 17, '', ('104.154.89.105', 443)), "
+                 "(2, 1, 6, '', ('104.154.89.105', 443))]")
+            ]]
+        ]
+        for test_case in test_cases:
+            url, expected_messages = test_case
+            os.environ['plotly_api_domain'] = url
+            with captured_output() as (out, err):
+                try:
+                    api_requests.post('/dash-apps')
+                except:
+                    pass
+
+            for expected_message in [url] + expected_messages:
+                self.assertTrue(
+                    expected_message in out.getvalue(),
+                    'Expected "{}" to be in:\n{}\n'.format(
+                        expected_message, out.getvalue())
+                )
 
 if __name__ == '__main__':
     unittest.main()

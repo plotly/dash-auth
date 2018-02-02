@@ -1,6 +1,14 @@
+from contextlib import contextmanager
 import json
+import sys
 import time
 
+try:
+    # python 2
+    from io import BytesIO as StringIO
+except ImportError:
+    # python 3
+    from io import StringIO
 
 TIMEOUT = 20  # Seconds
 
@@ -98,3 +106,15 @@ def assert_clean_console(TestClass):
 
     assert_no_console_warnings(TestClass)
     assert_no_console_errors(TestClass)
+
+
+# taken from https://stackoverflow.com/a/17981937/4142536
+@contextmanager
+def captured_output():
+    new_out, new_err = StringIO(), StringIO()
+    old_out, old_err = sys.stdout, sys.stderr
+    try:
+        sys.stdout, sys.stderr = new_out, new_err
+        yield sys.stdout, sys.stderr
+    finally:
+        sys.stdout, sys.stderr = old_out, old_err
