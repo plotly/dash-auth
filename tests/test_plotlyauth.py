@@ -9,7 +9,7 @@ import six
 from six.moves import http_cookies
 from six import iteritems
 import dash_auth
-from dash_auth import plotly_auth
+from dash_auth import utils
 from dash_auth.plotly_auth import PlotlyAuth
 from users import users
 
@@ -173,8 +173,8 @@ class ProtectedViewsTest(unittest.TestCase):
         auth.config['permissions_cache_expiry'] = 30
         auth.create_access_codes()
         viewer_token = users['viewer']['oauth_token']
-        with mock.patch('dash_auth.plotly_auth.check_view_access',
-                        wraps=plotly_auth.check_view_access) as \
+        with mock.patch('dash_auth.utils.check_view_access',
+                        wraps=utils.check_view_access) as \
                 wrapped:
 
             n_endpoints = (
@@ -186,7 +186,7 @@ class ProtectedViewsTest(unittest.TestCase):
             self.assertEqual(wrapped.call_count, n_endpoints)
 
             # make app public
-            dash_auth.plotly_auth.create_or_overwrite_dash_app(
+            dash_auth.utils.create_or_overwrite_dash_app(
                 app_name, 'public', app_url
             )
             res = self.check_endpoints(auth, app, viewer_token, all_200=True)
@@ -204,7 +204,7 @@ class ProtectedViewsTest(unittest.TestCase):
                 auth._access_codes['access_granted']
             )
 
-            plotly_auth.create_or_overwrite_dash_app(
+            utils.create_or_overwrite_dash_app(
                 app_name, 'private', app_url
             )
 
@@ -240,8 +240,8 @@ class ProtectedViewsTest(unittest.TestCase):
         app.layout = html.Div()
 
         creator = users['creator']['oauth_token']
-        with mock.patch('dash_auth.plotly_auth.check_view_access',
-                        wraps=plotly_auth.check_view_access) as wrapped:
+        with mock.patch('dash_auth.utils.check_view_access',
+                        wraps=utils.check_view_access) as wrapped:
             self.check_endpoints(auth, app, creator)
             res = self.check_endpoints(auth, app, creator)
 
