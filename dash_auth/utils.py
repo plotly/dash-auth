@@ -115,3 +115,14 @@ def check_view_access(oauth_token, fid):
     else:
         # TODO - Dash exception
         raise Exception('Failed request to plotly')
+
+def check_share_key_access(share_key, fid):
+    res = api_requests.get('/v2/files/{}?share_key='.format(fid, share_key))
+
+    if res.status_code == 200:
+        return True
+    elif res.status_code == 404:
+        return False
+    else:
+        # TODO - Dash exception
+        raise Exception('Failed request to plotly')

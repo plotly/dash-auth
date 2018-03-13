@@ -74,5 +74,19 @@ class PlotlyAuth(OAuthBase):
 
         return response
 
+    def is_authorized(self):
+        token_authorized = super(PlotlyAuth, self).is_authorized()
+        share_key_authorized = self.check_share_key_access()
+
+        if token_authorized or share_key_authorized:
+            return True
+        return False
+
     def check_view_access(self, oauth_token):
         return utils.check_view_access(oauth_token, self._fid)
+
+    def check_share_key_access(self):
+        share_key = flask.request.args.get('share_key')
+        if share_key:
+            return utils.check_share_key_access(share_key, self._fid)
+        return False
