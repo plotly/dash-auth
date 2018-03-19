@@ -139,9 +139,9 @@ def _create_method(method_name):
             debug_requests_off()
             try:
                 return request_with_retry(url, **kwargs)
-            except Exception as e:
+            except BaseException:
                 # request-level errors include ConnectionError
-                print(e)
+                print(sys.exc_info())
 
                 # do the request one last time with logs
                 debug_requests_on(url)
