@@ -65,8 +65,6 @@ class Tests(IntegrationTests):
             '#js-auth-modal-signin-submit').click()
 
         # wait for oauth screen
-        self.percy_snapshot('oauth screen - {} {} {}'.format(
-            username, pw, url_base_pathname))
         self.wait_for_element_by_css_selector('input[name="allow"]').click()
 
     def private_app_unauthorized(self, url_base_pathname=None, oauth_urls=None):
@@ -76,8 +74,6 @@ class Tests(IntegrationTests):
             url_base_pathname=url_base_pathname,
             oauth_urls=oauth_urls
         )
-        self.percy_snapshot('private_app_unauthorized 1 - {}'.format(
-            url_base_pathname))
         el = self.wait_for_element_by_css_selector(
             '#dash-auth--authorization__denied')
         self.assertEqual(el.text, 'You are not authorized to view this app')
@@ -98,8 +94,6 @@ class Tests(IntegrationTests):
             url_base_pathname,
         )
         switch_windows(self.driver)
-        self.percy_snapshot('private_app_authorized - {}'.format(
-            url_base_pathname))
         try:
             el = self.wait_for_element_by_css_selector('#output')
         except:
