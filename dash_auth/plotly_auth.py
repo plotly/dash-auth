@@ -13,6 +13,19 @@ class PlotlyAuth(OAuthBase):
     TOKEN_COOKIE_NAME = 'plotly_oauth_token'
 
     def __init__(self, app, app_name, sharing, app_url):
+        """
+        Provides Plotly Authentication login screen to a Dash app.
+
+        Args:
+            app: A `dash.Dash` app
+            app_name: The name of your Dash app. This name will be registered
+                on the Plotly server
+            sharing: 'private' or 'public'
+            app_url: String or list of strings. The URL(s) of the Dash app.
+                This is used to register your app with Plotly's OAuth system.
+        Returns:
+            None
+        """
         super(PlotlyAuth, self).__init__(app, app_url)
 
         self._fid = create_or_overwrite_dash_app(
@@ -98,7 +111,7 @@ def create_or_overwrite_dash_app(filename, sharing, app_url):
         'filename': filename,
         'share_key_enabled': True if sharing == 'secret' else False,
         'world_readable': True if sharing == 'public' else False,
-        'app_url': app_url
+        'app_url': app_url if isinstance(app_url, str) else app_url[0]
     })
 
     res_lookup = api_requests.get('/v2/files/lookup?path={}'.format(filename))
@@ -132,13 +145,19 @@ def create_or_overwrite_dash_app(filename, sharing, app_url):
 
 
 def create_or_overwrite_oauth_app(app_url, name):
-    redirect_uri = '{}/_oauth-redirect'.format(app_url.strip('/'))
+    if isinstance(app_url, str):
+        redirect_uris = '{}/_oauth-redirect'.format(app_url.strip('/'))
+    else:
+        redirect_uris = ' '.join([
+            '{}/_oauth-redirect'.format(url.strip('/'))
+            for url in app_url
+        ])
     request_data = {
         'data': json.dumps({
             'name': name,
             'client_type': 'public',
             'authorization_grant_type': 'implicit',
-            'redirect_uris': redirect_uri,
+            'redirect_uris': redirect_uris,
         })
     }
 
