@@ -14,7 +14,7 @@ from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
 
 from .IntegrationTests import IntegrationTests
-from .utils import assert_clean_console, invincible, switch_windows, wait_for
+from .utils import assert_clean_console, switch_windows
 from dash_auth import basic_auth
 
 
@@ -62,6 +62,5 @@ class Tests(IntegrationTests):
         # but it saves the credentials as part of the browser.
         # visiting the page again will use the saved credentials
         self.driver.get('http://localhost:8050')
-        time.sleep(5)
-        el = self.wait_for_element_by_id('output')
-        self.assertEqual(el.text, 'initial value')
+        el = self.wait_for_element_by_css_selector('#output')
+        self.wait_for_text_to_equal('#output', 'initial value')
