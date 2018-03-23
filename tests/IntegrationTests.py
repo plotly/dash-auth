@@ -11,10 +11,32 @@ import percy
 import sys
 import os
 
-from .utils import assert_clean_console, invincible, switch_windows, wait_for
+from .utils import assert_clean_console, switch_windows
 
+TIMEOUT = 60
 
 class IntegrationTests(unittest.TestCase):
+    def wait_for_element_by_css_selector(self, selector):
+        start_time = time.time()
+        while time.time() < start_time + TIMEOUT:
+            try:
+                return self.driver.find_element_by_css_selector(selector)
+            except Exception as e:
+                pass
+            time.sleep(0.25)
+        raise e
+
+    def wait_for_text_to_equal(self, selector, assertion_text):
+        start_time = time.time()
+        while time.time() < start_time + TIMEOUT:
+            el = self.wait_for_element_by_css_selector(selector)
+            try:
+                return self.assertEqual(el.text, assertion_text)
+            except Exception as e:
+                pass
+            time.sleep(0.25)
+        raise e
+
     def percy_snapshot(cls, name):
         if ('PERCY_PROJECT' in os.environ and
                 os.environ['PERCY_PROJECT'] == 'plotly/dash-auth'):
@@ -54,20 +76,6 @@ class IntegrationTests(unittest.TestCase):
     def setUp(self):
         super(IntegrationTests, self).setUp()
         self.driver = webdriver.Chrome()
-
-        def wait_for_element_by_id(id):
-            wait_for(lambda: None is not invincible(
-                lambda: self.driver.find_element_by_id(id)
-            ))
-            return self.driver.find_element_by_id(id)
-        self.wait_for_element_by_id = wait_for_element_by_id
-
-        def wait_for_element_by_css_selector(css_selector):
-            wait_for(lambda: None is not invincible(
-                lambda: self.driver.find_element_by_css_selector(css_selector)
-            ))
-            return self.driver.find_element_by_css_selector(css_selector)
-        self.wait_for_element_by_css_selector = wait_for_element_by_css_selector
 
     def tearDown(self):
         super(IntegrationTests, self).tearDown()
