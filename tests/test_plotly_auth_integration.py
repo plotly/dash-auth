@@ -10,7 +10,7 @@ import itertools
 import plotly.plotly as py
 
 from .IntegrationTests import IntegrationTests
-from .utils import assert_clean_console, invincible, switch_windows, wait_for
+from .utils import assert_clean_console, switch_windows
 from .users import users
 from dash_auth import plotly_auth
 
@@ -44,31 +44,27 @@ class Tests(IntegrationTests):
 
         self.startServer(app)
 
-        time.sleep(10)
-        self.percy_snapshot('login screen - {} {} {}'.format(
-            username, pw, url_base_pathname))
         try:
-            el = self.wait_for_element_by_id('dash-auth--login__container')
+            el = self.wait_for_element_by_css_selector('#dash-auth--login__container')
         except Exception as e:
             print(self.wait_for_element_by_tag_name('body').html)
             raise e
 
-        self.driver.find_element_by_id('dash-auth--login__button').click()
-        time.sleep(5)
+        self.wait_for_element_by_css_selector(
+            '#dash-auth--login__button').click()
         switch_windows(self.driver)
-        time.sleep(20)
-        self.wait_for_element_by_id(
-            'js-auth-modal-signin-username'
+        self.wait_for_element_by_css_selector(
+            '#js-auth-modal-signin-username'
         ).send_keys(username)
 
-        self.driver.find_element_by_id(
-            'js-auth-modal-signin-password'
+        self.wait_for_element_by_css_selector(
+            '#js-auth-modal-signin-password'
         ).send_keys(pw)
 
-        self.driver.find_element_by_id('js-auth-modal-signin-submit').click()
+        self.wait_for_element_by_css_selector(
+            '#js-auth-modal-signin-submit').click()
 
         # wait for oauth screen
-        time.sleep(5)
         self.percy_snapshot('oauth screen - {} {} {}'.format(
             username, pw, url_base_pathname))
         self.wait_for_element_by_css_selector('input[name="allow"]').click()
@@ -80,10 +76,10 @@ class Tests(IntegrationTests):
             url_base_pathname=url_base_pathname,
             oauth_urls=oauth_urls
         )
-        time.sleep(5)
         self.percy_snapshot('private_app_unauthorized 1 - {}'.format(
             url_base_pathname))
-        el = self.wait_for_element_by_id('dash-auth--authorization__denied')
+        el = self.wait_for_element_by_css_selector(
+            '#dash-auth--authorization__denied')
         self.assertEqual(el.text, 'You are not authorized to view this app')
         switch_windows(self.driver)
         self.percy_snapshot('private_app_unauthorized 2 - {}'.format(
@@ -92,7 +88,8 @@ class Tests(IntegrationTests):
         # login screen should still be there
         self.percy_snapshot('private_app_unauthorized 3 - {}'.format(
             url_base_pathname))
-        self.wait_for_element_by_id('dash-auth--login__container')
+        self.wait_for_element_by_css_selector(
+            '#dash-auth--login__container')
 
     def private_app_authorized(self, url_base_pathname=None, oauth_urls=None):
         self.plotly_auth_login_flow(
@@ -101,11 +98,10 @@ class Tests(IntegrationTests):
             url_base_pathname,
         )
         switch_windows(self.driver)
-        time.sleep(5)
         self.percy_snapshot('private_app_authorized - {}'.format(
             url_base_pathname))
         try:
-            el = self.wait_for_element_by_id('output')
+            el = self.wait_for_element_by_css_selector('#output')
         except:
             print((self.driver.find_element_by_tag_name('body').html))
         self.assertEqual(el.text, 'initial value')
