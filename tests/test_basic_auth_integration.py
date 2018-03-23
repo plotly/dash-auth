@@ -46,13 +46,12 @@ class Tests(IntegrationTests):
             TEST_USERS['valid']
         )
 
-        self.startServer(app)
+        self.startServer(app, skip_visit=True)
+
         self.assertEqual(
             requests.get('http://localhost:8050').status_code,
             401
         )
-        with self.assertRaises(NoSuchElementException):
-            self.driver.find_element_by_id('output')
 
         # login using the URL instead of the alert popup
         # selenium has no way of accessing the alert popup

@@ -84,7 +84,7 @@ class IntegrationTests(unittest.TestCase):
         time.sleep(5)
         self.driver.quit()
 
-    def startServer(self, app):
+    def startServer(self, app, skip_visit=False):
         def run():
             app.scripts.config.serve_locally = True
             app.run_server(
@@ -99,17 +99,10 @@ class IntegrationTests(unittest.TestCase):
         time.sleep(15)
 
         # Visit the dash page
-        try:
+        if not skip_visit:
             self.driver.get('http://localhost:8050{}'.format(
                 app.config['routes_pathname_prefix'])
             )
-        except:
-            print('Failed attempt to load page, trying again')
-            print(self.server_process)
-            print(self.server_process.is_alive())
-            time.sleep(5)
-            print(requests.get('http://localhost:8050'))
-            self.driver.get('http://localhost:8050')
 
         time.sleep(0.5)
 
