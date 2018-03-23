@@ -16,7 +16,8 @@ from dash_auth import plotly_auth
 
 
 class Tests(IntegrationTests):
-    def plotly_auth_login_flow(self, username, pw, url_base_pathname):
+    def plotly_auth_login_flow(self, username, pw,
+                               url_base_pathname=None, oauth_urls=None):
         os.environ['PLOTLY_USERNAME'] = users['creator']['username']
         os.environ['PLOTLY_API_KEY'] = users['creator']['api_key']
         app = dash.Dash(__name__, url_base_pathname=url_base_pathname)
@@ -35,7 +36,10 @@ class Tests(IntegrationTests):
             app,
             'integration-test',
             'private',
-            'http://localhost:8050{}'.format(url_base_pathname)
+            (
+                'http://localhost:8050{}'.format(url_base_pathname)
+                if url_base_pathname else oauth_urls
+            )
         )
 
         self.startServer(app)
@@ -69,11 +73,12 @@ class Tests(IntegrationTests):
             username, pw, url_base_pathname))
         self.wait_for_element_by_css_selector('input[name="allow"]').click()
 
-    def private_app_unauthorized(self, url_base_pathname):
+    def private_app_unauthorized(self, url_base_pathname=None, oauth_urls=None):
         self.plotly_auth_login_flow(
             users['viewer']['username'],
             users['viewer']['pw'],
-            url_base_pathname
+            url_base_pathname=url_base_pathname,
+            oauth_urls=oauth_urls
         )
         time.sleep(5)
         self.percy_snapshot('private_app_unauthorized 1 - {}'.format(
@@ -89,11 +94,11 @@ class Tests(IntegrationTests):
             url_base_pathname))
         self.wait_for_element_by_id('dash-auth--login__container')
 
-    def private_app_authorized(self, url_base_pathname):
+    def private_app_authorized(self, url_base_pathname=None, oauth_urls=None):
         self.plotly_auth_login_flow(
             users['creator']['username'],
             users['creator']['pw'],
-            url_base_pathname
+            url_base_pathname,
         )
         switch_windows(self.driver)
         time.sleep(5)
@@ -116,3 +121,13 @@ class Tests(IntegrationTests):
 
     def test_private_app_unauthorized_route(self):
         self.private_app_unauthorized('/my-app/')
+
+
+    def test_private_app_authorized_index_multiple_oauth_urls(self):
+        self.private_app_authorized(
+            '/',
+            oauth_urls=[
+                'http://test-domain.plotly.systems:8050/',
+                'http://localhost:8050/'
+            ]
+        )
