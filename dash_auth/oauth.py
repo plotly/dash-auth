@@ -1,9 +1,10 @@
 from __future__ import absolute_import
 import datetime
 import flask
-from flask_seasurf import SeaSurf
 import json
 import os
+from textwrap import dedent
+import itsdangerous
 
 from .auth import Auth
 
@@ -14,7 +15,7 @@ class OAuthBase(Auth):
     # Name of the cookie containing the OAuth2 access token
     TOKEN_COOKIE_NAME = 'oauth_token'
 
-    def __init__(self, app, app_url, client_id=None):
+    def __init__(self, app, app_url, client_id=None, secret_key=None):
         Auth.__init__(self, app)
 
         self.config = {
@@ -24,7 +25,6 @@ class OAuthBase(Auth):
         self._app = app
         self._app_url = app_url
         self._oauth_client_id = client_id
-        self._access_codes = self.create_access_codes()
 
         app.server.add_url_rule(
             '{}_dash-login'.format(app.config['routes_pathname_prefix']),
@@ -52,37 +52,13 @@ class OAuthBase(Auth):
         with open(os.path.join(_current_path, 'login.js'), 'r') as f:
             self.login_bundle = f.read()
 
-    def create_access_codes(self):
-        token = SeaSurf()._generate_token()
-        new_access_codes = {
-            'access_granted': token,
-            'expiration': (
-                datetime.datetime.now() + datetime.timedelta(
-                    seconds=self.config['permissions_cache_expiry']
-                )
             )
-        }
-        self._access_codes = new_access_codes
-        return self._access_codes
 
     def is_authorized(self):
         if self.TOKEN_COOKIE_NAME not in flask.request.cookies:
             return False
 
         oauth_token = flask.request.cookies[self.TOKEN_COOKIE_NAME]
-
-        if (datetime.datetime.now() > self._access_codes['expiration']):
-            self.create_access_codes()
-
-        if self.AUTH_COOKIE_NAME not in flask.request.cookies:
-            return self.check_view_access(oauth_token)
-
-        access_cookie = flask.request.cookies[self.AUTH_COOKIE_NAME]
-
-        # If there access was previously declined,
-        # check access again in case it has changed
-        if access_cookie != self._access_codes['access_granted']:
-            return self.check_view_access(oauth_token)
 
         return True
 
@@ -118,12 +94,6 @@ class OAuthBase(Auth):
                 # Python 3
                 if isinstance(response, str):
                     response = flask.Response(response)
-            self.set_cookie(
-                response,
-                name=self.AUTH_COOKIE_NAME,
-                value=self._access_codes['access_granted'],
-                max_age=(60 * 60 * 24 * 7),  # 1 week
-            )
             return response
         return wrap
 
