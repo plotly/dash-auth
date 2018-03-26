@@ -119,7 +119,6 @@ def create_or_overwrite_dash_app(filename, sharing, app_url):
 
     res_lookup = api_requests.get('/v2/files/lookup?path={}'.format(filename))
     if res_lookup.status_code == 404:
-        # TODO - Better request handling
         res_create = api_requests.post('/v2/dash-apps', data=payload)
         try:
             res_create.raise_for_status()
