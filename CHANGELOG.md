@@ -11,8 +11,8 @@ URL in order to test your Plotly login on your local machine while keeping
 the login screen available in your deployed app. Usage:
 ```
 dash_auth.PlotlyAuth(app, 'my-app', 'private', [
-    'http://localhost:8050',
-    'https://my-deployed-dash-app.com'
+    'https://my-deployed-dash-app.com',
+    'http://localhost:8050'
 ])
 ```
 
