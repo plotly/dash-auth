@@ -18,7 +18,8 @@ setup(
         'flask-seasurf',
         'plotly',
         'dash>=0.18.3',
-        'retrying'
+        'retrying',
+        'itsdangerous'
     ],
     include_package_data=True,
     url='https://plot.ly/dash',
