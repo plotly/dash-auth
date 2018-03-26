@@ -18,6 +18,7 @@ auth = dash_auth.PlotlyAuth(
     'private',
     'http://localhost:8050'
 )
+server = app.server
 
 
 app.layout = html.Div([
