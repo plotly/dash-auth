@@ -5,6 +5,7 @@ import json
 import os
 from textwrap import dedent
 import itsdangerous
+from .api_requests import credential
 
 from .auth import Auth
 
@@ -25,6 +26,25 @@ class OAuthBase(Auth):
         self._app = app
         self._app_url = app_url
         self._oauth_client_id = client_id
+
+        if secret_key is None and app.server.secret_key is None:
+            raise Exception(dedent('''
+                app.server.secret_key is missing.
+                Generate a secret key in your Python session
+                with the following commands:
+
+                >>> import os
+                >>> import base64
+                >>> base64.b64encode(os.urandom(30)).decode('utf-8')
+
+                and assign it to the property app.server.secret_key
+                (where app is your dash app instance).
+                Note that you should not do this dynamically:
+                you should create a key and then assign the value of
+                that key in your code.
+            '''))
+
+        self._signer = itsdangerous.TimestampSigner(secret_key)
 
         app.server.add_url_rule(
             '{}_dash-login'.format(app.config['routes_pathname_prefix']),
@@ -52,13 +72,34 @@ class OAuthBase(Auth):
         with open(os.path.join(_current_path, 'login.js'), 'r') as f:
             self.login_bundle = f.read()
 
+    def access_token_is_valid(self):
+        if self.AUTH_COOKIE_NAME not in flask.request.cookies:
+            return False
+
+        access_token = flask.request.cookies[self.AUTH_COOKIE_NAME]
+
+        try:
+            self._signer.unsign(
+                access_token,
+                max_age=self.config['permissions_cache_expiry']
             )
+            return True
+        except itsdangerous.SignatureExpired as e:
+            # Check access in case the user is valid but the token has expired
+            return False
+        except itsdangerous.BadSignature as e:
+            # Access tokens in previous versions of `dash-auth`
+            # weren't generated with itsdangerous
+            # and will raise `BadSignature`
+            return False
 
     def is_authorized(self):
         if self.TOKEN_COOKIE_NAME not in flask.request.cookies:
             return False
 
         oauth_token = flask.request.cookies[self.TOKEN_COOKIE_NAME]
+        if not self.access_token_is_valid():
+            return self.check_view_access(oauth_token)
 
         return True
 
@@ -94,6 +135,16 @@ class OAuthBase(Auth):
                 # Python 3
                 if isinstance(response, str):
                     response = flask.Response(response)
+
+            # grant a new access token if expired, missing, or invalid
+            if not self.access_token_is_valid():
+                access_token = self._signer.sign('access')
+                self.set_cookie(
+                    response,
+                    name=self.AUTH_COOKIE_NAME,
+                    value=access_token,
+                    max_age=(60 * 60 * 24 * 7),  # 1 week
+                )
             return response
         return wrap
 
