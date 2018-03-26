@@ -78,12 +78,8 @@ class Tests(IntegrationTests):
             '#dash-auth--authorization__denied')
         self.assertEqual(el.text, 'You are not authorized to view this app')
         switch_windows(self.driver)
-        self.percy_snapshot('private_app_unauthorized 2 - {}'.format(
-            url_base_pathname))
         self.driver.refresh()
         # login screen should still be there
-        self.percy_snapshot('private_app_unauthorized 3 - {}'.format(
-            url_base_pathname))
         self.wait_for_element_by_css_selector(
             '#dash-auth--login__container')
 

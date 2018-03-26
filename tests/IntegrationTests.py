@@ -7,7 +7,6 @@ import requests
 import time
 import unittest
 from selenium import webdriver
-import percy
 import sys
 import os
 
@@ -37,41 +36,15 @@ class IntegrationTests(unittest.TestCase):
             time.sleep(0.25)
         raise e
 
-    def percy_snapshot(cls, name):
-        if ('PERCY_PROJECT' in os.environ and
-                os.environ['PERCY_PROJECT'] == 'plotly/dash-auth'):
-
-            snapshot_name = '{} - Py{}'.format(
-                name, sys.version_info.major
-            ).replace('/', '-')
-            try:
-                cls.percy_runner.snapshot(
-                    name=snapshot_name
-                )
-            except Exception as e:
-                print('Saving "{}" failed'.format(snapshot_name))
-
     @classmethod
     def setUpClass(cls):
         super(IntegrationTests, cls).setUpClass()
         cls.driver = webdriver.Chrome()
 
-        if ('PERCY_PROJECT' in os.environ and
-                os.environ['PERCY_PROJECT'] == 'plotly/dash-auth'):
-            loader = percy.ResourceLoader(
-              webdriver=cls.driver
-            )
-            cls.percy_runner = percy.Runner(loader=loader)
-
-            cls.percy_runner.initialize_build()
-
     @classmethod
     def tearDownClass(cls):
         super(IntegrationTests, cls).tearDownClass()
         cls.driver.quit()
-        if ('PERCY_PROJECT' in os.environ and
-                os.environ['PERCY_PROJECT'] == 'plotly/dash-auth'):
-            cls.percy_runner.finalize_build()
 
     def setUp(self):
         super(IntegrationTests, self).setUp()
