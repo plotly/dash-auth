@@ -1,11 +1,9 @@
 from __future__ import absolute_import
-import datetime
 import flask
 import json
 import os
 from textwrap import dedent
 import itsdangerous
-from .api_requests import credential
 
 from .auth import Auth
 
@@ -84,10 +82,10 @@ class OAuthBase(Auth):
                 max_age=self.config['permissions_cache_expiry']
             )
             return True
-        except itsdangerous.SignatureExpired as e:
+        except itsdangerous.SignatureExpired:
             # Check access in case the user is valid but the token has expired
             return False
-        except itsdangerous.BadSignature as e:
+        except itsdangerous.BadSignature:
             # Access tokens in previous versions of `dash-auth`
             # weren't generated with itsdangerous
             # and will raise `BadSignature`
