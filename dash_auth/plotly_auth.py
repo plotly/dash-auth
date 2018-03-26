@@ -23,6 +23,9 @@ class PlotlyAuth(OAuthBase):
             sharing: 'private' or 'public'
             app_url: String or list of strings. The URL(s) of the Dash app.
                 This is used to register your app with Plotly's OAuth system.
+                For example, to test locally, supply a list of URLs with
+                the first URL being your remote server and the second URL
+                being e.g. http://localhost:8050
         Returns:
             None
         """
