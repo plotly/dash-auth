@@ -29,7 +29,11 @@ class PlotlyAuth(OAuthBase):
         Returns:
             None
         """
-        super(PlotlyAuth, self).__init__(app, app_url)
+        super(PlotlyAuth, self).__init__(
+            app,
+            app_url,
+            secret_key=api_requests.credential('plotly_api_key')
+        )
 
         self._fid = create_or_overwrite_dash_app(
             app_name, sharing, app_url
