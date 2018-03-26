@@ -1,7 +1,4 @@
 machine:
-  pre:
-    - echo export PERCY_PARALLEL_NONCE=$CIRCLE_BUILD_NUM >> $HOME/.circlerc
-
   post:
     - pyenv global 2.7.10 3.6.2
   environment:
