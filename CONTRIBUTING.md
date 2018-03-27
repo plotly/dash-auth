@@ -71,14 +71,21 @@ $ twine upload dist/dash_auth-VERSION.tar.gz
 ```
 Where `VERSION` refers to the version number of package. This file was created in Step 4.
 
-6. **Test it out**
-In a new folder, make sure the installation uploaded correctly. 
+6. **Git Tag**
+Create a Git Tag with the version number:
+```
+git tag -a 'v0.1.0' -m 'v0.1.0'
+git push origin master --follow-tags
+```
+
+7. **Test it out**
+In a new folder, make sure the installation uploaded correctly.
 Note that sometimes PyPI's servers take a few minutes for installations to be recognized.
 ```
 pip install dash-auth --upgrade
 ```
 
-7. **Update the version number in `dopsa`**
+8. **Update the version number in `dopsa`**
 We fix the version number in [`dash-on-premise-sample-app`](https://github.com/plotly/dash-on-premise-sample-app/).
 
 Create a PR to update that version in https://github.com/plotly/dash-on-premise-sample-app/blob/master/requirements.txt.
