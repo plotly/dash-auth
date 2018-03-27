@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [0.1.0] - 2018-03-23
+## [0.1.0] - 2018-03-27
 ### Added
 - `PlotlyAuth` now supports multiple URLs. Supply a localhost URL and a remote
 URL in order to test your Plotly login on your local machine while keeping
@@ -15,6 +15,12 @@ dash_auth.PlotlyAuth(app, 'my-app', 'private', [
     'http://localhost:8050'
 ])
 ```
+See https://github.com/plotly/dash-auth/pull/29
+
+### Fixed
+- `PlotlyAuth` is now stateless. This allows `PlotlyAuth` to be
+used in Dash Apps that are deployed with multiple workers.
+See https://github.com/plotly/dash-auth/pull/32
 
 ## [0.0.11] - 2018-02-01
 ### Added
