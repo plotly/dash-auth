@@ -14,7 +14,13 @@ class OAuthBase(Auth):
     # Name of the cookie containing the OAuth2 access token
     TOKEN_COOKIE_NAME = 'oauth_token'
 
-    def __init__(self, app, app_url, client_id=None, secret_key=None, salt=None):
+    def __init__(
+            self,
+            app,
+            app_url,
+            client_id=None,
+            secret_key=None,
+            salt=None):
         Auth.__init__(self, app)
 
         self.config = {
