@@ -26,7 +26,7 @@ To publish:
 Note that for security reasons, this is restricted to Plotly employees.
 - PyPI has a new website, register your account here: https://pypi.org/.
 - If you already have a PyPI account, you'll need to make sure that your email is registered
-- Add your PyPI credentials to a file at `~/.pypirc`. 
+- Add your PyPI credentials to a file at `~/.pypirc`.
 It will look something like:
 ```
 [distutils]
@@ -44,7 +44,7 @@ password:your_pypi_password
 - Once reviewed, merge into master.
 
 3. **Build Front-End**
-The front-end JavaScript code is bundled as part of this package. 
+The front-end JavaScript code is bundled as part of this package.
 So, you'll need to build the JS bundle:
 ```
 $ git checkout master
