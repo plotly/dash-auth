@@ -14,7 +14,7 @@ class OAuthBase(Auth):
     # Name of the cookie containing the OAuth2 access token
     TOKEN_COOKIE_NAME = 'oauth_token'
 
-    def __init__(self, app, app_url, client_id=None, secret_key=None):
+    def __init__(self, app, app_url, client_id=None, secret_key=None, salt=None):
         Auth.__init__(self, app)
 
         self.config = {
@@ -42,7 +42,13 @@ class OAuthBase(Auth):
                 that key in your code.
             '''))
 
-        self._signer = itsdangerous.TimestampSigner(secret_key)
+        if salt is None:
+            raise Exception(dedent('''
+                salt is missing. The salt parameter needs to a string that
+                is unique to this individual Dash app.
+            '''))
+
+        self._signer = itsdangerous.TimestampSigner(secret_key, salt=salt)
 
         app.server.add_url_rule(
             '{}_dash-login'.format(app.config['routes_pathname_prefix']),
