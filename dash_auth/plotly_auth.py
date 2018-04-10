@@ -20,7 +20,7 @@ class PlotlyAuth(OAuthBase):
             app: A `dash.Dash` app
             app_name: The name of your Dash app. This name will be registered
                 on the Plotly server
-            sharing: 'private' or 'public'
+            sharing: 'private', 'public', or 'secret'
             app_url: String or list of strings. The URL(s) of the Dash app.
                 This is used to register your app with Plotly's OAuth system.
                 For example, to test locally, supply a list of URLs with
@@ -109,10 +109,10 @@ def create_or_overwrite_dash_app(filename, sharing, app_url):
     for arg_name, arg_value in iteritems(required_args):
         if arg_value is None:
             raise Exception('{} is required'.format(arg_name))
-    if sharing not in ['private', 'public']:
+    if sharing not in ['private', 'public', 'secret']:
         raise Exception(
             "The privacy argument must be equal "
-            "to 'private' or 'public'.\n"
+            "to 'private', 'public', or 'secret'.\n"
             "You supplied '{}'".format(sharing)
         )
     payload = json.dumps({
