@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 import flask
 import json
+from hmac import compare_digest
 from six import iteritems
 
 from .oauth import OAuthBase
@@ -95,6 +96,19 @@ class PlotlyAuth(OAuthBase):
         )
 
         return response
+
+    def is_authorized(self):
+        if self._sharing == 'secret':
+            share_key = flask.request.args.get('share_key')
+            app_share_key = self._dash_app['share_key']
+
+            if share_key and compare_digest(share_key, app_share_key):
+                return True
+
+            if self.access_token_is_valid():
+                return True
+
+        return super(PlotlyAuth, self).is_authorized()
 
     def check_view_access(self, oauth_token):
         return check_view_access(oauth_token, self._dash_app['fid'])
