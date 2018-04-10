@@ -36,7 +36,7 @@ class PlotlyAuth(OAuthBase):
             salt=app_name
         )
 
-        self._fid = create_or_overwrite_dash_app(
+        self._dash_app = create_or_overwrite_dash_app(
             app_name, sharing, app_url
         )
         self._oauth_client_id = create_or_overwrite_oauth_app(
@@ -97,7 +97,7 @@ class PlotlyAuth(OAuthBase):
         return response
 
     def check_view_access(self, oauth_token):
-        return check_view_access(oauth_token, self._fid)
+        return check_view_access(oauth_token, self._dash_app['fid'])
 
 
 def create_or_overwrite_dash_app(filename, sharing, app_url):
@@ -131,10 +131,11 @@ def create_or_overwrite_dash_app(filename, sharing, app_url):
             print(payload)
             print(res_create.content)
             raise e
-        fid = res_create.json()['file']['fid']
-        return fid
+        app = res_create.json()['file']
+        return app
     elif res_lookup.status_code == 200:
-        fid = res_lookup.json()['fid']
+        app = res_lookup.json()
+        fid = app['fid']
         res_update = api_requests.patch(
             '/v2/dash-apps/{}'.format(fid),
             data=payload
@@ -145,7 +146,7 @@ def create_or_overwrite_dash_app(filename, sharing, app_url):
             print(payload)
             print(res_update.content)
             raise e
-        return fid
+        return app
     else:
         print(res_lookup.content)
         res_lookup.raise_for_status()
