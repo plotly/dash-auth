@@ -158,6 +158,14 @@ class OAuthBase(Auth):
             return response
         return wrap
 
+    def index_auth_wrapper(self, original_index):
+        def wrap(*args, **kwargs):
+            if self.is_authorized():
+                return original_index(*args, **kwargs)
+            else:
+                return self.login_request()
+        return wrap
+
     def html(self, script):
         return ('''
             <!doctype html>
