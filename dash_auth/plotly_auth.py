@@ -114,27 +114,7 @@ class PlotlyAuth(OAuthBase):
         def wrap(*args, **kwargs):
             if self.is_authorized():
                 response = original_index(*args, **kwargs)
-
-                try:
-                    # Python 2
-                    if isinstance(response, basestring):  # noqa: F821
-                        response = flask.Response(response)
-                except Exception:
-                    # Python 3
-                    if isinstance(response, str):
-                        response = flask.Response(response)
-
-                if not self.access_token_is_valid():
-                    access_token = self._signer.sign('access')
-                    self.set_cookie(
-                        response,
-                        name=self.AUTH_COOKIE_NAME,
-                        value=access_token,
-                        max_age=(60 * 60 * 24 * 7),  # 1 week
-                    )
-
-                return response
-                # TODO dry the above
+                return self.add_access_token_to_response(response)
             else:
                 return self.login_request()
         return wrap

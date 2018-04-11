@@ -119,6 +119,35 @@ class OAuthBase(Auth):
 
         return flask.Response(status=403)
 
+    def add_access_token_to_response(self, response):
+        """
+        Add an access token cookie to a response if it doesn't
+        already have a valid one. (To be called if auth succeeds to make
+        auth "sticky" for other requests.)
+
+        :param (flask.Response|str|unicode) response
+        :rtype: (flask.Response)
+        """
+        try:
+            # Python 2
+            if isinstance(response, basestring):  # noqa: F821
+                response = flask.Response(response)
+        except Exception:
+            # Python 3
+            if isinstance(response, str):
+                response = flask.Response(response)
+
+        if not self.access_token_is_valid():
+            access_token = self._signer.sign('access')
+            self.set_cookie(
+                response,
+                name=self.AUTH_COOKIE_NAME,
+                value=access_token,
+                max_age=(60 * 60 * 24 * 7),  # 1 week
+            )
+
+        return response
+
     def auth_wrapper(self, f):
         def wrap(*args, **kwargs):
             if not self.is_authorized():
@@ -137,25 +166,7 @@ class OAuthBase(Auth):
 
             # TODO - should set secure in this cookie, not exposed in flask
             # TODO - should set path or domain
-            try:
-                # Python 2
-                if isinstance(response, basestring):  # noqa: F821
-                    response = flask.Response(response)
-            except Exception:
-                # Python 3
-                if isinstance(response, str):
-                    response = flask.Response(response)
-
-            # grant a new access token if expired, missing, or invalid
-            if not self.access_token_is_valid():
-                access_token = self._signer.sign('access')
-                self.set_cookie(
-                    response,
-                    name=self.AUTH_COOKIE_NAME,
-                    value=access_token,
-                    max_age=(60 * 60 * 24 * 7),  # 1 week
-                )
-            return response
+            return self.add_access_token_to_response(response)
         return wrap
 
     def index_auth_wrapper(self, original_index):
