@@ -15,13 +15,8 @@ class Auth(object):
     def _overwrite_index(self):
         original_index = self.app.server.view_functions[self._index_view_name]
 
-        def wrap_index(*args, **kwargs):
-            if self.is_authorized():
-                return original_index(*args, **kwargs)
-            else:
-                return self.login_request()
-
-        self.app.server.view_functions[self._index_view_name] = wrap_index
+        self.app.server.view_functions[self._index_view_name] = \
+            self.index_auth_wrapper(original_index)
 
     def _protect_views(self):
         # TODO - allow users to white list in case they add their own views
@@ -37,6 +32,10 @@ class Auth(object):
 
     @abstractmethod
     def auth_wrapper(self, f):
+        pass
+
+    @abstractmethod
+    def index_auth_wrapper(self, f):
         pass
 
     @abstractmethod
