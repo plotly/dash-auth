@@ -11,7 +11,7 @@ from six import iteritems
 import dash_auth
 from dash_auth import plotly_auth
 from dash_auth.plotly_auth import PlotlyAuth
-from users import users
+from .users import users
 
 if six.PY3:
     from unittest import mock
@@ -139,9 +139,10 @@ class ProtectedViewsTest(unittest.TestCase):
             client = get_client()  # use a fresh client for every endpoint
             res = client.get(endpoint)
             test_name = '{} at {} as {} on {} ({})'.format(
-                res.status_code, endpoint, oauth_token, auth._fid, auth._sharing
+                res.status_code, endpoint, oauth_token, auth._dash_app['fid'],
+                auth._sharing
             )
-            if (auth._fid is None or
+            if (auth._dash_app['fid'] is None or
                     auth._sharing == 'public' or
                     oauth_token == users['creator']['oauth_token'] or
                     endpoint in endpoints['unprotected']['get'] or
