@@ -54,7 +54,7 @@ def get_cookie(res, cookie_name):
 
 
 def create_apps():
-    app_permissions = ['public', 'private']
+    app_permissions = ['public', 'private', 'secret']
     apps = {k: dash.Dash(k) for k in app_permissions}
     for app in list(apps.values()):
         app.scripts.config.serve_locally = True
