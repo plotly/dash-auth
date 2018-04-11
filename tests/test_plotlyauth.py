@@ -167,6 +167,31 @@ class ProtectedViewsTest(unittest.TestCase):
                         user_attributes['oauth_token'],
                     )
 
+    def test_share_key(self):
+        apps, auths = create_apps()
+        app = apps['secret']
+        auth = auths['secret']
+
+        key = 'testsharekey'
+        auth._dash_app = {'share_key': key}
+
+        for endpoint in endpoints['protected']['get']:
+            client = app.server.test_client()
+
+            endpoint_with_key = '{}?share_key=bad'.format(endpoint)
+            res = client.get(endpoint_with_key)
+            self.assertEqual(res.status_code, 403, endpoint)
+
+            endpoint_with_key = '{}?share_key={}'.format(endpoint, key)
+            res = client.get(endpoint_with_key)
+            self.assertEqual(res.status_code, 200, endpoint)
+
+            self.assertTrue(get_cookie(res, PlotlyAuth.AUTH_COOKIE_NAME))
+
+            # Given the cookie, we can now make a request with no other auth:
+            res = client.get(endpoint)
+            self.assertEqual(res.status_code, 200, endpoint)
+
     @unittest.skip('broken by e612142c530ee0375303fc88b646d534284c1209')
     def test_permissions_can_change(self):
         app_name = 'private-flip-flop-app-test'
