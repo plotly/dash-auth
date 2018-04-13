@@ -33,7 +33,6 @@ endpoints = {
 }
 
 
-
 def get_cookie(res, cookie_name):
     headers = res.headers.to_list()
     set_cookie_strings = [h for h in headers if (
@@ -77,7 +76,6 @@ class ProtectedViewsTest(unittest.TestCase):
         os.environ['PLOTLY_USERNAME'] = users['creator']['username']
         os.environ['PLOTLY_API_KEY'] = users['creator']['api_key']
         self.longMessage = True
-
 
     def test_protecting_all_views(self):
         apps = create_apps()[0]

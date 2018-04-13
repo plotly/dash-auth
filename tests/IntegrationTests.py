@@ -14,6 +14,7 @@ from .utils import assert_clean_console, switch_windows
 
 TIMEOUT = 60
 
+
 class IntegrationTests(unittest.TestCase):
     def wait_for_element_by_css_selector(self, selector):
         start_time = time.time()
@@ -89,17 +90,20 @@ class IntegrationTests(unittest.TestCase):
         var _error = console.error;
 
         console.log = function() {
-            window.tests.console.log.push({method: 'log', arguments: arguments});
+            window.tests.console.log.push({method: 'log',
+                                           arguments: arguments});
             return _log.apply(console, arguments);
         };
 
         console.warn = function() {
-            window.tests.console.warn.push({method: 'warn', arguments: arguments});
+            window.tests.console.warn.push({method: 'warn',
+                                            arguments: arguments});
             return _warn.apply(console, arguments);
         };
 
         console.error = function() {
-            window.tests.console.error.push({method: 'error', arguments: arguments});
+            window.tests.console.error.push({method: 'error',
+                                             arguments: arguments});
             return _error.apply(console, arguments);
         };
         '''

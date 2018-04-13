@@ -133,8 +133,8 @@ class TestRequestsCall(unittest.TestCase):
                     )
                 else:
                     self.assertTrue(
-                        (expected_message[0] in stdout)
-                        or (expected_message[1] in stdout),
+                        (expected_message[0] in stdout) or
+                        (expected_message[1] in stdout),
                         'Expected\n"{}"\nor"{}"\nto be in:\n{}\n'.format(
                             expected_message[0], expected_message[1], stdout)
                     )

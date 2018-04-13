@@ -26,6 +26,7 @@ class Tests(IntegrationTests):
             ),
             html.Div(id='output')
         ])
+
         @app.callback(Output('output', 'children'), [Input('input', 'value')])
         def update_output(new_value):
             return new_value
@@ -52,7 +53,8 @@ class Tests(IntegrationTests):
         app, _ = self.setup_app(url_base_pathname)
 
         try:
-            el = self.wait_for_element_by_css_selector('#dash-auth--login__container')
+            el = self.wait_for_element_by_css_selector(
+                '#dash-auth--login__container')
         except Exception as e:
             print(self.wait_for_element_by_tag_name('body').html)
             raise e
@@ -74,7 +76,8 @@ class Tests(IntegrationTests):
         # wait for oauth screen
         self.wait_for_element_by_css_selector('input[name="allow"]').click()
 
-    def private_app_unauthorized(self, url_base_pathname=None, oauth_urls=None):
+    def private_app_unauthorized(self, url_base_pathname=None,
+                                 oauth_urls=None):
         self.plotly_auth_login_flow(
             users['viewer']['username'],
             users['viewer']['pw'],
@@ -114,7 +117,6 @@ class Tests(IntegrationTests):
 
     def test_private_app_unauthorized_route(self):
         self.private_app_unauthorized('/my-app/')
-
 
     def test_private_app_authorized_index_multiple_oauth_urls(self):
         self.private_app_authorized(
