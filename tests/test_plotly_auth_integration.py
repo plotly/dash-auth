@@ -16,10 +16,7 @@ from dash_auth import plotly_auth
 
 
 class Tests(IntegrationTests):
-    def plotly_auth_login_flow(self, username, pw,
-                               url_base_pathname=None, oauth_urls=None):
-        os.environ['PLOTLY_USERNAME'] = users['creator']['username']
-        os.environ['PLOTLY_API_KEY'] = users['creator']['api_key']
+    def setup_app(self, url_base_pathname=None):
         app = dash.Dash(__name__, url_base_pathname=url_base_pathname)
         app.layout = html.Div([
             dcc.Input(
@@ -43,6 +40,15 @@ class Tests(IntegrationTests):
         )
 
         self.startServer(app)
+
+        return app
+
+    def plotly_auth_login_flow(self, username, pw,
+                               url_base_pathname=None, oauth_urls=None):
+        os.environ['PLOTLY_USERNAME'] = users['creator']['username']
+        os.environ['PLOTLY_API_KEY'] = users['creator']['api_key']
+
+        app = self.setup_app(url_base_pathname)
 
         try:
             el = self.wait_for_element_by_css_selector('#dash-auth--login__container')
