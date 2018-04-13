@@ -102,7 +102,8 @@ class PlotlyAuth(OAuthBase):
             share_key = flask.request.args.get('share_key')
             app_share_key = self._dash_app['share_key']
 
-            if share_key and compare_digest(share_key, app_share_key):
+            if share_key and compare_digest(str(share_key),
+                                            str(app_share_key)):
                 return True
 
             if self.access_token_is_valid():
