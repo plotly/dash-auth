@@ -124,3 +124,44 @@ class Tests(IntegrationTests):
                 'http://localhost:8050/'
             ]
         )
+
+    def secret_app_unauthorized(self, url_base_pathname=None):
+        app, auth = self.setup_app(url_base_pathname, skip_visit=True,
+                                   sharing='secret')
+
+        self.driver.get('http://localhost:8050{}'
+                        '?share_key=bad'.format(url_base_pathname))
+
+        # Should show login screen
+        self.wait_for_element_by_css_selector(
+            '#dash-auth--login__container')
+
+    def secret_app_authorized(self, url_base_pathname=None):
+        app, auth = self.setup_app(url_base_pathname, skip_visit=True,
+                                   sharing='secret')
+
+        key = auth._dash_app['share_key']
+
+        self.driver.get('http://localhost:8050{}'
+                        '?share_key={}'.format(url_base_pathname, key))
+
+        try:
+            el = self.wait_for_element_by_css_selector('#output')
+        except:
+            print((self.driver.find_element_by_tag_name('body').html))
+
+        # Note: this will only work if both the initial and subsequent
+        # requests (e.g. to get the layoout) succeed.
+        self.assertEqual(el.text, 'initial value')
+
+    def test_secret_app_unauthorized_index(self):
+        self.secret_app_unauthorized('/')
+
+    def test_secret_app_unauthorized_route(self):
+        self.secret_app_unauthorized('/my-app/')
+
+    def test_secret_app_authorized_index(self):
+        self.secret_app_authorized('/')
+
+    def test_secret_app_authorized_route(self):
+        self.secret_app_authorized('/my-app/')
