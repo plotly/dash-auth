@@ -58,6 +58,7 @@ def create_apps():
     apps = {k: dash.Dash(k) for k in app_permissions}
     for app in list(apps.values()):
         app.scripts.config.serve_locally = True
+        app.layout = html.Div()
     auths = {
         k: PlotlyAuth(
             apps[k],
