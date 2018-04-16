@@ -39,7 +39,7 @@ password:your_pypi_password
 
 2. **Changelogs and Version**
 - Check the recent commits and PRs and add anything notable to the `CHANGELOG.md` file
-- Bump the version number in `version.py`. Follow [Semantic Versioning 2.0.0](https://semver.org/)
+- Bump the version number in `dash_auth/version.py`. Follow [Semantic Versioning 2.0.0](https://semver.org/)
 - Create a PR and tag @chriddyp for review
 - Once reviewed, merge into master.
 
@@ -49,13 +49,14 @@ So, you'll need to build the JS bundle:
 ```
 $ git checkout master
 $ git pull origin master
-$ cd dash-auth/js
+$ cd js
 $ yarn
 $ yarn run build
 ```
 
 4. **Create a Python Build**
 ```
+$ cd ..
 $ python setup.py sdist
 ```
 
