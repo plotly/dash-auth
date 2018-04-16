@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2018-04-11
+### Added
+- `PlotlyAuth` now supports "secret" authentication using the `share_key`
+parameter.
+
+### Changed
+- All `Auth` subclasses must now implement `index_auth_wrapper()`. See
+`basic_auth.py` for an example that preserves the existing behaviour.
+
 ## [0.1.0] - 2018-03-27
 ### Added
 - `PlotlyAuth` now supports multiple URLs. Supply a localhost URL and a remote

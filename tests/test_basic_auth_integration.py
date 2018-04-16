@@ -27,6 +27,7 @@ TEST_USERS = {
     ],
 }
 
+
 class Tests(IntegrationTests):
     def test_basic_auth_login_flow(self):
         app = dash.Dash(__name__)
@@ -37,6 +38,7 @@ class Tests(IntegrationTests):
             ),
             html.Div(id='output')
         ])
+
         @app.callback(Output('output', 'children'), [Input('input', 'value')])
         def update_output(new_value):
             return new_value
@@ -57,8 +59,8 @@ class Tests(IntegrationTests):
         # selenium has no way of accessing the alert popup
         self.driver.get('http://hello:world@localhost:8050')
 
-        # the username:password@host url doesn't work right now for dash routes,
-        # but it saves the credentials as part of the browser.
+        # the username:password@host url doesn't work right now for dash
+        # routes, but it saves the credentials as part of the browser.
         # visiting the page again will use the saved credentials
         self.driver.get('http://localhost:8050')
         el = self.wait_for_element_by_css_selector('#output')

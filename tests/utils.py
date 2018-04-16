@@ -22,6 +22,7 @@ def switch_windows(driver):
     driver.switch_to.window(new_window_handle)
     return new_window_handle
 
+
 class WaitForTimeout(Exception):
     """This should only be raised inside the `wait_for` function."""
     pass

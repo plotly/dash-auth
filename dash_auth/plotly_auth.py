@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 import flask
 import json
+from hmac import compare_digest
 from six import iteritems
 
 from .oauth import OAuthBase
@@ -20,7 +21,7 @@ class PlotlyAuth(OAuthBase):
             app: A `dash.Dash` app
             app_name: The name of your Dash app. This name will be registered
                 on the Plotly server
-            sharing: 'private' or 'public'
+            sharing: 'private', 'public', or 'secret'
             app_url: String or list of strings. The URL(s) of the Dash app.
                 This is used to register your app with Plotly's OAuth system.
                 For example, to test locally, supply a list of URLs with
@@ -36,7 +37,7 @@ class PlotlyAuth(OAuthBase):
             salt=app_name
         )
 
-        self._fid = create_or_overwrite_dash_app(
+        self._dash_app = create_or_overwrite_dash_app(
             app_name, sharing, app_url
         )
         self._oauth_client_id = create_or_overwrite_oauth_app(
@@ -96,8 +97,31 @@ class PlotlyAuth(OAuthBase):
 
         return response
 
+    def is_authorized(self):
+        if self._sharing == 'secret':
+            share_key = flask.request.args.get('share_key')
+            app_share_key = self._dash_app['share_key']
+
+            if share_key and compare_digest(str(share_key),
+                                            str(app_share_key)):
+                return True
+
+            if self.access_token_is_valid():
+                return True
+
+        return super(PlotlyAuth, self).is_authorized()
+
+    def index_auth_wrapper(self, original_index):
+        def wrap(*args, **kwargs):
+            if self.is_authorized():
+                response = original_index(*args, **kwargs)
+                return self.add_access_token_to_response(response)
+            else:
+                return self.login_request()
+        return wrap
+
     def check_view_access(self, oauth_token):
-        return check_view_access(oauth_token, self._fid)
+        return check_view_access(oauth_token, self._dash_app['fid'])
 
 
 def create_or_overwrite_dash_app(filename, sharing, app_url):
@@ -109,10 +133,10 @@ def create_or_overwrite_dash_app(filename, sharing, app_url):
     for arg_name, arg_value in iteritems(required_args):
         if arg_value is None:
             raise Exception('{} is required'.format(arg_name))
-    if sharing not in ['private', 'public']:
+    if sharing not in ['private', 'public', 'secret']:
         raise Exception(
             "The privacy argument must be equal "
-            "to 'private' or 'public'.\n"
+            "to 'private', 'public', or 'secret'.\n"
             "You supplied '{}'".format(sharing)
         )
     payload = json.dumps({
@@ -131,10 +155,11 @@ def create_or_overwrite_dash_app(filename, sharing, app_url):
             print(payload)
             print(res_create.content)
             raise e
-        fid = res_create.json()['file']['fid']
-        return fid
+        app = res_create.json()['file']
+        return app
     elif res_lookup.status_code == 200:
-        fid = res_lookup.json()['fid']
+        app = res_lookup.json()
+        fid = app['fid']
         res_update = api_requests.patch(
             '/v2/dash-apps/{}'.format(fid),
             data=payload
@@ -145,7 +170,7 @@ def create_or_overwrite_dash_app(filename, sharing, app_url):
             print(payload)
             print(res_update.content)
             raise e
-        return fid
+        return app
     else:
         print(res_lookup.content)
         res_lookup.raise_for_status()

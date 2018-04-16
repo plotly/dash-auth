@@ -16,10 +16,8 @@ from dash_auth import plotly_auth
 
 
 class Tests(IntegrationTests):
-    def plotly_auth_login_flow(self, username, pw,
-                               url_base_pathname=None, oauth_urls=None):
-        os.environ['PLOTLY_USERNAME'] = users['creator']['username']
-        os.environ['PLOTLY_API_KEY'] = users['creator']['api_key']
+    def setup_app(self, url_base_pathname=None, skip_visit=False,
+                  sharing='private'):
         app = dash.Dash(__name__, url_base_pathname=url_base_pathname)
         app.layout = html.Div([
             dcc.Input(
@@ -28,24 +26,35 @@ class Tests(IntegrationTests):
             ),
             html.Div(id='output')
         ])
+
         @app.callback(Output('output', 'children'), [Input('input', 'value')])
         def update_output(new_value):
             return new_value
 
-        plotly_auth.PlotlyAuth(
+        auth = plotly_auth.PlotlyAuth(
             app,
             'integration-test',
-            'private',
+            sharing,
             (
                 'http://localhost:8050{}'.format(url_base_pathname)
                 if url_base_pathname else oauth_urls
             )
         )
 
-        self.startServer(app)
+        self.startServer(app, skip_visit=skip_visit)
+
+        return app, auth
+
+    def plotly_auth_login_flow(self, username, pw,
+                               url_base_pathname=None, oauth_urls=None):
+        os.environ['PLOTLY_USERNAME'] = users['creator']['username']
+        os.environ['PLOTLY_API_KEY'] = users['creator']['api_key']
+
+        app, _ = self.setup_app(url_base_pathname)
 
         try:
-            el = self.wait_for_element_by_css_selector('#dash-auth--login__container')
+            el = self.wait_for_element_by_css_selector(
+                '#dash-auth--login__container')
         except Exception as e:
             print(self.wait_for_element_by_tag_name('body').html)
             raise e
@@ -67,7 +76,8 @@ class Tests(IntegrationTests):
         # wait for oauth screen
         self.wait_for_element_by_css_selector('input[name="allow"]').click()
 
-    def private_app_unauthorized(self, url_base_pathname=None, oauth_urls=None):
+    def private_app_unauthorized(self, url_base_pathname=None,
+                                 oauth_urls=None):
         self.plotly_auth_login_flow(
             users['viewer']['username'],
             users['viewer']['pw'],
@@ -108,7 +118,6 @@ class Tests(IntegrationTests):
     def test_private_app_unauthorized_route(self):
         self.private_app_unauthorized('/my-app/')
 
-
     def test_private_app_authorized_index_multiple_oauth_urls(self):
         self.private_app_authorized(
             '/',
@@ -117,3 +126,44 @@ class Tests(IntegrationTests):
                 'http://localhost:8050/'
             ]
         )
+
+    def secret_app_unauthorized(self, url_base_pathname=None):
+        app, auth = self.setup_app(url_base_pathname, skip_visit=True,
+                                   sharing='secret')
+
+        self.driver.get('http://localhost:8050{}'
+                        '?share_key=bad'.format(url_base_pathname))
+
+        # Should show login screen
+        self.wait_for_element_by_css_selector(
+            '#dash-auth--login__container')
+
+    def secret_app_authorized(self, url_base_pathname=None):
+        app, auth = self.setup_app(url_base_pathname, skip_visit=True,
+                                   sharing='secret')
+
+        key = auth._dash_app['share_key']
+
+        self.driver.get('http://localhost:8050{}'
+                        '?share_key={}'.format(url_base_pathname, key))
+
+        try:
+            el = self.wait_for_element_by_css_selector('#output')
+        except:
+            print((self.driver.find_element_by_tag_name('body').html))
+
+        # Note: this will only work if both the initial and subsequent
+        # requests (e.g. to get the layoout) succeed.
+        self.assertEqual(el.text, 'initial value')
+
+    def test_secret_app_unauthorized_index(self):
+        self.secret_app_unauthorized('/')
+
+    def test_secret_app_unauthorized_route(self):
+        self.secret_app_unauthorized('/my-app/')
+
+    def test_secret_app_authorized_index(self):
+        self.secret_app_authorized('/')
+
+    def test_secret_app_authorized_route(self):
+        self.secret_app_authorized('/my-app/')
