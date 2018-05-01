@@ -3,6 +3,7 @@ import flask
 import json
 from hmac import compare_digest
 from six import iteritems
+import os
 
 from .oauth import OAuthBase
 
@@ -217,6 +218,7 @@ def create_or_overwrite_oauth_app(app_url, name):
             **request_data
         )
     else:
+        print('CREATE DASH APP, pid: {}'.format(os.getpid()))
         res = api_requests.post('/v2/oauth-apps', **request_data)
 
     try:
