@@ -206,11 +206,7 @@ def create_or_overwrite_oauth_app(app_url, name):
         print(res.content)
         raise e
     apps = res.json()
-    if len(apps) > 1:
-        raise Exception(
-            'There are more than one oauth apps with the name {}.'.format(name)
-        )
-    elif len(apps) == 1:
+    if apps:
         oauth_app_id = apps[0]['id']
         res = api_requests.patch(
             '/v2/oauth-apps/{}'.format(oauth_app_id),
