@@ -184,6 +184,7 @@ def create_or_overwrite_oauth_app(app_url, name):
             '{}/_oauth-redirect'.format(url.strip('/'))
             for url in app_url
         ])
+
     request_data = {
         'data': json.dumps({
             'name': name,
@@ -193,9 +194,19 @@ def create_or_overwrite_oauth_app(app_url, name):
         })
     }
 
-    # Check if app already exists.
-    # If it does, then update it.
-    # If it doesn't, then create a new one.
+    res = api_requests.post('/v2/oauth-apps/update_or_create', **request_data)
+
+    if res.status_code != 404:
+        try:
+            res.raise_for_status()
+        except Exception as e:
+            print(res.content)
+            raise e
+
+        return res.json()
+
+    # The update_or_create endpoint does not exist; fall back to the old
+    # behaviour (which is racy and may result in 2 applications being created)
     res = api_requests.get(
         '/v2/oauth-apps/lookup',
         params={'name': name},
