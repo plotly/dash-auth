@@ -2,6 +2,9 @@ build/
 vv
 *egg-info
 *pyc
+.python-version
+.tox/
+venv/
 
 node_modules
 npm-debug.log
