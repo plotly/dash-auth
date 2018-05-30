@@ -12,7 +12,7 @@ import os
 
 from .utils import assert_clean_console, switch_windows
 
-TIMEOUT = 60
+TIMEOUT = 120
 
 
 class IntegrationTests(unittest.TestCase):
