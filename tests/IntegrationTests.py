@@ -12,30 +12,36 @@ import os
 
 from .utils import assert_clean_console, switch_windows
 
-TIMEOUT = 60
+TIMEOUT = 120
 
 
 class IntegrationTests(unittest.TestCase):
     def wait_for_element_by_css_selector(self, selector):
         start_time = time.time()
+        latest_exception = None
         while time.time() < start_time + TIMEOUT:
             try:
                 return self.driver.find_element_by_css_selector(selector)
             except Exception as e:
+                latest_exception = e
                 pass
             time.sleep(0.25)
-        raise e
+        if latest_exception:
+            raise latest_exception
 
     def wait_for_text_to_equal(self, selector, assertion_text):
         start_time = time.time()
+        latest_exception = None
         while time.time() < start_time + TIMEOUT:
             el = self.wait_for_element_by_css_selector(selector)
             try:
                 return self.assertEqual(el.text, assertion_text)
             except Exception as e:
+                latest_exception = e
                 pass
             time.sleep(0.25)
-        raise e
+        if latest_exception:
+            raise latest_exception
 
     @classmethod
     def setUpClass(cls):
@@ -64,7 +70,8 @@ class IntegrationTests(unittest.TestCase):
             app.run_server(
                 port=8050,
                 debug=False,
-                processes=2
+                processes=2,
+                threaded=False
             )
 
         # Run on a separate process so that it doesn't block
