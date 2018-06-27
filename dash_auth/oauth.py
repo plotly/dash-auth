@@ -254,7 +254,7 @@ class OAuthBase(Auth):
         response.set_cookie(cookie_name,
                             value='',
                             expires=0,
-                            secure=True if 'https:' in self._app_url else False)
+                            secure='https:' in self._app_url)
 
     def check_view_access(self, oauth_token):
         """Checks the validity of oauth_token."""
@@ -288,9 +288,11 @@ class OAuthBase(Auth):
         """
         username = flask.request.cookies.get(self.USERNAME_COOKIE)
         if username:
+            max_age = self.config['permissions_cache_expiry'] \
+                if validate_max_age else None
             return self._signer.unsign(
                 username,
-                max_age=self.config['permissions_cache_expiry'] if validate_max_age else None)
+                max_age=max_age)
 
     def get_user_data(self):
         """
