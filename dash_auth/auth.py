@@ -43,7 +43,7 @@ class Auth(object):
         pass
 
     @abstractmethod
-    def get_username(self):
+    def get_username(self, validate_max_age=True):
         pass
 
     @abstractmethod

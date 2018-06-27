@@ -150,6 +150,14 @@ class OAuthBase(Auth):
                 max_age=(60 * 60 * 24 * 7),  # 1 week
             )
 
+            username = self.get_username(validate_max_age=False)
+            userdata = self.get_user_data()
+
+            if username:
+                self.set_user_name(username)
+            if userdata:
+                self.set_user_data(userdata)
+
         return response
 
     def auth_wrapper(self, f):
@@ -268,7 +276,7 @@ class OAuthBase(Auth):
 
         return response
 
-    def get_username(self):
+    def get_username(self, validate_max_age=True):
         """
         Retrieve the username from the `dash_user` cookie.
 
@@ -278,7 +286,8 @@ class OAuthBase(Auth):
         username = flask.request.cookies.get(self.USERNAME_COOKIE)
         if username:
             return self._signer.unsign(
-                username, max_age=self.config['permissions_cache_expiry'])
+                username,
+                max_age=self.config['permissions_cache_expiry'] if validate_max_age else None)
 
     def get_user_data(self):
         """
@@ -307,7 +316,7 @@ class OAuthBase(Auth):
                 response,
                 self.USERNAME_COOKIE,
                 self._signer.sign(name),
-                self.config['permissions_cache_expiry'], httponly=True)
+                max_age=None)
             return response
 
     def set_user_data(self, data):
@@ -315,7 +324,7 @@ class OAuthBase(Auth):
         Set meta data for a user to store in a cookie.
 
         :param data: Data to encode and store.
-        :type data: dict
+        :type data: dict, list
         :return:
         """
 
@@ -325,5 +334,5 @@ class OAuthBase(Auth):
                 response,
                 self.USERDATA_COOKIE,
                 self._json_signer.dumps(data),
-                self.config['permissions_cache_expiry'], httponly=True)
+                max_age=None)
             return response
