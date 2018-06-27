@@ -11,6 +11,7 @@ class Auth(object):
         self._overwrite_index()
         self._protect_views()
         self._index_view_name = app.config['routes_pathname_prefix']
+        self._auth_hooks = []
 
     def _overwrite_index(self):
         original_index = self.app.server.view_functions[self._index_view_name]
@@ -25,6 +26,9 @@ class Auth(object):
             if view_name != self._index_view_name:
                 self.app.server.view_functions[view_name] = \
                     self.auth_wrapper(view_method)
+
+    def is_authorized_hook(self, func):
+        self._auth_hooks.append(func)
 
     @abstractmethod
     def is_authorized(self):

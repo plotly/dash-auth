@@ -113,7 +113,10 @@ class OAuthBase(Auth):
 
         oauth_token = flask.request.cookies[self.TOKEN_COOKIE_NAME]
         if not self.access_token_is_valid():
-            return self.check_view_access(oauth_token)
+            hooks = []
+            for hook in self._auth_hooks:
+                hooks.append(hook())
+            return all(hooks) and self.check_view_access(oauth_token)
 
         return True
 
