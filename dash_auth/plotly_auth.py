@@ -89,11 +89,15 @@ class PlotlyAuth(OAuthBase):
         except Exception as e:
             print(res.content)
             raise e
+
+        data = res.json()
         response = flask.Response(
-            json.dumps(res.json()),
+            json.dumps(data),
             mimetype='application/json',
             status=res.status_code
         )
+
+        self.set_user_name(data.get('username'))
 
         self.set_cookie(
             response=response,
