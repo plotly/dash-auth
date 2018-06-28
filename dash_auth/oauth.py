@@ -159,9 +159,8 @@ class OAuthBase(Auth):
             if userdata:
                 self.set_user_data(userdata)
 
-            hooks = []
-            for hook in self._auth_hooks:
-                hooks.append(hook())
+            if not all([x() for x in self._auth_hooks]):
+                return flask.Response(status=403)
 
         return response
 
