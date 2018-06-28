@@ -32,6 +32,7 @@ class OAuthBase(Auth):
         self._app = app
         self._app_url = app_url
         self._oauth_client_id = client_id
+        self._username_cache = {}
 
         if secret_key is None and app.server.secret_key is None:
             raise Exception(dedent('''
@@ -57,7 +58,7 @@ class OAuthBase(Auth):
             '''))
 
         self._signer = itsdangerous.TimestampSigner(secret_key, salt=salt)
-        self._json_signer = itsdangerous.TimedJSONWebSignatureSerializer(
+        self._json_signer = itsdangerous.JSONWebSignatureSerializer(
             secret_key, salt=salt)
 
         app.server.add_url_rule(
@@ -113,10 +114,7 @@ class OAuthBase(Auth):
 
         oauth_token = flask.request.cookies[self.TOKEN_COOKIE_NAME]
         if not self.access_token_is_valid():
-            hooks = []
-            for hook in self._auth_hooks:
-                hooks.append(hook())
-            return all(hooks) and self.check_view_access(oauth_token)
+            return self.check_view_access(oauth_token)
 
         return True
 
@@ -160,6 +158,10 @@ class OAuthBase(Auth):
                 self.set_user_name(username)
             if userdata:
                 self.set_user_data(userdata)
+
+            hooks = []
+            for hook in self._auth_hooks:
+                hooks.append(hook())
 
         return response
 
@@ -286,10 +288,14 @@ class OAuthBase(Auth):
         :return: The stored username if any.
         :rtype: str
         """
+        cached = self._username_cache.get(flask.request.remote_addr)
+        if cached:
+            return cached
         username = flask.request.cookies.get(self.USERNAME_COOKIE)
         if username:
-            max_age = self.config['permissions_cache_expiry'] \
-                if validate_max_age else None
+            max_age = None
+            if validate_max_age:
+                max_age = self.config['permissions_cache_expiry']
             return self._signer.unsign(
                 username,
                 max_age=max_age)
@@ -315,6 +321,8 @@ class OAuthBase(Auth):
         :type name: str
         :return:
         """
+        self._username_cache[flask.request.remote_addr] = name
+
         @flask.after_this_request
         def _set_username(response):
             self.set_cookie(
@@ -322,6 +330,7 @@ class OAuthBase(Auth):
                 self.USERNAME_COOKIE,
                 self._signer.sign(name),
                 max_age=None)
+            del self._username_cache[flask.request.remote_addr]
             return response
 
     def set_user_data(self, data):
