@@ -4,8 +4,20 @@ import json
 import os
 from textwrap import dedent
 import itsdangerous
+import functools
 
 from .auth import Auth
+
+
+def need_request_context(func):
+    @functools.wraps(func)
+    def _wrap(*args, **kwargs):
+        if not flask.has_request_context():
+            raise RuntimeError('`{0}` method needs a flask/dash request'
+                               ' context to run. Make sure to run '
+                               '`{0}` from a callback.'.format(func.__name__))
+        return func(*args, **kwargs)
+    return _wrap
 
 
 class OAuthBase(Auth):
@@ -281,6 +293,7 @@ class OAuthBase(Auth):
 
         return response
 
+    @need_request_context
     def get_username(self, validate_max_age=True):
         """
         Retrieve the username from the `dash_user` cookie.
@@ -299,6 +312,7 @@ class OAuthBase(Auth):
             unsigned = self._signer.unsign(username, max_age=max_age)
             return unsigned.decode('utf-8')
 
+    @need_request_context
     def get_user_data(self):
         """
         Retrieve the user data from `dash_user_data` cookie.
@@ -312,6 +326,7 @@ class OAuthBase(Auth):
             signed = self._json_signer.loads(user_data)
             return signed
 
+    @need_request_context
     def set_user_name(self, name):
         """
         Store the username in the `dash_user` cookie.
@@ -332,6 +347,7 @@ class OAuthBase(Auth):
             del self._username_cache[flask.request.remote_addr]
             return response
 
+    @need_request_context
     def set_user_data(self, data):
         """
         Set meta data for a user to store in a cookie.
