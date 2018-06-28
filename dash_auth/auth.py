@@ -45,19 +45,3 @@ class Auth(object):
     @abstractmethod
     def login_request(self):
         pass
-
-    @abstractmethod
-    def get_username(self, validate_max_age=True):
-        pass
-
-    @abstractmethod
-    def get_user_data(self):
-        pass
-
-    @abstractmethod
-    def set_user_name(self, name):
-        pass
-
-    @abstractmethod
-    def set_user_data(self, data):
-        pass
