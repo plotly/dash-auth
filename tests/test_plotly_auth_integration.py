@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from dash.dependencies import Input, Output, State, Event
 import dash
 import dash_html_components as html
@@ -268,12 +269,8 @@ class Tests(IntegrationTests):
         self._login_flow(users['creator']['username'], users['creator']['pw'])
         switch_windows(self.driver)
 
-        time.sleep(2)
-        el = self.wait_for_element_by_css_selector('#username')
-        self.assertEqual('dash-test-user', el.text)
+        self.wait_for_text_to_equal('#username', 'dash-test-user')
 
         btn = self.wait_for_element_by_css_selector('#btn')
         btn.click()
-        time.sleep(2)
-        el = self.wait_for_element_by_css_selector('#authorized')
-        self.assertEqual('authorized', el.text)
+        self.wait_for_text_to_equal('#authorized', 'authorized')

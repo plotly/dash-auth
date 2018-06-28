@@ -296,9 +296,8 @@ class OAuthBase(Auth):
             max_age = None
             if validate_max_age:
                 max_age = self.config['permissions_cache_expiry']
-            return self._signer.unsign(
-                username,
-                max_age=max_age)
+            unsigned = self._signer.unsign(username, max_age=max_age)
+            return unsigned.decode('utf-8')
 
     def get_user_data(self):
         """
