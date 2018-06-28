@@ -22,8 +22,8 @@ class OAuthBase(Auth):
             app_url,
             client_id=None,
             secret_key=None,
-            salt=None):
-        Auth.__init__(self, app)
+            salt=None, authorization_hook=None):
+        Auth.__init__(self, app, authorization_hook)
 
         self.config = {
             'permissions_cache_expiry': 5 * 60,

@@ -19,7 +19,8 @@ class PlotlyAuth(OAuthBase):
     AUTH_COOKIE_NAME = 'plotly_auth'
     TOKEN_COOKIE_NAME = 'plotly_oauth_token'
 
-    def __init__(self, app, app_name, sharing, app_url):
+    def __init__(self, app, app_name, sharing, app_url,
+                 authorization_hook=None):
         """
         Provides Plotly Authentication login screen to a Dash app.
 
@@ -40,7 +41,8 @@ class PlotlyAuth(OAuthBase):
             app,
             app_url,
             secret_key=api_requests.credential('plotly_api_key'),
-            salt=app_name
+            salt=app_name,
+            authorization_hook=authorization_hook
         )
 
         self._dash_app = create_or_overwrite_dash_app(
