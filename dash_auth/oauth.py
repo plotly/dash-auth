@@ -26,7 +26,8 @@ class OAuthBase(Auth):
         Auth.__init__(self, app)
 
         self.config = {
-            'permissions_cache_expiry': 5 * 60
+            'permissions_cache_expiry': 5 * 60,
+            'user_cookies_expiry': 604800,  # one week.
         }
 
         self._app = app
@@ -328,7 +329,7 @@ class OAuthBase(Auth):
                 response,
                 self.USERNAME_COOKIE,
                 self._signer.sign(name),
-                max_age=None)
+                max_age=self.config['user_cookies_expiry'])
             del self._username_cache[flask.request.remote_addr]
             return response
 
@@ -347,5 +348,5 @@ class OAuthBase(Auth):
                 response,
                 self.USERDATA_COOKIE,
                 self._json_signer.dumps(data),
-                max_age=None)
+                max_age=self.config['user_cookies_expiry'])
             return response
