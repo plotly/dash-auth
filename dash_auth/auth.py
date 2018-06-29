@@ -29,6 +29,7 @@ class Auth(object):
 
     def is_authorized_hook(self, func):
         self._auth_hooks.append(func)
+        return func
 
     @abstractmethod
     def is_authorized(self):
