@@ -172,9 +172,6 @@ class OAuthBase(Auth):
             if userdata:
                 self.set_user_data(userdata)
 
-            if not all([x() for x in self._auth_hooks]):
-                return flask.Response(status=403)
-
         return response
 
     def auth_wrapper(self, f):

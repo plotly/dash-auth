@@ -101,6 +101,16 @@ class PlotlyAuth(OAuthBase):
 
         self.set_user_name(data.get('username'))
 
+        hooks = []
+        for hook in self._auth_hooks:
+            hooks.append(hook(data))
+
+        if not all(hooks):
+            @flask.after_this_request
+            def _rep(rep):
+                self.clear_cookies(rep)
+                return rep
+
         self.set_cookie(
             response=response,
             name='plotly_oauth_token',

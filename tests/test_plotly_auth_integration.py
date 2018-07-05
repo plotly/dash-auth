@@ -248,7 +248,7 @@ class Tests(IntegrationTests):
             return username
 
         @auth.is_authorized_hook
-        def _is_authorized():
+        def _is_authorized(_):
             perms = {'click_button': True}
             auth.set_user_data(perms)
             return True
