@@ -117,7 +117,7 @@ def _create_method(method_name):
 
         request_method = getattr(requests, method_name)
 
-        VALID_4XX_STATUS_CODES = [404]
+        VALID_4XX_STATUS_CODES = [404, 405]
 
         def check_request_before_returning(url, **kwargs):
             resp = request_method(url, **kwargs)

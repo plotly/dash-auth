@@ -196,7 +196,7 @@ def create_or_overwrite_oauth_app(app_url, name):
 
     res = api_requests.post('/v2/oauth-apps/update_or_create', **request_data)
 
-    if res.status_code != 404:
+    if res.status_code != 405:
         try:
             res.raise_for_status()
         except Exception as e:
