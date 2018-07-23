@@ -4,6 +4,10 @@ import json
 from hmac import compare_digest
 from six import iteritems
 
+import dash_html_components as html
+import dash_core_components as dcc
+from dash.dependencies import Output, Input
+
 from .oauth import OAuthBase
 
 from . import api_requests
@@ -40,9 +44,15 @@ class PlotlyAuth(OAuthBase):
         self._dash_app = create_or_overwrite_dash_app(
             app_name, sharing, app_url
         )
-        self._oauth_client_id = create_or_overwrite_oauth_app(
+        oauth_app = create_or_overwrite_oauth_app(
             app_url, app_name
-        )['client_id']
+        )
+        self._client_type = oauth_app['client_type']
+        if self._client_type == 'Confidential':
+            self._client_secret = oauth_app['client_secret']
+        else:
+            self._client_secret = ''
+        self._oauth_client_id = oauth_app['client_id']
         self._sharing = sharing
 
     def html(self, script):
@@ -122,6 +132,35 @@ class PlotlyAuth(OAuthBase):
 
     def check_view_access(self, oauth_token):
         return check_view_access(oauth_token, self._dash_app['fid'])
+
+    def create_logout_btn(self,
+                          id='logout-btn',
+                          redirect_to='https://plot.ly',
+                          label='Logout',
+                          **button_props):
+
+        btn = html.Div([
+            html.Button(label, id=id, **button_props),
+            dcc.Location(id='loc'),
+        ])
+
+        # setup the callback only after the btn has been inserted in the layout
+        @self.app.server.before_first_request
+        def _log_out_callback():
+
+            @self.app.callback(Output('loc', 'href'), [Input(id, 'n_clicks')])
+            def _on_log_out(n_clicks):
+                if not n_clicks:
+                    return
+
+                @flask.after_this_request
+                def _after(rep):
+                    self.clear_cookies(rep)
+                    return rep
+
+                return redirect_to
+
+        return btn
 
 
 def create_or_overwrite_dash_app(filename, sharing, app_url):
