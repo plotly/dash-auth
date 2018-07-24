@@ -52,6 +52,9 @@ class Tests(IntegrationTests):
 
         app, _ = self.setup_app(url_base_pathname)
 
+        self._login_flow(username, pw)
+
+    def _login_flow(self, username, pw):
         try:
             el = self.wait_for_element_by_css_selector(
                 '#dash-auth--login__container')
@@ -168,3 +171,53 @@ class Tests(IntegrationTests):
 
     def test_secret_app_authorized_route(self):
         self.secret_app_authorized('/my-app/')
+
+    def test_logout(self):
+        os.environ['PLOTLY_USERNAME'] = users['creator']['username']
+        os.environ['PLOTLY_API_KEY'] = users['creator']['api_key']
+
+        app = dash.Dash()
+        auth = plotly_auth.PlotlyAuth(
+            app, 'integration-test', 'public',
+            'http://localhost:8050/')
+
+        logout_label = 'Press to logout'
+        redirect = 'https://www.google.com/'
+
+        btn_style = {
+            'backgroundColor': 'red',
+            'padding': '16px',
+            'borderRadius': '8px',
+            'border': 'none'
+        }
+
+        app.layout = html.Div([
+            html.Div('content', id='content'),
+            auth.create_logout_button(
+                id='logout-btn',
+                label=logout_label,
+                redirect_to=redirect,
+                style=btn_style)
+        ], id='container')
+
+        self.startServer(app)
+
+        username = users['viewer']['username']
+        pw = users['viewer']['pw']
+
+        self._login_flow(username, pw)
+
+        switch_windows(self.driver)
+        time.sleep(1)
+
+        btn = self.wait_for_element_by_css_selector('#logout-btn')
+
+        padding = btn.value_of_css_property('padding')
+        self.assertEqual(btn_style['padding'], padding)
+
+        self.assertEqual(logout_label, btn.text)
+        btn.click()
+        time.sleep(1)
+
+        self.assertEqual(redirect, self.driver.current_url)
+
