@@ -1,4 +1,7 @@
 from __future__ import absolute_import
+
+import os
+
 from abc import ABCMeta, abstractmethod
 from six import iteritems, add_metaclass
 
@@ -10,7 +13,9 @@ class Auth(object):
         self._index_view_name = app.config['routes_pathname_prefix']
         self._overwrite_index()
         self._protect_views()
-        self._index_view_name = app.config['routes_pathname_prefix']
+        app_name = os.getenv('DASH_APP_NAME')
+        if app_name:
+            app.config['requests_pathname_prefix'] = '/{}/'.format(app_name)
 
     def _overwrite_index(self):
         original_index = self.app.server.view_functions[self._index_view_name]
