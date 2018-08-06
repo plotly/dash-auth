@@ -18,6 +18,8 @@ setup(
         'flask-seasurf',
         'plotly',
         'dash>=0.18.3',
+        'dash_html_components',
+        'dash_core_components',
         'retrying',
         'itsdangerous'
     ],

@@ -1,8 +1,14 @@
 from __future__ import absolute_import
 import flask
 import json
+import requests
+
 from hmac import compare_digest
 from six import iteritems
+
+import dash_html_components as html
+import dash_core_components as dcc
+from dash.dependencies import Output, Input
 
 from .oauth import OAuthBase
 
@@ -40,9 +46,10 @@ class PlotlyAuth(OAuthBase):
         self._dash_app = create_or_overwrite_dash_app(
             app_name, sharing, app_url
         )
-        self._oauth_client_id = create_or_overwrite_oauth_app(
+        oauth_app = create_or_overwrite_oauth_app(
             app_url, app_name
-        )['client_id']
+        )
+        self._oauth_client_id = oauth_app['client_id']
         self._sharing = sharing
 
     def html(self, script):
@@ -122,6 +129,56 @@ class PlotlyAuth(OAuthBase):
 
     def check_view_access(self, oauth_token):
         return check_view_access(oauth_token, self._dash_app['fid'])
+
+    def logout(self):
+        token = flask.request.cookies.get('plotly_oauth_token')
+        data = {
+            'token': token,
+            'client_id': self._oauth_client_id,
+        }
+        invalidation_resp = requests.post(
+            '{}{}'.format(api_requests.config('plotly_domain'),
+                          '/o/revoke_token/'),
+            data=data)
+
+        invalidation_resp.raise_for_status()
+
+        @flask.after_this_request
+        def _after(rep):
+            self.clear_cookies(rep)
+            return rep
+
+    def create_logout_button(self,
+                             id='logout-btn',
+                             redirect_to='',
+                             label='Logout',
+                             **button_props):
+        location_id = '{}-{}'.format(id, 'loc')
+
+        btn = html.Div([
+            html.Button(label, id=id, **button_props),
+            dcc.Location(id=location_id),
+        ])
+
+        # setup the callback only after the btn has been inserted in the layout
+        @self.app.server.before_first_request
+        def _log_out_callback():
+
+            @self.app.callback(Output(location_id, 'href'),
+                               [Input(id, 'n_clicks')])
+            def _on_log_out(n_clicks):
+                if not n_clicks:
+                    return
+
+                redirect = redirect_to or '{}{}'.format(
+                    flask.request.url_root,
+                    self.app.config.routes_pathname_prefix.lstrip('/'))
+
+                self.logout()
+
+                return redirect
+
+        return btn
 
 
 def create_or_overwrite_dash_app(filename, sharing, app_url):
