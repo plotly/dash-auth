@@ -21,7 +21,7 @@ setup(
         'dash_html_components',
         'dash_core_components',
         'retrying',
-        'itsdangerous'
+        'itsdangerous>=0.18'
     ],
     include_package_data=True,
     url='https://plot.ly/dash',

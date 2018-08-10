@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from dash.dependencies import Input, Output, State, Event
 import dash
 import dash_html_components as html
@@ -221,3 +222,55 @@ class Tests(IntegrationTests):
 
         self.assertEqual(redirect, self.driver.current_url)
 
+
+    def test_user_cookies(self):
+        os.environ['PLOTLY_USERNAME'] = users['creator']['username']
+        os.environ['PLOTLY_API_KEY'] = users['creator']['api_key']
+
+        app = dash.Dash()
+        auth = plotly_auth.PlotlyAuth(
+            app,
+            'integration-test',
+            'private',
+            'http://localhost:8050/'
+        )
+
+        app.layout = html.Div([
+            html.Div(id='username'),
+            html.Button('click me', id='btn'),
+            html.Div(id='authorized')],
+            id='container')
+
+        @app.callback(Output('username', 'children'),
+                      [Input('username', 'id')])
+        def _give_name(_):
+            username = auth.get_username()
+            return username
+
+        @auth.is_authorized_hook
+        def _is_authorized(_):
+            perms = {'click_button': True}
+            auth.set_user_data(perms)
+            return True
+
+        @app.callback(Output('authorized', 'children'),
+                      [Input('btn', 'n_clicks')])
+        def _check_perms(n_clicks):
+            if n_clicks:
+                perms = auth.get_user_data()
+                perm_click_button = perms.get('click_button')
+                if not perm_click_button:
+                    return 'unauthorized'
+                else:
+                    return 'authorized'
+
+        self.startServer(app)
+
+        self._login_flow(users['creator']['username'], users['creator']['pw'])
+        switch_windows(self.driver)
+
+        self.wait_for_text_to_equal('#username', 'dash-test-user')
+
+        btn = self.wait_for_element_by_css_selector('#btn')
+        btn.click()
+        self.wait_for_text_to_equal('#authorized', 'authorized')

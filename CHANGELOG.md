@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2018-08-10
+### Added
+- Added `get_username` to `PlotlyAuth`, signed cookie stored in `USERNAME_COOKIE`.
+- Added `get_user_data` to `PlotlyAuth`, custom cookie that can contains any json data for the user.
+- Added `logout` to `PlotlyAuth`, helper method to remove the auth cookies and invalidate the token.
+- Added `create_logout_button` which create a dash logout button that will logout on click to be inserted in the layout.
+
 ## [1.0.2] - 2018-05-31
 ### Fixed
 - Use update_or_create for OAuth app creation when available, to avoid

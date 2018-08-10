@@ -19,7 +19,8 @@ class PlotlyAuth(OAuthBase):
     AUTH_COOKIE_NAME = 'plotly_auth'
     TOKEN_COOKIE_NAME = 'plotly_oauth_token'
 
-    def __init__(self, app, app_name, sharing, app_url):
+    def __init__(self, app, app_name, sharing, app_url,
+                 authorization_hook=None):
         """
         Provides Plotly Authentication login screen to a Dash app.
 
@@ -40,7 +41,8 @@ class PlotlyAuth(OAuthBase):
             app,
             app_url,
             secret_key=api_requests.credential('plotly_api_key'),
-            salt=app_name
+            salt=app_name,
+            authorization_hook=authorization_hook
         )
 
         self._dash_app = create_or_overwrite_dash_app(
@@ -89,11 +91,25 @@ class PlotlyAuth(OAuthBase):
         except Exception as e:
             print(res.content)
             raise e
+
+        data = res.json()
         response = flask.Response(
-            json.dumps(res.json()),
+            json.dumps(data),
             mimetype='application/json',
             status=res.status_code
         )
+
+        self.set_user_name(data.get('username'))
+
+        hooks = []
+        for hook in self._auth_hooks:
+            hooks.append(hook(data))
+
+        if not all(hooks):
+            @flask.after_this_request
+            def _rep(rep):
+                self.clear_cookies(rep)
+                return rep
 
         self.set_cookie(
             response=response,
@@ -253,7 +269,7 @@ def create_or_overwrite_oauth_app(app_url, name):
 
     res = api_requests.post('/v2/oauth-apps/update_or_create', **request_data)
 
-    if res.status_code != 404:
+    if res.status_code != 405:
         try:
             res.raise_for_status()
         except Exception as e:
