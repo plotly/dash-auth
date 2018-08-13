@@ -148,6 +148,7 @@ class OAuthBase(Auth):
         """
         try:
             # Python 2
+            # noinspection PyUnresolvedReferences
             if isinstance(response, basestring):  # noqa: F821
                 response = flask.Response(response)
         except Exception:
@@ -164,13 +165,14 @@ class OAuthBase(Auth):
                 max_age=(60 * 60 * 24 * 7),  # 1 week
             )
 
-            username = self.get_username(validate_max_age=False)
-            userdata = self.get_user_data()
+            username = self.get_username(
+                validate_max_age=False, response=response)
+            userdata = self.get_user_data(response=response)
 
             if username:
-                self.set_user_name(username)
+                self.set_user_name(username, response)
             if userdata:
-                self.set_user_data(userdata)
+                self.set_user_data(userdata, response)
 
         return response
 
@@ -267,6 +269,19 @@ class OAuthBase(Auth):
                             expires=0,
                             secure='https:' in self._app_url)
 
+    def _unsign(self, s, max_age=None, is_json=False, response=None):
+        try:
+            if is_json:
+                return self._json_signer.loads(s)
+            return self._signer.unsign(s, max_age=max_age)
+        except itsdangerous.BadSignature:
+            if response:
+                self.clear_cookies(response)
+            else:
+                @flask.after_this_request
+                def _clear(rep):
+                    self.clear_cookies(rep)
+
     def check_view_access(self, oauth_token):
         """Checks the validity of oauth_token."""
         raise NotImplementedError()
@@ -291,7 +306,7 @@ class OAuthBase(Auth):
         return response
 
     @need_request_context
-    def get_username(self, validate_max_age=True):
+    def get_username(self, validate_max_age=True, response=None):
         """
         Retrieve the username from the `dash_user` cookie.
 
@@ -306,11 +321,12 @@ class OAuthBase(Auth):
             max_age = None
             if validate_max_age:
                 max_age = self.config['permissions_cache_expiry']
-            unsigned = self._signer.unsign(username, max_age=max_age)
+            unsigned = self._unsign(username,
+                                    max_age=max_age, response=response)
             return unsigned.decode('utf-8')
 
     @need_request_context
-    def get_user_data(self):
+    def get_user_data(self, response=None):
         """
         Retrieve the user data from `dash_user_data` cookie.
 
@@ -320,45 +336,61 @@ class OAuthBase(Auth):
 
         user_data = flask.request.cookies.get(self.USERDATA_COOKIE)
         if user_data:
-            signed = self._json_signer.loads(user_data)
+            signed = self._unsign(user_data, is_json=True, response=response)
             return signed
 
     @need_request_context
-    def set_user_name(self, name):
+    def set_user_name(self, name, response=None):
         """
         Store the username in the `dash_user` cookie.
 
         :param name: the name of the user.
         :type name: str
+        :param response:
+        :type response: flask.Response
         :return:
         """
         self._username_cache[flask.request.remote_addr] = name
 
-        @flask.after_this_request
-        def _set_username(response):
+        if not response:
+            @flask.after_this_request
+            def _set_username(rep):
+                self.set_cookie(
+                    rep,
+                    self.USERNAME_COOKIE,
+                    self._signer.sign(name),
+                    max_age=self.config['user_cookies_expiry'])
+                del self._username_cache[flask.request.remote_addr]
+                return rep
+        else:
             self.set_cookie(
-                response,
-                self.USERNAME_COOKIE,
-                self._signer.sign(name),
+                response, self.USERNAME_COOKIE, self._signer.sign(name),
                 max_age=self.config['user_cookies_expiry'])
-            del self._username_cache[flask.request.remote_addr]
-            return response
 
     @need_request_context
-    def set_user_data(self, data):
+    def set_user_data(self, data, response=None):
         """
         Set meta data for a user to store in a cookie.
 
         :param data: Data to encode and store.
         :type data: dict, list
+        :param response:
+        :type response: flask.Response
         :return:
         """
 
-        @flask.after_this_request
-        def _set_data(response):
+        if not response:
+            @flask.after_this_request
+            def _set_data(rep):
+                self.set_cookie(
+                    rep,
+                    self.USERDATA_COOKIE,
+                    self._json_signer.dumps(data),
+                    max_age=self.config['user_cookies_expiry'])
+                return rep
+        else:
             self.set_cookie(
                 response,
                 self.USERDATA_COOKIE,
                 self._json_signer.dumps(data),
                 max_age=self.config['user_cookies_expiry'])
-            return response
