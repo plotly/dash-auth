@@ -32,6 +32,7 @@ class Tests(IntegrationTests):
         def update_output(new_value):
             return new_value
 
+        # noinspection PyUnresolvedReferences
         auth = plotly_auth.PlotlyAuth(
             app,
             'integration-test',
@@ -221,7 +222,6 @@ class Tests(IntegrationTests):
         time.sleep(1)
 
         self.assertEqual(redirect, self.driver.current_url)
-
 
     def test_user_cookies(self):
         os.environ['PLOTLY_USERNAME'] = users['creator']['username']
