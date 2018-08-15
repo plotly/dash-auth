@@ -243,7 +243,7 @@ class OAuthBase(Auth):
             value=value,
             max_age=max_age,
             secure=True if 'https:' in self._app_url else False,
-            path=self._app.config['requests_pathname_prefix'],
+            path=self._app.config['requests_pathname_prefix'].rstrip('/'),
             httponly=httponly,
             samesite=samesite
         )
