@@ -61,7 +61,7 @@ class Tests(IntegrationTests):
             el = self.wait_for_element_by_css_selector(
                 '#dash-auth--login__container')
         except Exception as e:
-            print(self.wait_for_element_by_tag_name('body').html)
+            print(self.wait_for_element_by_css_selector('body').html)
             raise e
 
         self.wait_for_element_by_css_selector(
