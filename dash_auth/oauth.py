@@ -6,6 +6,8 @@ from textwrap import dedent
 import itsdangerous
 import functools
 
+from ua_parser import user_agent_parser
+
 from .auth import Auth
 
 
@@ -238,11 +240,25 @@ class OAuthBase(Auth):
 
     def set_cookie(self, response, name, value, max_age,
                    httponly=True, samesite='Strict'):
+
+        secure = True if 'https:' in self._app_url else False
+
+        is_http = flask.request.environ.get(
+            'wsgi.url_scheme',
+            flask.request.environ.get('HTTP_X_FORWARDED_PROTO', 'http')
+        ) == 'http'
+
+        ua = user_agent_parser.ParseUserAgent(
+            flask.request.environ.get('HTTP_USER_AGENT', ''))
+
+        if ua.get('family') == 'Electron' and is_http:
+            secure = False
+
         response.set_cookie(
             name,
             value=value,
             max_age=max_age,
-            secure=True if 'https:' in self._app_url else False,
+            secure=secure,
             path=self._app.config['requests_pathname_prefix'].rstrip('/'),
             httponly=httponly,
             samesite=samesite

@@ -21,7 +21,8 @@ setup(
         'dash_html_components',
         'dash_core_components',
         'retrying',
-        'itsdangerous>=0.18'
+        'itsdangerous>=0.18',
+        'ua_parser'
     ],
     include_package_data=True,
     url='https://plot.ly/dash',
