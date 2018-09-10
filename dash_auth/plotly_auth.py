@@ -1,4 +1,7 @@
 from __future__ import absolute_import
+
+import os
+
 import flask
 import json
 import requests
@@ -155,7 +158,7 @@ class PlotlyAuth(OAuthBase):
         invalidation_resp = requests.post(
             '{}{}'.format(api_requests.config('plotly_domain'),
                           '/o/revoke_token/'),
-            verify=api_requests.config('PLOTLY_SSL_VERIFICATION'),
+            verify='DASH_STREAMBED_DIRECT_IP' not in os.environ,
             data=data)
 
         invalidation_resp.raise_for_status()
