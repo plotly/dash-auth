@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 import os
+import time
 
 import flask
 import json
@@ -190,9 +191,12 @@ class PlotlyAuth(OAuthBase):
                 if not n_clicks:
                     return
 
-                redirect = redirect_to or '{}{}'.format(
-                    flask.request.url_root,
-                    self.app.config.routes_pathname_prefix.lstrip('/'))
+                app_url = self._app_url[0] if \
+                    isinstance(self._app_url, (list, tuple)) else self._app_url
+
+                redirect = redirect_to or '{}?t={}'.format(
+                    app_url,
+                    int(time.time()))
 
                 self.logout()
 
