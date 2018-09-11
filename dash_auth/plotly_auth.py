@@ -156,10 +156,14 @@ class PlotlyAuth(OAuthBase):
             'token': token,
             'client_id': self._oauth_client_id,
         }
+
+        streambed_ip = os.environ.get('DASH_STREAMBED_DIRECT_IP')
         invalidation_resp = requests.post(
-            '{}{}'.format(api_requests.config('plotly_domain'),
+            '{}{}'.format('https://{}'.format(streambed_ip)
+                          if streambed_ip
+                          else api_requests.config('plotly_domain'),
                           '/o/revoke_token/'),
-            verify='DASH_STREAMBED_DIRECT_IP' not in os.environ,
+            verify=False if streambed_ip else True,
             data=data)
 
         invalidation_resp.raise_for_status()
