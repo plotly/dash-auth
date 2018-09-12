@@ -2,6 +2,7 @@ dash_core_components
 dash_html_components
 dash_renderer
 dash>=0.18.3
+ua_parser
 selenium
 mock
 tox
