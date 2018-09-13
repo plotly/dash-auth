@@ -283,6 +283,8 @@ class OAuthBase(Auth):
         response.set_cookie(cookie_name,
                             value='',
                             expires=0,
+                            path=self._app.config['requests_pathname_prefix']
+                            .rstrip('/'),
                             secure='https:' in self._app_url)
 
     def _unsign(self, s, max_age=None, is_json=False, response=None):

@@ -1,4 +1,8 @@
 from __future__ import absolute_import
+
+import os
+import time
+
 import flask
 import json
 import requests
@@ -152,9 +156,14 @@ class PlotlyAuth(OAuthBase):
             'token': token,
             'client_id': self._oauth_client_id,
         }
+
+        streambed_ip = os.environ.get('DASH_STREAMBED_DIRECT_IP')
         invalidation_resp = requests.post(
-            '{}{}'.format(api_requests.config('plotly_domain'),
+            '{}{}'.format('https://{}'.format(streambed_ip)
+                          if streambed_ip
+                          else api_requests.config('plotly_domain'),
                           '/o/revoke_token/'),
+            verify=False if streambed_ip else True,
             data=data)
 
         invalidation_resp.raise_for_status()
@@ -186,9 +195,12 @@ class PlotlyAuth(OAuthBase):
                 if not n_clicks:
                     return
 
-                redirect = redirect_to or '{}{}'.format(
-                    flask.request.url_root,
-                    self.app.config.routes_pathname_prefix.lstrip('/'))
+                app_url = self._app_url[0] if \
+                    isinstance(self._app_url, (list, tuple)) else self._app_url
+
+                redirect = redirect_to or '{}?t={}'.format(
+                    app_url,
+                    int(time.time()))
 
                 self.logout()
 

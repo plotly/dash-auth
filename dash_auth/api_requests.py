@@ -40,7 +40,7 @@ def config(key):
     elif key.upper() in os.environ:
         value = os.environ[key.upper()]
     else:
-        value = plotly.tools.get_config_file()[key]
+        value = plotly.tools.get_config_file().get(key)
 
     # Handle PLOTLY_SSL_VERIFICATION which is True or False but a
     # string in environ

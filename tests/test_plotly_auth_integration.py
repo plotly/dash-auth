@@ -61,7 +61,7 @@ class Tests(IntegrationTests):
             el = self.wait_for_element_by_css_selector(
                 '#dash-auth--login__container')
         except Exception as e:
-            print(self.wait_for_element_by_tag_name('body').html)
+            print(self.wait_for_element_by_css_selector('body').html)
             raise e
 
         self.wait_for_element_by_css_selector(
@@ -181,10 +181,9 @@ class Tests(IntegrationTests):
         app = dash.Dash()
         auth = plotly_auth.PlotlyAuth(
             app, 'integration-test', 'public',
-            'http://localhost:8050/')
+            ['http://localhost:8050/', 'http://127.0.0.1:8050/'])
 
         logout_label = 'Press to logout'
-        redirect = 'https://www.google.com/'
 
         btn_style = {
             'backgroundColor': 'red',
@@ -198,7 +197,6 @@ class Tests(IntegrationTests):
             auth.create_logout_button(
                 id='logout-btn',
                 label=logout_label,
-                redirect_to=redirect,
                 style=btn_style)
         ], id='container')
 
@@ -221,7 +219,7 @@ class Tests(IntegrationTests):
         btn.click()
         time.sleep(1)
 
-        self.assertEqual(redirect, self.driver.current_url)
+        self.assertTrue(auth._app_url[0] in self.driver.current_url)
 
     def test_user_cookies(self):
         os.environ['PLOTLY_USERNAME'] = users['creator']['username']
