@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.1.4] - 2018-09-11
+### Fixed
+- Token invalidation from self signed on-prem. [#56](https://github.com/plotly/dash-auth/pull/56)
+- Logout button redirect to app url. [#56](https://github.com/plotly/dash-auth/pull/56)
+- Cookie clear use `requests_pathname_prefix`. [#56](https://github.com/plotly/dash-auth/pull/56)
+
 ## [1.1.3] - 2018-09-12
 ### Fixed
 - Detect requests coming from orca pdf generation and disable unsupported secure cookies. [#60](https://github.com/plotly/dash-auth/pull/60)
