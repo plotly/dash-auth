@@ -87,7 +87,7 @@ class PlotlyAuth(OAuthBase):
     def login_api(self):
         oauth_token = flask.request.get_json()['access_token']
         res = api_requests.get(
-            '/v2/users/current',
+            '/v2/users/current?kerberos=1',
             headers={'Authorization': 'Bearer {}'.format(oauth_token)},
         )
         try:
