@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 
+import base64
+import datetime
 import os
 import time
 
@@ -149,6 +151,21 @@ class PlotlyAuth(OAuthBase):
 
     def check_view_access(self, oauth_token):
         return check_view_access(oauth_token, self._dash_app['fid'])
+
+    def get_kerberos_ticket_cache(self):
+        token = flask.request.cookies.get('plotly_oauth_token')
+
+        res = api_requests.get(
+            '/v2/users/current?kerberos=1',
+            headers={'Authorization': 'Bearer {}'.format(token)},
+        )
+
+        expiry_str = res.json()['kerberos_ticket_expiry']
+        expiry = datetime.datetime.strptime(expiry_str, '%Y-%m-%dT%H:%M:%SZ')
+        if expiry < datetime.datetime.utcnow():
+            raise Exception('Kerberos ticket has expired.')
+
+        return base64.b64decode(res.json()['kerberos_ticket_cache'])
 
     def logout(self):
         token = flask.request.cookies.get('plotly_oauth_token')
