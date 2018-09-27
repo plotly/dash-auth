@@ -23,7 +23,7 @@ endpoints = {
         'get': [
             '/_dash-layout', '/_dash-routes', '/_dash-dependencies',
             '/_dash-component-suites/dash_html_components/dash_html_components.min.js',
-            '/static/', '/assets/'
+            '/static/', '/assets/', '/_favicon.ico'
         ],
         'post': ['/_dash-update-component']
     },
