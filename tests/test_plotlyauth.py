@@ -22,8 +22,8 @@ endpoints = {
     'protected': {
         'get': [
             '/_dash-layout', '/_dash-routes', '/_dash-dependencies',
-            '/_dash-component-suites/dash_html_components/bundle.js',
-            '/static/', '/assets/'
+            '/_dash-component-suites/dash_html_components/dash_html_components.min.js',
+            '/static/', '/assets/', '/_favicon.ico'
         ],
         'post': ['/_dash-update-component']
     },
