@@ -3,34 +3,26 @@ from __future__ import absolute_import
 import threading
 
 import flask
-from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-import importlib
-import multiprocessing
 import requests
 import time
 import unittest
 from selenium import webdriver
-import sys
-import os
 
 from selenium.webdriver.support.wait import WebDriverWait
-
-from .utils import assert_clean_console, switch_windows
-
-TIMEOUT = 120
 from selenium.webdriver.support import expected_conditions as EC
+
+TIMEOUT = 10
 
 
 class IntegrationTests(unittest.TestCase):
     def wait_for_element_by_css_selector(self, selector):
-        return WebDriverWait(self.driver, 10).until(
+        return WebDriverWait(self.driver, TIMEOUT).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, selector))
         )
 
     def wait_for_text_to_equal(self, selector, assertion_text):
-        return WebDriverWait(self.driver, 10).until(
+        return WebDriverWait(self.driver, TIMEOUT).until(
             EC.text_to_be_present_in_element((By.CSS_SELECTOR, selector),
                                              assertion_text)
         )
@@ -52,7 +44,6 @@ class IntegrationTests(unittest.TestCase):
     def tearDown(self):
         super(IntegrationTests, self).tearDown()
         time.sleep(2)
-        # self.server_process.terminate()
         requests.get('http://localhost:8050/stop')
         time.sleep(2)
         self.driver.quit()
@@ -76,8 +67,6 @@ class IntegrationTests(unittest.TestCase):
 
         self.server_thread = threading.Thread(target=run)
         self.server_thread.start()
-        # self.server_process = multiprocessing.Process(target=run)
-        # self.server_process.start()
         time.sleep(2)
 
         # Visit the dash page
@@ -85,7 +74,7 @@ class IntegrationTests(unittest.TestCase):
             self.driver.get('http://localhost:8050{}'.format(
                 app.config['requests_pathname_prefix'])
             )
-            WebDriverWait(self.driver, 10).until(
+            WebDriverWait(self.driver, TIMEOUT).until(
                 EC.presence_of_element_located((By.ID, 'react-entry-point')))
 
         time.sleep(0.5)
