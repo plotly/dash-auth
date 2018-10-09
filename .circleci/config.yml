@@ -29,10 +29,19 @@ jobs:
           - "venv"
 
       - run:
+          name: Flake8
+          command: |
+            . venv/bin/activate
+            flake8 dash_auth setup.py
+
+      - run:
           name: Test with pytest
           command: |
             . venv/bin/activate
-            pytest tests
+            python -m unittest -v tests.test_basic_auth_integration
+            python -m unittest -v tests.test_plotly_auth_integration
+            python -m unittest -v tests.test_api_requests
+            python -m unittest -v tests.test_plotlyauth
 
   "python-3.6":
     <<: *test-template
