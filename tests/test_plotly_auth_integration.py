@@ -77,7 +77,7 @@ class Tests(IntegrationTests):
 
         self.wait_for_element_by_css_selector(
             '#js-auth-modal-signin-submit').click()
-        self.driver.implicitly_wait(5)
+        time.sleep(3)
 
         # wait for oauth screen
         self.wait_for_element_by_css_selector('input[name="allow"]').click()
@@ -106,6 +106,7 @@ class Tests(IntegrationTests):
             url_base_pathname,
         )
         switch_windows(self.driver)
+        self.driver.implicitly_wait(3)
         try:
             el = self.wait_for_element_by_css_selector('#output')
         except:
