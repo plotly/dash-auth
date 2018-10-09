@@ -1,5 +1,10 @@
 from __future__ import absolute_import
+
+import threading
+
+import flask
 from selenium import webdriver
+from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 import importlib
 import multiprocessing
@@ -10,9 +15,12 @@ from selenium import webdriver
 import sys
 import os
 
+from selenium.webdriver.support.wait import WebDriverWait
+
 from .utils import assert_clean_console, switch_windows
 
 TIMEOUT = 120
+from selenium.webdriver.support import expected_conditions as EC
 
 
 class IntegrationTests(unittest.TestCase):
@@ -82,8 +90,10 @@ class IntegrationTests(unittest.TestCase):
         # Visit the dash page
         if not skip_visit:
             self.driver.get('http://localhost:8050{}'.format(
-                app.config['routes_pathname_prefix'])
+                app.config['requests_pathname_prefix'])
             )
+            WebDriverWait(self.driver, 10).until(
+                EC.presence_of_element_located((By.ID, 'react-entry-point')))
 
         time.sleep(0.5)
 
