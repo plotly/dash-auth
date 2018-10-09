@@ -25,31 +25,15 @@ from selenium.webdriver.support import expected_conditions as EC
 
 class IntegrationTests(unittest.TestCase):
     def wait_for_element_by_css_selector(self, selector):
-        start_time = time.time()
-        latest_exception = None
-        while time.time() < start_time + TIMEOUT:
-            try:
-                return self.driver.find_element_by_css_selector(selector)
-            except Exception as e:
-                latest_exception = e
-                pass
-            time.sleep(0.25)
-        if latest_exception:
-            raise latest_exception
+        return WebDriverWait(self.driver, 10).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, selector))
+        )
 
     def wait_for_text_to_equal(self, selector, assertion_text):
-        start_time = time.time()
-        latest_exception = None
-        while time.time() < start_time + TIMEOUT:
-            el = self.wait_for_element_by_css_selector(selector)
-            try:
-                return self.assertEqual(el.text, assertion_text)
-            except Exception as e:
-                latest_exception = e
-                pass
-            time.sleep(0.25)
-        if latest_exception:
-            raise latest_exception
+        return WebDriverWait(self.driver, 10).until(
+            EC.text_to_be_present_in_element((By.CSS_SELECTOR, selector),
+                                             assertion_text)
+        )
 
     @classmethod
     def setUpClass(cls):
@@ -93,7 +77,7 @@ class IntegrationTests(unittest.TestCase):
                 app.config['requests_pathname_prefix'])
             )
             WebDriverWait(self.driver, 10).until(
-                EC.presence_of_element_located((By.ID, 'react-entry-point')))
+                EC.presence_of_element_located((By.ID, 'react-root')))
 
         time.sleep(0.5)
 

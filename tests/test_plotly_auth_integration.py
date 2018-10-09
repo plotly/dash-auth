@@ -208,7 +208,7 @@ class Tests(IntegrationTests):
         self._login_flow(username, pw)
 
         switch_windows(self.driver)
-        time.sleep(1)
+        time.sleep(2)
 
         btn = self.wait_for_element_by_css_selector('#logout-btn')
 
