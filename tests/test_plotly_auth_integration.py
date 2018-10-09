@@ -77,6 +77,7 @@ class Tests(IntegrationTests):
 
         self.wait_for_element_by_css_selector(
             '#js-auth-modal-signin-submit').click()
+        time.sleep(2)
 
         # wait for oauth screen
         self.wait_for_element_by_css_selector('input[name="allow"]').click()
