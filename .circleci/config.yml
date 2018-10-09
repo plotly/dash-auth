@@ -1,35 +1,43 @@
 version: 2
 
 jobs:
-  "python-2.7":
+  "python-2.7": &test-template
     docker:
       - image: circleci/python:2.7-stretch-browsers
-        environment:
-          TOX_PYTHON_27: python2.7
 
     steps:
       - checkout
+
       - run:
-          name: Install tox
-          command: 'sudo pip install tox'
+          name: Write job name
+          command: echo $CIRCLE_JOB > circlejob.txt
+
+      - restore_cache:
+          key: deps1-{{ .Branch }}-{{ checksum "circlejob.txt" }}-{{ checksum "dev-requirements.txt" }}-{{ checksum ".circleci/config.yml" }}
+
       - run:
-          name: Test with tox
-          command: 'tox -e py27'
+          name: Install dependencies
+          command: |
+            sudo pip install virtualenv
+            python -m venv venv || virtualenv venv
+            . venv/bin/activate
+            pip install -r dev-requirements.txt
+
+      - save_cache:
+          key: deps1-{{ .Branch }}-{{ checksum "circlejob.txt" }}-{{ checksum "dev-requirements.txt" }}-{{ checksum ".circleci/config.yml" }}
+          paths:
+          - "venv"
+
+      - run:
+          name: Test with pytest
+          command: |
+            . venv/bin/activate
+            pytest tests
 
   "python-3.6":
+    <<: *test-template
     docker:
       - image: circleci/python:3.6-stretch-browsers
-        environment:
-          TOX_PYTHON_36: python3.6
-
-    steps:
-      - checkout
-      - run:
-          name: Install tox
-          command: 'sudo pip install tox'
-      - run:
-          name: Test with tox
-          command: 'tox -e py36'
 
 workflows:
   version: 2
