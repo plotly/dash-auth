@@ -51,9 +51,10 @@ class IntegrationTests(unittest.TestCase):
 
     def tearDown(self):
         super(IntegrationTests, self).tearDown()
-        time.sleep(5)
-        self.server_process.terminate()
-        time.sleep(5)
+        time.sleep(2)
+        # self.server_process.terminate()
+        requests.get('http://localhost:8050/stop')
+        time.sleep(2)
         self.driver.quit()
 
     def startServer(self, app, skip_visit=False):
@@ -62,14 +63,22 @@ class IntegrationTests(unittest.TestCase):
             app.run_server(
                 port=8050,
                 debug=False,
-                processes=2,
-                threaded=False
+                threaded=True
             )
 
-        # Run on a separate process so that it doesn't block
-        self.server_process = multiprocessing.Process(target=run)
-        self.server_process.start()
-        time.sleep(15)
+        # Run on a separate thread so that it doesn't block
+
+        @app.server.route('/stop')
+        def _stop():
+            stopper = flask.request.environ['werkzeug.server.shutdown']
+            stopper()
+            return 'stop'
+
+        self.server_thread = threading.Thread(target=run)
+        self.server_thread.start()
+        # self.server_process = multiprocessing.Process(target=run)
+        # self.server_process.start()
+        time.sleep(2)
 
         # Visit the dash page
         if not skip_visit:
