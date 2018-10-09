@@ -39,7 +39,7 @@ class IntegrationTests(unittest.TestCase):
 
     def setUp(self):
         options = webdriver.ChromeOptions()
-        options.headless = True
+        # options.headless = True
         self.driver = webdriver.Chrome(options=options)
 
     def tearDown(self):
