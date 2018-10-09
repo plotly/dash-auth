@@ -42,7 +42,6 @@ class IntegrationTests(unittest.TestCase):
         time.sleep(2)
         requests.get('http://localhost:8050/stop')
         time.sleep(2)
-        self.driver.quit()
 
     def startServer(self, app, skip_visit=False):
         def run():
