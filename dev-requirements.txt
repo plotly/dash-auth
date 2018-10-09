@@ -5,8 +5,6 @@ dash>=0.18.3
 ua_parser
 selenium
 mock
-tox
-tox-pyenv
 six
 plotly>=2.0.8
 requests[security]
