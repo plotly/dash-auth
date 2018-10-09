@@ -77,7 +77,7 @@ class IntegrationTests(unittest.TestCase):
                 app.config['requests_pathname_prefix'])
             )
             WebDriverWait(self.driver, 10).until(
-                EC.presence_of_element_located((By.ID, 'react-root')))
+                EC.presence_of_element_located((By.ID, 'react-entry-point')))
 
         time.sleep(0.5)
 
