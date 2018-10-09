@@ -124,4 +124,4 @@ class OauthRedirect extends Component {
     }
 }
 
-ReactDOM.render(<OauthRedirect/>, document.getElementById('react-root'));
+ReactDOM.render(<OauthRedirect/>, document.getElementById('react-entry-point'));
