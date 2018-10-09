@@ -125,4 +125,4 @@ class Login extends Component {
     }
 }
 
-ReactDOM.render(<Login/>, document.getElementById('react-root'));
+ReactDOM.render(<Login/>, document.getElementById('react-entry-point'));

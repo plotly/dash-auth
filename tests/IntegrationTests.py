@@ -1,47 +1,31 @@
 from __future__ import absolute_import
-from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
-import importlib
-import multiprocessing
+
+import threading
+
+import flask
+from selenium.webdriver.common.by import By
 import requests
 import time
 import unittest
 from selenium import webdriver
-import sys
-import os
 
-from .utils import assert_clean_console, switch_windows
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
-TIMEOUT = 120
+TIMEOUT = 12
 
 
 class IntegrationTests(unittest.TestCase):
     def wait_for_element_by_css_selector(self, selector):
-        start_time = time.time()
-        latest_exception = None
-        while time.time() < start_time + TIMEOUT:
-            try:
-                return self.driver.find_element_by_css_selector(selector)
-            except Exception as e:
-                latest_exception = e
-                pass
-            time.sleep(0.25)
-        if latest_exception:
-            raise latest_exception
+        return WebDriverWait(self.driver, TIMEOUT).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, selector))
+        )
 
     def wait_for_text_to_equal(self, selector, assertion_text):
-        start_time = time.time()
-        latest_exception = None
-        while time.time() < start_time + TIMEOUT:
-            el = self.wait_for_element_by_css_selector(selector)
-            try:
-                return self.assertEqual(el.text, assertion_text)
-            except Exception as e:
-                latest_exception = e
-                pass
-            time.sleep(0.25)
-        if latest_exception:
-            raise latest_exception
+        return WebDriverWait(self.driver, TIMEOUT).until(
+            EC.text_to_be_present_in_element((By.CSS_SELECTOR, selector),
+                                             assertion_text)
+        )
 
     @classmethod
     def setUpClass(cls):
@@ -59,9 +43,9 @@ class IntegrationTests(unittest.TestCase):
 
     def tearDown(self):
         super(IntegrationTests, self).tearDown()
-        time.sleep(5)
-        self.server_process.terminate()
-        time.sleep(5)
+        time.sleep(2)
+        requests.get('http://localhost:8050/stop')
+        time.sleep(2)
         self.driver.quit()
 
     def startServer(self, app, skip_visit=False):
@@ -70,20 +54,28 @@ class IntegrationTests(unittest.TestCase):
             app.run_server(
                 port=8050,
                 debug=False,
-                processes=2,
-                threaded=False
+                threaded=True
             )
 
-        # Run on a separate process so that it doesn't block
-        self.server_process = multiprocessing.Process(target=run)
-        self.server_process.start()
-        time.sleep(15)
+        # Run on a separate thread so that it doesn't block
+
+        @app.server.route('/stop')
+        def _stop():
+            stopper = flask.request.environ['werkzeug.server.shutdown']
+            stopper()
+            return 'stop'
+
+        self.server_thread = threading.Thread(target=run)
+        self.server_thread.start()
+        time.sleep(2)
 
         # Visit the dash page
         if not skip_visit:
             self.driver.get('http://localhost:8050{}'.format(
-                app.config['routes_pathname_prefix'])
+                app.config['requests_pathname_prefix'])
             )
+            WebDriverWait(self.driver, TIMEOUT).until(
+                EC.presence_of_element_located((By.ID, 'react-entry-point')))
 
         time.sleep(0.5)
 

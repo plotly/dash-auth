@@ -77,6 +77,7 @@ class Tests(IntegrationTests):
 
         self.wait_for_element_by_css_selector(
             '#js-auth-modal-signin-submit').click()
+        time.sleep(2)
 
         # wait for oauth screen
         self.wait_for_element_by_css_selector('input[name="allow"]').click()
@@ -208,7 +209,7 @@ class Tests(IntegrationTests):
         self._login_flow(username, pw)
 
         switch_windows(self.driver)
-        time.sleep(1)
+        time.sleep(2)
 
         btn = self.wait_for_element_by_css_selector('#logout-btn')
 
