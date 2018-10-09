@@ -12,3 +12,4 @@ ipdb
 flake8
 retrying
 pytest
+chromedriver
