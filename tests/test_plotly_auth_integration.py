@@ -162,7 +162,8 @@ class Tests(IntegrationTests):
 
         # Note: this will only work if both the initial and subsequent
         # requests (e.g. to get the layoout) succeed.
-        self.assertEqual(el.text, 'initial value')
+
+        self.wait_for_text_to_equal('#output', 'initial value')
 
     def test_secret_app_unauthorized_index(self):
         self.secret_app_unauthorized('/')

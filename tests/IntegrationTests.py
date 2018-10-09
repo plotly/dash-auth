@@ -30,19 +30,22 @@ class IntegrationTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         super(IntegrationTests, cls).setUpClass()
-        cls.driver = webdriver.Chrome()
+        # cls.driver = webdriver.Chrome()
 
-    @classmethod
-    def tearDownClass(cls):
-        super(IntegrationTests, cls).tearDownClass()
-        cls.driver.quit()
+    # @classmethod
+    # def tearDownClass(cls):
+    #     super(IntegrationTests, cls).tearDownClass()
+    #     cls.driver.quit()
+
+    def setUp(self):
+        self.driver = webdriver.Chrome()
 
     def tearDown(self):
         super(IntegrationTests, self).tearDown()
         time.sleep(2)
         requests.get('http://localhost:8050/stop')
         time.sleep(3)
-        self.driver.back()
+        self.driver.quit()
 
     def startServer(self, app, skip_visit=False):
         def run():
