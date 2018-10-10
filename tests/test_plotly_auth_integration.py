@@ -77,6 +77,7 @@ class Tests(IntegrationTests):
 
         self.wait_for_element_by_css_selector(
             '#js-auth-modal-signin-submit').click()
+        time.sleep(3)
 
         # wait for oauth screen
         self.wait_for_element_by_css_selector('input[name="allow"]').click()
@@ -105,6 +106,7 @@ class Tests(IntegrationTests):
             url_base_pathname,
         )
         switch_windows(self.driver)
+        self.driver.implicitly_wait(3)
         try:
             el = self.wait_for_element_by_css_selector('#output')
         except:
@@ -160,7 +162,8 @@ class Tests(IntegrationTests):
 
         # Note: this will only work if both the initial and subsequent
         # requests (e.g. to get the layoout) succeed.
-        self.assertEqual(el.text, 'initial value')
+
+        self.wait_for_text_to_equal('#output', 'initial value')
 
     def test_secret_app_unauthorized_index(self):
         self.secret_app_unauthorized('/')
@@ -208,7 +211,7 @@ class Tests(IntegrationTests):
         self._login_flow(username, pw)
 
         switch_windows(self.driver)
-        time.sleep(1)
+        time.sleep(2)
 
         btn = self.wait_for_element_by_css_selector('#logout-btn')
 

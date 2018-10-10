@@ -67,7 +67,7 @@ class PlotlyAuth(OAuthBase):
                 <title>Log In</title>
             </head>
             <body>
-              <div id="react-root"></div>
+              <div id="react-entry-point"></div>
             </body>
             <script id="_auth-config" type="application/json">
             {}
