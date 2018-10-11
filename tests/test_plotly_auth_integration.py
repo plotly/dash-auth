@@ -9,6 +9,7 @@ import time
 import re
 import itertools
 import plotly.plotly as py
+import unittest
 
 from .IntegrationTests import IntegrationTests
 from .utils import assert_clean_console, switch_windows
@@ -80,7 +81,7 @@ class Tests(IntegrationTests):
         time.sleep(3)
 
         # wait for oauth screen
-        self.wait_for_element_by_css_selector('input[name="allow"]').click()
+        self.wait_for_element_to_be_clickable('input[name="allow"]').click()
 
     def private_app_unauthorized(self, url_base_pathname=None,
                                  oauth_urls=None):
@@ -106,7 +107,7 @@ class Tests(IntegrationTests):
             url_base_pathname,
         )
         switch_windows(self.driver)
-        self.driver.implicitly_wait(3)
+        time.sleep(3)
         try:
             el = self.wait_for_element_by_css_selector('#output')
         except:
@@ -275,3 +276,4 @@ class Tests(IntegrationTests):
         btn = self.wait_for_element_by_css_selector('#btn')
         btn.click()
         self.wait_for_text_to_equal('#authorized', 'authorized')
+        time.sleep(2)

@@ -12,7 +12,7 @@ from selenium import webdriver
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-TIMEOUT = 22
+TIMEOUT = 28
 
 
 class IntegrationTests(unittest.TestCase):
@@ -27,21 +27,29 @@ class IntegrationTests(unittest.TestCase):
                                              assertion_text)
         )
 
+    def wait_for_element_to_be_clickable(self, selector):
+        return WebDriverWait(self.driver, TIMEOUT).until(
+            EC.element_to_be_clickable((By.CSS_SELECTOR, selector))
+        )
+
     @classmethod
     def setUpClass(cls):
         super(IntegrationTests, cls).setUpClass()
 
     def setUp(self):
         options = webdriver.ChromeOptions()
-        # options.headless = True
+        options.headless = True
+        options.add_argument('no-sandbox')
+        options.add_argument('--disable-dev-shm-usage')
         self.driver = webdriver.Chrome(options=options)
 
     def tearDown(self):
         super(IntegrationTests, self).tearDown()
         time.sleep(2)
         requests.get('http://localhost:8050/stop')
-        time.sleep(3)
-        self.driver.quit()
+        self.driver.close()
+        time.sleep(4)
+        self.server_thread.join()
 
     def startServer(self, app, skip_visit=False):
         def run():
