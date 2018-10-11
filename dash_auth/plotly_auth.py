@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 
+import base64
+import datetime
 import os
 import time
 
@@ -14,7 +16,7 @@ import dash_html_components as html
 import dash_core_components as dcc
 from dash.dependencies import Output, Input
 
-from .oauth import OAuthBase
+from .oauth import OAuthBase, need_request_context
 
 from . import api_requests
 
@@ -87,7 +89,7 @@ class PlotlyAuth(OAuthBase):
     def login_api(self):
         oauth_token = flask.request.get_json()['access_token']
         res = api_requests.get(
-            '/v2/users/current',
+            '/v2/users/current?kerberos=1',
             headers={'Authorization': 'Bearer {}'.format(oauth_token)},
         )
         try:
@@ -149,6 +151,23 @@ class PlotlyAuth(OAuthBase):
 
     def check_view_access(self, oauth_token):
         return check_view_access(oauth_token, self._dash_app['fid'])
+
+    @need_request_context
+    def get_kerberos_ticket_cache(self):
+        token = flask.request.cookies.get('plotly_oauth_token')
+
+        res = api_requests.get(
+            '/v2/users/current?kerberos=1',
+            headers={'Authorization': 'Bearer {}'.format(token)},
+        )
+        res_json = res.json()
+
+        expiry_str = res_json['kerberos_ticket_expiry']
+        expiry = datetime.datetime.strptime(expiry_str, '%Y-%m-%dT%H:%M:%SZ')
+        if expiry < datetime.datetime.utcnow():
+            raise Exception('Kerberos ticket has expired.')
+
+        return base64.b64decode(res_json['kerberos_ticket_cache'])
 
     def logout(self):
         token = flask.request.cookies.get('plotly_oauth_token')
