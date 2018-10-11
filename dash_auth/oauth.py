@@ -47,7 +47,6 @@ class OAuthBase(Auth):
         self._app = app
         self._app_url = app_url
         self._oauth_client_id = client_id
-        self._username_cache = {}
 
         if secret_key is None and app.server.secret_key is None:
             raise Exception(dedent('''
@@ -331,10 +330,8 @@ class OAuthBase(Auth):
         :return: The stored username if any.
         :rtype: str
         """
-        cached = self._username_cache.get(flask.request.remote_addr)
-        if cached:
-            return cached
         username = flask.request.cookies.get(self.USERNAME_COOKIE)
+
         if username:
             max_age = None
             if validate_max_age:
@@ -368,7 +365,6 @@ class OAuthBase(Auth):
         :type response: flask.Response
         :return:
         """
-        self._username_cache[flask.request.remote_addr] = name
 
         if not response:
             @flask.after_this_request
@@ -378,7 +374,6 @@ class OAuthBase(Auth):
                     self.USERNAME_COOKIE,
                     self._signer.sign(name),
                     max_age=self.config['user_cookies_expiry'])
-                del self._username_cache[flask.request.remote_addr]
                 return rep
         else:
             self.set_cookie(
