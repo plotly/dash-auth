@@ -11,3 +11,4 @@ requests[security]
 ipdb
 flake8
 retrying
+flaky

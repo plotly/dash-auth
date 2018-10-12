@@ -1,22 +1,26 @@
 # -*- coding: utf-8 -*-
-from dash.dependencies import Input, Output, State, Event
+from dash.dependencies import Input, Output
 import dash
 import dash_html_components as html
 import dash_core_components as dcc
-from multiprocessing import Value
 import os
 import time
-import re
-import itertools
-import plotly.plotly as py
-import unittest
+
+from flaky import flaky
+from selenium.common.exceptions import TimeoutException
 
 from .IntegrationTests import IntegrationTests
-from .utils import assert_clean_console, switch_windows
+from .utils import switch_windows
 from .users import users
 from dash_auth import plotly_auth
 
 
+def is_timeout(err, *args):
+    print('flaky retrying')
+    return isinstance(err, TimeoutException)
+
+
+@flaky(max_runs=5, rerun_filter=is_timeout)
 class Tests(IntegrationTests):
     def setup_app(self, url_base_pathname=None, skip_visit=False,
                   sharing='private'):
@@ -81,7 +85,7 @@ class Tests(IntegrationTests):
         time.sleep(3)
 
         # wait for oauth screen
-        self.wait_for_element_to_be_clickable('input[name="allow"]').click()
+        self.wait_for_element_to_be_clickable('allow').click()
 
     def private_app_unauthorized(self, url_base_pathname=None,
                                  oauth_urls=None):

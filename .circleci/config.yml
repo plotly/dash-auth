@@ -35,7 +35,7 @@ jobs:
             flake8 dash_auth setup.py
 
       - run:
-          name: Test with pytest
+          name: Run tests
           command: |
             . venv/bin/activate
             python -m unittest -v tests.test_basic_auth_integration

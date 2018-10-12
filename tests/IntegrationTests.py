@@ -12,7 +12,7 @@ from selenium import webdriver
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-TIMEOUT = 28
+TIMEOUT = 48
 
 
 class IntegrationTests(unittest.TestCase):
@@ -27,9 +27,9 @@ class IntegrationTests(unittest.TestCase):
                                              assertion_text)
         )
 
-    def wait_for_element_to_be_clickable(self, selector):
+    def wait_for_element_to_be_clickable(self, name):
         return WebDriverWait(self.driver, TIMEOUT).until(
-            EC.element_to_be_clickable((By.CSS_SELECTOR, selector))
+            EC.element_to_be_clickable((By.NAME, name))
         )
 
     @classmethod
