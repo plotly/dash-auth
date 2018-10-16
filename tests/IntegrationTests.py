@@ -35,21 +35,27 @@ class IntegrationTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         super(IntegrationTests, cls).setUpClass()
-
-    def setUp(self):
         options = webdriver.ChromeOptions()
         options.headless = True
         options.add_argument('no-sandbox')
         options.add_argument('--disable-dev-shm-usage')
-        self.driver = webdriver.Chrome(options=options)
+        cls.driver = webdriver.Chrome(options=options)
 
     def tearDown(self):
         super(IntegrationTests, self).tearDown()
         time.sleep(2)
         requests.get('http://localhost:8050/stop')
-        self.driver.close()
+        self.driver.delete_all_cookies()
+        self.driver.get('http://www.plot.ly')
+        self.driver.delete_all_cookies()
+        self.driver.refresh()
         time.sleep(4)
         self.server_thread.join()
+
+    @classmethod
+    def tearDownClass(cls):
+        super(IntegrationTests, cls).tearDownClass()
+        cls.driver.quit()
 
     def startServer(self, app, skip_visit=False):
         def run():
