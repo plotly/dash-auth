@@ -97,7 +97,7 @@ class OauthRedirect extends Component {
                     </div>
                 );
             } else if (authorizationRequest.status === 200) {
-                window.close();
+                //window.close();
             } else {
                 content = loading;
             }
