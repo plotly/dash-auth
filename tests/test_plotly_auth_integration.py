@@ -92,7 +92,8 @@ class Tests(IntegrationTests):
         )
         el = self.wait_for_element_by_css_selector(
             '#dash-auth--authorization__denied')
-        self.assertEqual(el.text, 'You are not authorized to view this app')
+        self.wait_for_text_to_equal('#dash-auth--authorization__denied',
+                                    'You are not authorized to view this app')
         switch_windows(self.driver)
         self.driver.refresh()
         # login screen should still be there
@@ -106,13 +107,15 @@ class Tests(IntegrationTests):
             url_base_pathname,
         )
         switch_windows(self.driver)
-        self.driver.implicitly_wait(3)
+        time.sleep(3)
+
         try:
             el = self.wait_for_element_by_css_selector('#output')
         except:
             print(self.driver.find_element_by_tag_name(
                 'body').get_attribute('innerHTML'))
-        self.assertEqual(el.text, 'initial value')
+
+        self.wait_for_text_to_equal('#output', 'initial value')
 
     def test_private_app_authorized_index(self):
         self.private_app_authorized('/')
