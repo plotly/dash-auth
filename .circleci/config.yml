@@ -1,9 +1,19 @@
-version: 2
+version: 2.1
+
+executors:
+  python-27:
+    docker:
+        - image: circleci/python:2.7-stretch-browsers
+    resource_class: large
+  python-36:
+    docker:
+        - image: circleci/python:3.6-stretch-browsers
+    resource_class: large
+
 
 jobs:
-  "python-2.7": &test-template
-    docker:
-      - image: circleci/python:2.7-stretch-browsers
+  python-27: &test-template
+    executor: python-27
 
     steps:
       - checkout
@@ -35,7 +45,7 @@ jobs:
             flake8 dash_auth setup.py
 
       - run:
-          name: Test with pytest
+          name: Run tests
           command: |
             . venv/bin/activate
             python -m unittest -v tests.test_basic_auth_integration
@@ -43,14 +53,13 @@ jobs:
             python -m unittest -v tests.test_api_requests
             python -m unittest -v tests.test_plotlyauth
 
-  "python-3.6":
+  python-36:
     <<: *test-template
-    docker:
-      - image: circleci/python:3.6-stretch-browsers
+    executor: python-36
 
 workflows:
   version: 2
   build:
     jobs:
-      - "python-2.7"
-      - "python-3.6"
+      - python-27
+      - python-36
