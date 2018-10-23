@@ -51,6 +51,7 @@ class IntegrationTests(unittest.TestCase):
         self.driver.refresh()
         time.sleep(4)
         self.server_thread.join()
+        time.sleep(2)
 
     @classmethod
     def tearDownClass(cls):
