@@ -33,7 +33,9 @@ class IntegrationTests(unittest.TestCase):
 
     def setUp(self):
         options = webdriver.ChromeOptions()
-        # options.headless = True
+        options.headless = True
+        options.add_argument('no-sandbox')
+        options.add_argument('--disable-dev-shm-usage')
         self.driver = webdriver.Chrome(options=options)
 
     def tearDown(self):
