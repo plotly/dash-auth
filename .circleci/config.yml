@@ -4,11 +4,11 @@ executors:
   python-27:
     docker:
         - image: circleci/python:2.7-stretch-browsers
-    resource_class: large
+    resource_class: xlarge
   python-36:
     docker:
         - image: circleci/python:3.6-stretch-browsers
-    resource_class: large
+    resource_class: xlarge
 
 
 jobs:
