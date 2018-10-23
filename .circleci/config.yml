@@ -1,9 +1,19 @@
-version: 2
+version: 2.1
+
+executors:
+  python-27:
+    docker:
+        - image: circleci/python:2.7-stretch-browsers
+    resource_class: large
+  python-36:
+    docker:
+        - image: circleci/python:3.6-stretch-browsers
+    resource_class: large
+
 
 jobs:
   "python-2.7": &test-template
-    docker:
-      - image: circleci/python:2.7-stretch-browsers
+    executor: python-27
 
     steps:
       - checkout
@@ -45,8 +55,7 @@ jobs:
 
   "python-3.6":
     <<: *test-template
-    docker:
-      - image: circleci/python:3.6-stretch-browsers
+    executor: python-36
 
 workflows:
   version: 2
