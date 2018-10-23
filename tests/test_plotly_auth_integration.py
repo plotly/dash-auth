@@ -20,7 +20,6 @@ def is_timeout(err, *args):
     return isinstance(err, TimeoutException)
 
 
-@flaky(max_runs=5, rerun_filter=is_timeout)
 class Tests(IntegrationTests):
     def setup_app(self, url_base_pathname=None, skip_visit=False,
                   sharing='private'):

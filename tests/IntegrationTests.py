@@ -38,7 +38,7 @@ class IntegrationTests(unittest.TestCase):
     def setUpClass(cls):
         super(IntegrationTests, cls).setUpClass()
         options = webdriver.ChromeOptions()
-        options.headless = True
+        # options.headless = True
         options.add_argument('no-sandbox')
         options.add_argument('--disable-dev-shm-usage')
         cls.driver = webdriver.Chrome(options=options)
@@ -51,14 +51,13 @@ class IntegrationTests(unittest.TestCase):
         time.sleep(2)
         self.driver.delete_all_cookies()
         self.driver.refresh()
-        time.sleep(4)
 
         if platform.system() == 'Windows':
             requests.get('http://localhost:8050/stop')
             self.server_thread.join()
         else:
             self.server_process.terminate()
-        time.sleep(3)
+        time.sleep(5)
 
     @classmethod
     def tearDownClass(cls):
