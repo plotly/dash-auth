@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 
 import threading
+import multiprocessing
+import platform
 
 import flask
 from selenium.webdriver.common.by import By
@@ -43,15 +45,20 @@ class IntegrationTests(unittest.TestCase):
 
     def tearDown(self):
         super(IntegrationTests, self).tearDown()
-        time.sleep(2)
-        requests.get('http://localhost:8050/stop')
+
         self.driver.delete_all_cookies()
         self.driver.get('http://www.plot.ly')
+        time.sleep(2)
         self.driver.delete_all_cookies()
         self.driver.refresh()
         time.sleep(4)
-        self.server_thread.join()
-        time.sleep(2)
+
+        if platform.system() == 'Windows':
+            requests.get('http://localhost:8050/stop')
+            self.server_thread.join()
+        else:
+            self.server_process.terminate()
+        time.sleep(3)
 
     @classmethod
     def tearDownClass(cls):
@@ -61,10 +68,12 @@ class IntegrationTests(unittest.TestCase):
     def startServer(self, app, skip_visit=False):
         def run():
             app.scripts.config.serve_locally = True
+            is_windows = platform.system() == 'Windows'
             app.run_server(
                 port=8050,
                 debug=False,
-                threaded=True
+                threaded=is_windows,
+                processes=4 if not is_windows else 0
             )
 
         # Run on a separate thread so that it doesn't block
@@ -75,9 +84,15 @@ class IntegrationTests(unittest.TestCase):
             stopper()
             return 'stop'
 
-        self.server_thread = threading.Thread(target=run)
-        self.server_thread.start()
-        time.sleep(2)
+        if platform.system() == 'Windows':
+            self.server_thread = threading.Thread(target=run)
+            self.server_thread.start()
+
+        else:
+            self.server_process = multiprocessing.Process(target=run)
+            self.server_process.start()
+
+        time.sleep(3)
 
         # Visit the dash page
         if not skip_visit:
