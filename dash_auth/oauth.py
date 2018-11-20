@@ -36,8 +36,10 @@ class OAuthBase(Auth):
             app_url,
             client_id=None,
             secret_key=None,
-            salt=None, authorization_hook=None):
-        Auth.__init__(self, app, authorization_hook)
+            salt=None, authorization_hook=None,
+            add_routes=True):
+        Auth.__init__(self, app, authorization_hook,
+                      _overwrite_index=add_routes)
 
         self.config = {
             'permissions_cache_expiry': 5 * 60,
@@ -76,23 +78,26 @@ class OAuthBase(Auth):
         self._json_signer = itsdangerous.JSONWebSignatureSerializer(
             secret_key, salt=salt)
 
-        app.server.add_url_rule(
-            '{}_dash-login'.format(app.config['routes_pathname_prefix']),
-            view_func=self.login_api,
-            methods=['post']
-        )
+        if add_routes:
 
-        app.server.add_url_rule(
-            '{}_oauth-redirect'.format(app.config['routes_pathname_prefix']),
-            view_func=self.serve_oauth_redirect,
-            methods=['get']
-        )
+            app.server.add_url_rule(
+                '{}_dash-login'.format(app.config['routes_pathname_prefix']),
+                view_func=self.login_api,
+                methods=['post']
+            )
 
-        app.server.add_url_rule(
-            '{}_is-authorized'.format(app.config['routes_pathname_prefix']),
-            view_func=self.check_if_authorized,
-            methods=['get']
-        )
+            app.server.add_url_rule(
+                '{}_oauth-redirect'.format(app.config['routes_pathname_prefix']),
+                view_func=self.serve_oauth_redirect,
+                methods=['get']
+            )
+
+            app.server.add_url_rule(
+                '{}_is-authorized'.format(app.config['routes_pathname_prefix']),
+                view_func=self.check_if_authorized,
+                methods=['get']
+            )
+
         _current_path = os.path.dirname(os.path.abspath(__file__))
 
         # TODO - Dist files

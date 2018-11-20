@@ -43,22 +43,25 @@ class PlotlyAuth(OAuthBase):
         Returns:
             None
         """
+        self._logout_url = os.getenv('DASH_LOGOUT_URL')
         super(PlotlyAuth, self).__init__(
             app,
             app_url,
             secret_key=api_requests.credential('plotly_api_key'),
             salt=app_name,
-            authorization_hook=authorization_hook
+            authorization_hook=authorization_hook,
+            add_routes=not self._logout_url,
         )
 
-        self._dash_app = create_or_overwrite_dash_app(
-            app_name, sharing, app_url
-        )
-        oauth_app = create_or_overwrite_oauth_app(
-            app_url, app_name
-        )
-        self._oauth_client_id = oauth_app['client_id']
-        self._sharing = sharing
+        if not self._logout_url:
+            self._dash_app = create_or_overwrite_dash_app(
+                app_name, sharing, app_url
+            )
+            oauth_app = create_or_overwrite_oauth_app(
+                app_url, app_name
+            )
+            self._oauth_client_id = oauth_app['client_id']
+            self._sharing = sharing
 
     def html(self, script):
         return ('''
