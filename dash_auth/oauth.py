@@ -87,13 +87,15 @@ class OAuthBase(Auth):
             )
 
             app.server.add_url_rule(
-                '{}_oauth-redirect'.format(app.config['routes_pathname_prefix']),
+                '{}_oauth-redirect'.format(
+                    app.config['routes_pathname_prefix']),
                 view_func=self.serve_oauth_redirect,
                 methods=['get']
             )
 
             app.server.add_url_rule(
-                '{}_is-authorized'.format(app.config['routes_pathname_prefix']),
+                '{}_is-authorized'.format(
+                    app.config['routes_pathname_prefix']),
                 view_func=self.check_if_authorized,
                 methods=['get']
             )
