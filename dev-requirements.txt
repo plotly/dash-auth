@@ -1,4 +1,5 @@
-dash_core_components
+# dash_core_components
+-e git+https://github.com/plotly/dash-core-components.git@logout-btn#egg=dash_core_components
 dash_html_components
 dash_renderer
 dash>=0.18.3
