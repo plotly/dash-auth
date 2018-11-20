@@ -200,6 +200,14 @@ class PlotlyAuth(OAuthBase):
                              redirect_to='',
                              label='Logout',
                              **button_props):
+        if self._logout_url:
+            return dcc.LogoutButton(
+                id=id,
+                label=label,
+                logout_url=self._logout_url,
+                **button_props
+            )
+
         location_id = '{}-{}'.format(id, 'loc')
 
         btn = html.Div([
