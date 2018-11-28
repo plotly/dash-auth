@@ -190,7 +190,7 @@ class PlotlyAuth(OAuthBase):
                 '{}{}'.format('https://{}'.format(streambed_ip)
                               if streambed_ip
                               else api_requests.config('plotly_domain'),
-                              '/o/revoke_token/'),
+                              '/Auth/o/revoke_token/'),
                 verify=False if streambed_ip else True,
                 data=data)
             invalidation_resp.raise_for_status()
