@@ -179,21 +179,23 @@ class PlotlyAuth(OAuthBase):
             'client_id': self._oauth_client_id,
         }
 
-        streambed_ip = os.environ.get('DASH_STREAMBED_DIRECT_IP')
-        invalidation_resp = requests.post(
-            '{}{}'.format('https://{}'.format(streambed_ip)
-                          if streambed_ip
-                          else api_requests.config('plotly_domain'),
-                          '/o/revoke_token/'),
-            verify=False if streambed_ip else True,
-            data=data)
-
-        invalidation_resp.raise_for_status()
-
         @flask.after_this_request
         def _after(rep):
             self.clear_cookies(rep)
             return rep
+
+        streambed_ip = os.environ.get('DASH_STREAMBED_DIRECT_IP')
+        try:
+            invalidation_resp = requests.post(
+                '{}{}'.format('https://{}'.format(streambed_ip)
+                              if streambed_ip
+                              else api_requests.config('plotly_domain'),
+                              '/o/revoke_token/'),
+                verify=False if streambed_ip else True,
+                data=data)
+            invalidation_resp.raise_for_status()
+        except requests.HTTPError as e:
+            print('Invalidation failure {}'.format(repr(e)))
 
     def create_logout_button(self,
                              id='logout-btn',
