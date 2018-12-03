@@ -4,6 +4,7 @@ import base64
 import datetime
 import os
 import time
+import warnings
 
 import flask
 import json
@@ -19,6 +20,19 @@ from dash.dependencies import Output, Input
 from .oauth import OAuthBase, need_request_context
 
 from . import api_requests
+
+
+deprecation_notice = '''
+PlotlyAuth is being deprecated.
+If your app is still using dash-deployment-server < 2.6,
+you can still use this package.
+
+The repo will be broken down into 3 different repo:
+
+dash-basic-auth -> basic_auth
+dash-oauth -> oauth
+dash-enterprise-auth -> dash-deployment-server integration, replace PlotlyAuth.
+'''
 
 
 class PlotlyAuth(OAuthBase):
@@ -44,6 +58,7 @@ class PlotlyAuth(OAuthBase):
             None
         """
         self._logout_url = os.getenv('DASH_LOGOUT_URL')
+        warnings.warn(deprecation_notice, PendingDeprecationWarning)
         super(PlotlyAuth, self).__init__(
             app,
             app_url,
@@ -239,7 +254,7 @@ class PlotlyAuth(OAuthBase):
                 return redirect
 
         return btn
-    
+
     def get_username(self, validate_max_age=True, response=None):
         if self._logout_url:
             user_data = flask.request.headers.get('Plotly-User-Data', {})
