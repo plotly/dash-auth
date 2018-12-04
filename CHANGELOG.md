@@ -4,6 +4,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2018-12-04
+
+Add integrations with Dash Deployment Server 2.6. [#75](https://github.com/plotly/dash-auth/pull/75)
+This version works on both 2.5 and 2.6.
+
+dash-auth will be split into 3 repositories:
+
+- `dash-basic-auth` -> basic_auth
+- `dash-oauth` -> oauth
+- `dash-enterprise-auth` -> Dash Deployment Server integration, replace PlotlyAuth.
+
+### Added
+- Pending deprecation notice for PlotlyAuth.
+
+### Changed
+- Logout button changed to a `dcc.LogoutButton` if app is on Dash Deployment Server 2.6 
+- `get_username` from request headers if app is on Dash Deployment Server 2.6
+- Disabled authentication if app is on Dash Deployment Server>=2.6, authentication is now performed on the Dash Deployment Server for all deployed apps.
+
+### Fixed
+- Fixed logout invalidation url and put in a try/catch so the token is still cleared from the cookies after an error.
+
 ## [1.2.0] - 2018-10-11
 ### Fixed
 - Kerberos tickets can be retrieved from a Dash Deployment Server and used
