@@ -24,14 +24,14 @@ from . import api_requests
 
 deprecation_notice = '''
 PlotlyAuth is being deprecated.
-If your app is still using dash-deployment-server < 2.6,
+If your app is still using Dash Deployment Server < 2.6,
 you can still use this package.
 
 The repo will be broken down into 3 different repo:
 
 dash-basic-auth -> basic_auth
 dash-oauth -> oauth
-dash-enterprise-auth -> dash-deployment-server integration, replace PlotlyAuth.
+dash-enterprise-auth -> Dash Deployment Server integration, replace PlotlyAuth.
 '''
 
 
