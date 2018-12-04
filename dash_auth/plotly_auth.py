@@ -4,6 +4,7 @@ import base64
 import datetime
 import os
 import time
+import warnings
 
 import flask
 import json
@@ -19,6 +20,19 @@ from dash.dependencies import Output, Input
 from .oauth import OAuthBase, need_request_context
 
 from . import api_requests
+
+
+deprecation_notice = '''
+PlotlyAuth is being deprecated.
+If your app is still using Dash Deployment Server < 2.6,
+you can still use this package.
+
+The repo will be broken down into 3 different repo:
+
+dash-basic-auth -> basic_auth
+dash-oauth -> oauth
+dash-enterprise-auth -> Dash Deployment Server integration, replace PlotlyAuth.
+'''
 
 
 class PlotlyAuth(OAuthBase):
@@ -43,22 +57,26 @@ class PlotlyAuth(OAuthBase):
         Returns:
             None
         """
+        self._logout_url = os.getenv('DASH_LOGOUT_URL')
+        warnings.warn(deprecation_notice, PendingDeprecationWarning)
         super(PlotlyAuth, self).__init__(
             app,
             app_url,
             secret_key=api_requests.credential('plotly_api_key'),
             salt=app_name,
-            authorization_hook=authorization_hook
+            authorization_hook=authorization_hook,
+            add_routes=not self._logout_url,
         )
 
-        self._dash_app = create_or_overwrite_dash_app(
-            app_name, sharing, app_url
-        )
-        oauth_app = create_or_overwrite_oauth_app(
-            app_url, app_name
-        )
-        self._oauth_client_id = oauth_app['client_id']
-        self._sharing = sharing
+        if not self._logout_url:
+            self._dash_app = create_or_overwrite_dash_app(
+                app_name, sharing, app_url
+            )
+            oauth_app = create_or_overwrite_oauth_app(
+                app_url, app_name
+            )
+            self._oauth_client_id = oauth_app['client_id']
+            self._sharing = sharing
 
     def html(self, script):
         return ('''
@@ -176,27 +194,37 @@ class PlotlyAuth(OAuthBase):
             'client_id': self._oauth_client_id,
         }
 
-        streambed_ip = os.environ.get('DASH_STREAMBED_DIRECT_IP')
-        invalidation_resp = requests.post(
-            '{}{}'.format('https://{}'.format(streambed_ip)
-                          if streambed_ip
-                          else api_requests.config('plotly_domain'),
-                          '/o/revoke_token/'),
-            verify=False if streambed_ip else True,
-            data=data)
-
-        invalidation_resp.raise_for_status()
-
         @flask.after_this_request
         def _after(rep):
             self.clear_cookies(rep)
             return rep
+
+        streambed_ip = os.environ.get('DASH_STREAMBED_DIRECT_IP')
+        try:
+            invalidation_resp = requests.post(
+                '{}{}'.format('https://{}'.format(streambed_ip)
+                              if streambed_ip
+                              else api_requests.config('plotly_domain'),
+                              '/Auth/o/revoke_token/'),
+                verify=False if streambed_ip else True,
+                data=data)
+            invalidation_resp.raise_for_status()
+        except requests.HTTPError as e:
+            print('Invalidation failure {}'.format(repr(e)))
 
     def create_logout_button(self,
                              id='logout-btn',
                              redirect_to='',
                              label='Logout',
                              **button_props):
+        if self._logout_url:
+            return dcc.LogoutButton(
+                id=id,
+                label=label,
+                logout_url=self._logout_url,
+                **button_props
+            )
+
         location_id = '{}-{}'.format(id, 'loc')
 
         btn = html.Div([
@@ -226,6 +254,14 @@ class PlotlyAuth(OAuthBase):
                 return redirect
 
         return btn
+
+    def get_username(self, validate_max_age=True, response=None):
+        if self._logout_url:
+            user_data = flask.request.headers.get('Plotly-User-Data', {})
+            return user_data.get('username')
+        else:
+            return super(PlotlyAuth, self).get_username(
+                validate_max_age, response)
 
 
 def create_or_overwrite_dash_app(filename, sharing, app_url):

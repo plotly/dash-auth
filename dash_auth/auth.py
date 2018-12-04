@@ -5,11 +5,12 @@ from six import iteritems, add_metaclass
 
 @add_metaclass(ABCMeta)
 class Auth(object):
-    def __init__(self, app, authorization_hook=None):
+    def __init__(self, app, authorization_hook=None, _overwrite_index=True):
         self.app = app
         self._index_view_name = app.config['routes_pathname_prefix']
-        self._overwrite_index()
-        self._protect_views()
+        if _overwrite_index:
+            self._overwrite_index()
+            self._protect_views()
         self._index_view_name = app.config['routes_pathname_prefix']
         self._auth_hooks = [authorization_hook] if authorization_hook else []
 
