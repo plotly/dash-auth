@@ -27,7 +27,7 @@ PlotlyAuth is being deprecated.
 If your app is still using Dash Deployment Server < 2.6,
 you can still use this package.
 
-The repo will be broken down into 2 different repo:
+The repo will be broken down into 2 different repos:
 
 dash-basic-auth -> basic http auth for dash apps.
 dash-enterprise-auth -> Dash Deployment Server integration, replace PlotlyAuth.
