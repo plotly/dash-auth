@@ -15,7 +15,7 @@ class BasicAuth(Auth):
         username_password = base64.b64decode(header.split('Basic ')[1])
         username_password_utf8 = username_password.decode('utf-8')
         username, password = username_password_utf8.split(':')
-        return [username, password] in self._username_password_list
+        return (username, password) in ((x[0], x[1]) for x in self._username_password_list)
 
     def login_request(self):
         return flask.Response(
