@@ -6,7 +6,9 @@ import flask
 class BasicAuth(Auth):
     def __init__(self, app, username_password_list):
         Auth.__init__(self, app)
-        self._username_password_list = username_password_list
+        self._users = username_password_list \
+            if isinstance(username_password_list, dict) \
+            else {k: v for k, v in username_password_list}
 
     def is_authorized(self):
         header = flask.request.headers.get('Authorization', None)
@@ -15,11 +17,7 @@ class BasicAuth(Auth):
         username_password = base64.b64decode(header.split('Basic ')[1])
         username_password_utf8 = username_password.decode('utf-8')
         username, password = username_password_utf8.split(':')
-        for pair in self._username_password_list:
-            if pair[0] == username and pair[1] == password:
-                return True
-
-        return False
+        return self._users.get(username) == password
 
     def login_request(self):
         return flask.Response(

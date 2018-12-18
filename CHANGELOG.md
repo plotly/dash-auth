@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.3.2] - 2018-12-18
+### Change
+Changed basic-auth to use a dictionary of valid credentials, rather than lists.
+This ensures only one valid password per user, and credential checks are faster.
+
 ## [1.3.1] - 2018-12-05
 ### Changed
 Changed the deprecation notice to only 2 repos (`dash-basic-auth` and `dash-enterprise-auth`).
