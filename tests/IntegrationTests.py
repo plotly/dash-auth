@@ -12,7 +12,7 @@ from selenium import webdriver
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-TIMEOUT = 22
+TIMEOUT = 10
 
 
 class IntegrationTests(unittest.TestCase):
