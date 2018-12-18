@@ -108,7 +108,6 @@ class Tests(IntegrationTests):
             url_base_pathname,
         )
         switch_windows(self.driver)
-        self.driver.implicitly_wait(3)
         try:
             el = self.wait_for_element_by_css_selector('#output')
         except:
