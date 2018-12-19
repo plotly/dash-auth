@@ -8,8 +8,10 @@ import dash_core_components as dcc
 import os
 import plotly
 
-os.environ['PLOTLY_USERNAME'] = 'dash-test-user'
-os.environ['PLOTLY_API_KEY'] = '9kCBELqYp54Dygjn7zhH'
+
+# Set your http://plot.ly username and api key in the environ or here.
+os.environ.setdefault('PLOTLY_USERNAME', '<insert username>')
+os.environ.setdefault('PLOTLY_API_KEY', '<insert_api_key>')
 
 app = dash.Dash('auth')
 auth = dash_auth.PlotlyAuth(
@@ -31,6 +33,7 @@ app.layout = html.Div([
     ),
     dcc.Graph(id='graph')
 ], className="container")
+
 
 @app.callback(
     dash.dependencies.Output('graph', 'figure'),
