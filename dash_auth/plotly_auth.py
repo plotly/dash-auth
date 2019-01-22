@@ -23,8 +23,8 @@ from . import api_requests
 
 
 deprecation_notice = '''
-PlotlyAuth is being deprecated.
-If your app is still using Dash Deployment Server < 2.6,
+PlotlyAuth is deprecated.
+If your app is still using Dash Deployment Server < 3.0,
 you can still use this package.
 
 The repo will be broken down into 2 different repos:
