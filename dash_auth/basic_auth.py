@@ -16,7 +16,7 @@ class BasicAuth(Auth):
             return False
         username_password = base64.b64decode(header.split('Basic ')[1])
         username_password_utf8 = username_password.decode('utf-8')
-        username, password = username_password_utf8.split(':')
+        username, password = username_password_utf8.split(':', maxsplit=1)
         return self._users.get(username) == password
 
     def login_request(self):
