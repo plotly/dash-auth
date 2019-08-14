@@ -126,14 +126,14 @@ class TestRequestsCall(unittest.TestCase):
                 if isinstance(expected_message, six.string_types):
                     self.assertTrue(
                         expected_message in stdout,
-                        'url {}\nExpected "{}" to be in:\n{}\n'.format(
+                        'url "{}"\nExpected "{}" to be in:\n{}\n'.format(
                             url, expected_message, stdout)
                     )
                 else:
                     self.assertTrue(
                         (expected_message[0] in stdout) or
                         (expected_message[1] in stdout),
-                        'url {}\nExpected\n"{}"\nor "{}"\nto be in:\n{}\n'.format(
+                        'url "{}"\nExpected\n"{}"\nor "{}"\nto be in:\n{}\n'.format(
                             url, expected_message[0], expected_message[1], stdout)
                     )
 

@@ -1,9 +1,9 @@
+chart_studio>=1.0.0
 dash>=1.1.1
 ua_parser
 selenium
 mock
 six
-plotly>=4.1.0
 requests[security]
 ipdb
 flake8

@@ -2,11 +2,12 @@ from __future__ import absolute_import
 import copy
 import logging
 import os
-import plotly
-from retrying import retry
-import requests
 import socket
 import sys
+
+import chart_studio
+from retrying import retry
+import requests
 
 try:
     import http.client as http_client
@@ -22,7 +23,7 @@ except ImportError:
 
 # API requests get their config from the environment.
 # If variables aren't there, then they check the
-# plotly.tools.get_credentials_file
+# chart_studio.tools.get_credentials_file
 
 
 def credential(key):
@@ -31,7 +32,9 @@ def credential(key):
     elif key.upper() in os.environ:
         return os.environ[key.upper()]
     else:
-        return plotly.tools.get_credentials_file()[key.replace('plotly_', '')]
+        return chart_studio.tools.get_credentials_file()[
+            key.replace('plotly_', '')
+        ]
 
 
 def config(key):
@@ -40,7 +43,7 @@ def config(key):
     elif key.upper() in os.environ:
         value = os.environ[key.upper()]
     else:
-        value = plotly.tools.get_config_file().get(key)
+        value = chart_studio.tools.get_config_file().get(key)
 
     # Handle PLOTLY_SSL_VERIFICATION which is True or False but a
     # string in environ
