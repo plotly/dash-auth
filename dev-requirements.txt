@@ -1,13 +1,9 @@
-# dash_core_components
-dash-core-components>=0.40.0
-dash_html_components
-dash_renderer
-dash>=0.34.0
+chart_studio>=1.0.0
+dash>=1.1.1
 ua_parser
 selenium
 mock
 six
-plotly>=2.0.8
 requests[security]
 ipdb
 flake8
