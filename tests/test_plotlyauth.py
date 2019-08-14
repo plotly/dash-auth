@@ -2,7 +2,6 @@ from __future__ import absolute_import
 import time
 import unittest
 import dash
-import plotly
 import dash_html_components as html
 import os
 import six
@@ -325,7 +324,7 @@ class LoginFlow(unittest.TestCase):
     def login_success(self):
         app = dash.Dash()
         app.config.scripts.serve_locally = True
-        auth = PlotlyAuth(
+        PlotlyAuth(
             app,
             'test-auth-login-flow',
             'private',

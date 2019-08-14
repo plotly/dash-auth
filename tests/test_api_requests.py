@@ -1,6 +1,5 @@
 import mock
 import os
-import requests
 from requests.exceptions import HTTPError
 import six
 import sys
@@ -113,8 +112,7 @@ class TestRequestsCall(unittest.TestCase):
             ]]
         ]
 
-        for test_case in test_cases:
-            url, expected_messages = test_case
+        for url, expected_messages in test_cases:
             os.environ['plotly_api_domain'] = url
             f = IO()
             with captured_output(f) as out:
@@ -128,16 +126,17 @@ class TestRequestsCall(unittest.TestCase):
                 if isinstance(expected_message, six.string_types):
                     self.assertTrue(
                         expected_message in stdout,
-                        'Expected "{}" to be in:\n{}\n'.format(
-                            expected_message, stdout)
+                        'url {}\nExpected "{}" to be in:\n{}\n'.format(
+                            url, expected_message, stdout)
                     )
                 else:
                     self.assertTrue(
                         (expected_message[0] in stdout) or
                         (expected_message[1] in stdout),
-                        'Expected\n"{}"\nor"{}"\nto be in:\n{}\n'.format(
-                            expected_message[0], expected_message[1], stdout)
+                        'url {}\nExpected\n"{}"\nor "{}"\nto be in:\n{}\n'.format(
+                            url, expected_message[0], expected_message[1], stdout)
                     )
+
 
 if __name__ == '__main__':
     unittest.main()

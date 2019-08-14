@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Changed
+Updated to require dash 1.x - this did not affect the API of this package at all, but usage examples and tests were adapted for the dash API changes.
+
 ## [1.3.2] - 2018-12-18
 ### Change
 Changed basic-auth to use a dictionary of valid credentials, rather than lists.
@@ -28,7 +32,7 @@ dash-auth will be split into 2 repositories:
 - Pending deprecation notice for PlotlyAuth.
 
 ### Changed
-- Logout button changed to a `dcc.LogoutButton` if app is on Dash Deployment Server 2.6 
+- Logout button changed to a `dcc.LogoutButton` if app is on Dash Deployment Server 2.6
 - `get_username` from request headers if app is on Dash Deployment Server 2.6
 - Disabled authentication if app is on Dash Deployment Server>=2.6, authentication is now performed on the Dash Deployment Server for all deployed apps.
 
