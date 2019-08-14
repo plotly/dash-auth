@@ -20,6 +20,7 @@ setup(
         'dash>=0.18.3',
         'dash_html_components',
         'dash_core_components',
+        'requests',
         'retrying',
         'itsdangerous>=0.18',
         'ua_parser'
