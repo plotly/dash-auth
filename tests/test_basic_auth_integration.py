@@ -1,20 +1,11 @@
-from dash.dependencies import Input, Output, State
+from dash.dependencies import Input, Output
 import dash
 import dash_html_components as html
 import dash_core_components as dcc
-from multiprocessing import Value
-import os
-import time
-import re
-import itertools
-import plotly.plotly as py
 import requests
 
-from selenium import webdriver
-from selenium.common.exceptions import NoSuchElementException
 
 from .IntegrationTests import IntegrationTests
-from .utils import assert_clean_console, switch_windows
 from dash_auth import basic_auth
 
 
@@ -44,7 +35,7 @@ class Tests(IntegrationTests):
         def update_output(new_value):
             return new_value
 
-        auth = basic_auth.BasicAuth(
+        basic_auth.BasicAuth(
             app,
             TEST_USERS['valid']
         )
@@ -69,5 +60,4 @@ class Tests(IntegrationTests):
             # routes, but it saves the credentials as part of the browser.
             # visiting the page again will use the saved credentials
             self.driver.get('http://localhost:8050')
-            el = self.wait_for_element_by_css_selector('#output')
             self.wait_for_text_to_equal('#output', 'initial value')

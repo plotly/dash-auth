@@ -1,18 +1,16 @@
-# pip install dash==0.17.8rc1
-# pip install dash-auth==0.0.2
-
 import dash
+from dash.dependencies import Input, Output
 import dash_auth
 import dash_html_components as html
 import dash_core_components as dcc
-import plotly
 
 # Keep this out of source code repository - save in a file or a database
 VALID_USERNAME_PASSWORD_PAIRS = {
     'hello': 'world'
 }
 
-app = dash.Dash('auth')
+external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+app = dash.Dash('auth', external_stylesheets=external_stylesheets)
 auth = dash_auth.BasicAuth(
     app,
     VALID_USERNAME_PASSWORD_PAIRS
@@ -29,9 +27,8 @@ app.layout = html.Div([
     dcc.Graph(id='graph')
 ], className="container")
 
-@app.callback(
-    dash.dependencies.Output('graph', 'figure'),
-    [dash.dependencies.Input('dropdown', 'value')])
+
+@app.callback(Output('graph', 'figure'), [Input('dropdown', 'value')])
 def update_graph(dropdown_value):
     return {
         'layout': {
@@ -46,8 +43,6 @@ def update_graph(dropdown_value):
         'data': [{'x': [1, 2, 3], 'y': [4, 1, 2]}]
     }
 
-app.scripts.config.serve_locally = True
-app.css.append_css({"external_url": "https://codepen.io/chriddyp/pen/bWLwgP.css"})
 
 if __name__ == '__main__':
     app.run_server(debug=True)
