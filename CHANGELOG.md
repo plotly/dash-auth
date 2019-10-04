@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.4.1] - 2019-10-04
+### Fixed
+Fixed a bug with PlotlyAuth not properly converting user data to json
+
 ## [1.4.0] - 2019-09-02
 ### Changed
 Updated to require dash 1.x - this did not affect the API of this package at all, but usage examples and tests were adapted for the dash API changes.
