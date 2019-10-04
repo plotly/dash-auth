@@ -10,7 +10,7 @@ $ yarn
 $ yarn run build
 ```
 
-Install the python package
+Install the Python package
 ```
 $ cd dash-auth
 $ python setup.py install

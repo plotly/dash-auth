@@ -1,7 +1,7 @@
 version: 2
 
 jobs:
-  "python-2.7": &test-template
+  python-2.7: &test-template
     docker:
       - image: circleci/python:2.7-stretch-browsers
 
@@ -26,7 +26,7 @@ jobs:
       - save_cache:
           key: deps1-{{ .Branch }}-{{ checksum "circlejob.txt" }}-{{ checksum "dev-requirements.txt" }}-{{ checksum ".circleci/config.yml" }}
           paths:
-          - "venv"
+          - venv
 
       - run:
           name: Flake8
@@ -43,7 +43,7 @@ jobs:
             python -m unittest -v tests.test_plotlyauth
             python -m unittest -v tests.test_plotly_auth_integration
 
-  "python-3.6":
+  python-3.6:
     <<: *test-template
     docker:
       - image: circleci/python:3.6-stretch-browsers
@@ -52,5 +52,5 @@ workflows:
   version: 2
   build:
     jobs:
-      - "python-2.7"
-      - "python-3.6"
+      - python-2.7
+      - python-3.6
