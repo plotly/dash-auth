@@ -256,7 +256,9 @@ class PlotlyAuth(OAuthBase):
 
     def get_username(self, validate_max_age=True, response=None):
         if self._logout_url:
-            user_data = flask.request.headers.get('Plotly-User-Data', {})
+            user_data = json.loads(
+                    flask.request.headers.get('Plotly-User-Data', "{}")
+                    )
             return user_data.get('username')
         else:
             return super(PlotlyAuth, self).get_username(
