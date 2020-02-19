@@ -16,7 +16,7 @@ const IS_AUTHORIZED_PATHNAME = '_is-authorized';
 
 /**
  * OAuth redirect component
- * - Looks for an oauth token in the URL as provided by the plot.ly redirect
+ * - Looks for an oauth token in the URL as provided by the plotly.com redirect
  * - Make an API call to dash with that oauth token
  * - In response, Dash will set the oauth token as a cookie
  *   if it is valid

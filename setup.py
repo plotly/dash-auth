@@ -9,7 +9,7 @@ setup(
     name='dash_auth',
     version=main_ns['__version__'],
     author='Christopher Parmer',
-    author_email='chris@plot.ly',
+    author_email='chris@plotly.com',
     packages=['dash_auth'],
     license='MIT',
     description='Dash Authorization Package.',
@@ -26,7 +26,7 @@ setup(
         'ua_parser'
     ],
     include_package_data=True,
-    url='https://plot.ly/dash',
+    url='https://plotly.com/dash',
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Environment :: Web Environment',
