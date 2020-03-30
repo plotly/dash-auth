@@ -6,7 +6,7 @@ import dash_core_components as dcc
 import os
 
 
-# Set your http://plot.ly username and api key in the environ or here.
+# Set your http://plotly.com username and api key in the environ or here.
 os.environ.setdefault('PLOTLY_USERNAME', '<insert username>')
 os.environ.setdefault('PLOTLY_API_KEY', '<insert_api_key>')
 

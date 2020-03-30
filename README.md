@@ -1,6 +1,6 @@
 ## Dash Authorization and Login
 
-Docs: [https://plot.ly/dash/authentication](https://plot.ly/dash/authentication)
+Docs: [https://plotly.com/dash/authentication](https://plotly.com/dash/authentication)
 
 License: MIT
 

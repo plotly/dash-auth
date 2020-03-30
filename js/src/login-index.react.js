@@ -31,9 +31,9 @@ const PopupCenter = (url, title, w, h) => {
 
 /**
  * Login displays an interface that guides the user through an oauth flow.
- * - Clicking on a login button will launch a new window with the plot.ly
+ * - Clicking on a login button will launch a new window with the plotly.com
  *   oauth url
- * - plot.ly will redirect that window to defined redirect URL when complete
+ * - plotly.com will redirect that window to defined redirect URL when complete
  * - The <OauthRedirect/> component will render the oauth redirect page
  * - When the <OauthRedirect/> window is closed, <Login/> will call its
  *   `onClosed` prop
@@ -53,7 +53,7 @@ class Login extends Component {
         } = CONFIG;
         /*
          * There are a few things to consider when constructing the redirect_uri:
-         * - Since Dash apps can have URLs (https://plot.ly/dash/urls), e.g.
+         * - Since Dash apps can have URLs (https://plotly.com/dash/urls), e.g.
          *   `/page-1/another-page`, and so just appending the /_oauth-redirect
          *   API path to the end of the current URL (window.location.href) isn't
          *   safe because the API endpoint is `/_oauth-redirect` not e.g.
