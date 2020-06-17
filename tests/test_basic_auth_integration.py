@@ -3,19 +3,34 @@ import dash
 import dash_html_components as html
 import dash_core_components as dcc
 import requests
+import bcrypt
 
 
 from .IntegrationTests import IntegrationTests
 from dash_auth import basic_auth
 
 
-TEST_USERS = {
+def hash_password(passwd):
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(passwd.encode('utf8'), salt)
+
+TEST_USERS_PLAINTEXT = {
     'valid': [
         ['hello', 'world'],
         ['hello2', 'wo:rld']
     ],
     'invalid': [
         ['hello', 'password']
+    ],
+}
+
+TEST_USERS_HASHED = {
+    'valid': [
+        ['hello', hash_password('world')],
+        ['hello2', hash_password('wo:rld')]
+    ],
+    'invalid': [
+        ['hello', hash_password('password')]
     ],
 }
 
@@ -37,7 +52,7 @@ class Tests(IntegrationTests):
 
         basic_auth.BasicAuth(
             app,
-            TEST_USERS['valid']
+            TEST_USERS_HASHED['valid']
         )
 
         self.startServer(app, skip_visit=True)
@@ -48,7 +63,7 @@ class Tests(IntegrationTests):
         )
 
         # Test login for each user:
-        for user, password in TEST_USERS['valid']:
+        for user, password in TEST_USERS_PLAINTEXT['valid']:
             # login using the URL instead of the alert popup
             # selenium has no way of accessing the alert popup
             self.driver.get(

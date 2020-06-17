@@ -4,9 +4,15 @@ import dash_auth
 import dash_html_components as html
 import dash_core_components as dcc
 
+import bcrypt
+
+def hash_password(passwd):
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(passwd.encode('utf8'), salt)
+
 # Keep this out of source code repository - save in a file or a database
 VALID_USERNAME_PASSWORD_PAIRS = {
-    'hello': 'world'
+    'hello': hash_password('world')
 }
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']

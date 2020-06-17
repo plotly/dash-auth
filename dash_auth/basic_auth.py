@@ -1,6 +1,7 @@
 from .auth import Auth
 import base64
 import flask
+import bcrypt
 
 
 class BasicAuth(Auth):
@@ -17,7 +18,10 @@ class BasicAuth(Auth):
         username_password = base64.b64decode(header.split('Basic ')[1])
         username_password_utf8 = username_password.decode('utf-8')
         username, password = username_password_utf8.split(':', 1)
-        return self._users.get(username) == password
+        pw_hash = self._users.get(username)
+        if isinstance(pw_hash, str):
+            pw_hash = pw_hash.encode('utf8')
+        return pw_hash and bcrypt.checkpw(password.encode('utf8'), pw_hash)
 
     def login_request(self):
         return flask.Response(
