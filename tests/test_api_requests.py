@@ -54,7 +54,7 @@ class TestRequestsCall(unittest.TestCase):
     def test_plotly_query(self, mock_get):
         result = plotly_query()
         self.assertEqual(result.json(), JSON_DATA)
-        self.failUnless(result.raise_for_status.called)
+        self.assertTrue(result.raise_for_status.called)
         self.assertEqual(mock_get.call_count, 1)
 
     @mock.patch(
@@ -77,7 +77,7 @@ class TestRequestsCall(unittest.TestCase):
         test_cases = [
             ['', [
                 'Invalid URL',
-                'No schema supplied',
+                'No scheme supplied',
                 'gettaddrinfo failed',
                 ['nodename nor servname provided, or not known',
                  'Name or service not known']
@@ -95,17 +95,13 @@ class TestRequestsCall(unittest.TestCase):
                  'Name or service not known']
             ]],
             ['https://expired.badssl.com', [
-                'Caused by SSLError(SSLError("bad handshake: Error([(',
-                'SSL routines',
-                'tls_process_server_certificate',
+                'Caused by SSLError(SSLError',
                 'certificate verify failed',
                 'gettaddrinfo: ',
                 "'104.154.89.105', 443"
             ]],
             ['https://self-signed.badssl.com', [
-                'Caused by SSLError(SSLError("bad handshake: Error([(',
-                'SSL routines',
-                'tls_process_server_certificate',
+                'Caused by SSLError(SSLError',
                 'certificate verify failed',
                 'gettaddrinfo',
                 "'104.154.89.105', 443"

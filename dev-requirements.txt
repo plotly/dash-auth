@@ -9,3 +9,4 @@ ipdb
 flake8
 retrying
 chromedriver
+pytest

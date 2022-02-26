@@ -4,8 +4,11 @@ import unittest
 import flask
 from dash.dependencies import Input, Output
 import dash
-import dash_html_components as html
-import dash_core_components as dcc
+try:
+    from dash import html, dcc
+except ImportError:
+    import dash_html_components as html
+    import dash_core_components as dcc
 import os
 import time
 from dash.exceptions import PreventUpdate

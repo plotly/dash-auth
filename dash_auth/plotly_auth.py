@@ -13,8 +13,11 @@ import requests
 from hmac import compare_digest
 from six import iteritems
 
-import dash_html_components as html
-import dash_core_components as dcc
+try:
+    from dash import html, dcc
+except ImportError:
+    import dash_html_components as html
+    import dash_core_components as dcc
 from dash.dependencies import Output, Input
 
 from .oauth import OAuthBase, need_request_context

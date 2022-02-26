@@ -2,7 +2,10 @@ from __future__ import absolute_import
 import time
 import unittest
 import dash
-import dash_html_components as html
+try:
+    from dash import html
+except ImportError:
+    import dash_html_components as html
 import os
 import six
 from six.moves import http_cookies
