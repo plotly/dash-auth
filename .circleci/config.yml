@@ -4,7 +4,6 @@ jobs:
   "python-2.7": &test-template
     docker:
       - image: circleci/python:2.7-stretch-browsers
-
     steps:
       - checkout
 
@@ -38,10 +37,11 @@ jobs:
           name: Test with pytest
           command: |
             . venv/bin/activate
-            python -m unittest -v tests.test_basic_auth_integration
-            python -m unittest -v tests.test_api_requests
-            python -m unittest -v tests.test_plotlyauth
-            python -m unittest -v tests.test_plotly_auth_integration
+            mkdir test-results
+            pytest --junitxml=test-results/junit.xml
+      
+      - store_test_results:
+          path: test-results
 
   "python-3.6":
     <<: *test-template
