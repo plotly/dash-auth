@@ -1,11 +1,3 @@
-chart_studio>=1.0.0
-dash>=1.1.1
-ua_parser
-selenium
-mock
-six
+dash[testing]>=2
 requests[security]
-ipdb
 flake8
-retrying
-chromedriver

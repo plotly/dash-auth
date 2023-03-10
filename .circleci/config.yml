@@ -1,13 +1,21 @@
-version: 2
+version: 2.1
+
+orbs:
+  browser-tools: circleci/browser-tools@1.4.1
 
 jobs:
-  "python-2.7": &test-template
+  "python-36": &test-template
     docker:
-      - image: circleci/python:2.7-stretch-browsers
-
+      - image: cimg/python:3.6-node
+        auth:
+          username: dashautomation
+          password: $DASH_PAT_DOCKERHUB
+        environment:
+          PERCY_ENABLE: 0
     steps:
       - checkout
-
+      - browser-tools/install-chrome
+      - browser-tools/install-chromedriver
       - run:
           name: Write job name
           command: echo $CIRCLE_JOB > circlejob.txt
@@ -18,8 +26,7 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            sudo pip install virtualenv
-            python -m venv venv || virtualenv venv
+            python -m venv venv
             . venv/bin/activate
             pip install -r dev-requirements.txt
 
@@ -38,19 +45,20 @@ jobs:
           name: Test with pytest
           command: |
             . venv/bin/activate
-            python -m unittest -v tests.test_basic_auth_integration
-            python -m unittest -v tests.test_api_requests
-            python -m unittest -v tests.test_plotlyauth
-            python -m unittest -v tests.test_plotly_auth_integration
+            pytest --headless
 
-  "python-3.6":
+  "python-311":
     <<: *test-template
     docker:
-      - image: circleci/python:3.6-stretch-browsers
+      - image: cimg/python:3.6-node
+        auth:
+          username: dashautomation
+          password: $DASH_PAT_DOCKERHUB
+        environment:
+          PERCY_ENABLE: 0
 
 workflows:
-  version: 2
-  build:
+  test:
     jobs:
-      - "python-2.7"
-      - "python-3.6"
+      - "python-36"
+      - "python-311"

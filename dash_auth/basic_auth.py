@@ -6,9 +6,11 @@ import flask
 class BasicAuth(Auth):
     def __init__(self, app, username_password_list):
         Auth.__init__(self, app)
-        self._users = username_password_list \
-            if isinstance(username_password_list, dict) \
+        self._users = (
+            username_password_list
+            if isinstance(username_password_list, dict)
             else {k: v for k, v in username_password_list}
+        )
 
     def is_authorized(self):
         header = flask.request.headers.get('Authorization', None)
@@ -23,7 +25,8 @@ class BasicAuth(Auth):
         return flask.Response(
             'Login Required',
             headers={'WWW-Authenticate': 'Basic realm="User Visible Realm"'},
-            status=401)
+            status=401
+        )
 
     def auth_wrapper(self, f):
         def wrap(*args, **kwargs):

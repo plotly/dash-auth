@@ -1,8 +1,5 @@
-import dash
-from dash.dependencies import Input, Output
+from dash import Dash, Input, Output, dcc, html
 import dash_auth
-import dash_html_components as html
-import dash_core_components as dcc
 
 # Keep this out of source code repository - save in a file or a database
 VALID_USERNAME_PASSWORD_PAIRS = {
@@ -10,7 +7,7 @@ VALID_USERNAME_PASSWORD_PAIRS = {
 }
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-app = dash.Dash('auth', external_stylesheets=external_stylesheets)
+app = Dash(__name__, external_stylesheets=external_stylesheets)
 auth = dash_auth.BasicAuth(
     app,
     VALID_USERNAME_PASSWORD_PAIRS
