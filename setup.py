@@ -1,9 +1,11 @@
 from setuptools import setup
 
-import io
-
 main_ns = {}
-exec(open('dash_auth/version.py').read(), main_ns)
+with open('dash_auth/version.py', encoding='utf-8') as f:
+    exec(f.read(), main_ns)
+
+with open('README.md', encoding='utf-8') as f:
+    long_description = f.read()
 
 setup(
     name='dash_auth',
@@ -13,7 +15,7 @@ setup(
     packages=['dash_auth'],
     license='MIT',
     description='Dash Authorization Package.',
-    long_description=io.open('README.md', encoding='utf-8').read(),
+    long_description=long_description,
     install_requires=[
         'dash>=1.1.1'
     ],
