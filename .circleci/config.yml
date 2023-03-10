@@ -43,7 +43,7 @@ jobs:
           name: Test with pytest
           command: |
             . venv/bin/activate
-            pytest
+            pytest --headless
 
   "python-311":
     <<: *test-template
