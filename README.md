@@ -16,10 +16,10 @@ Or create a virtualenv, install the dev requirements, and run individual
 tests or test classes:
 
 ```
-virtualenv venv
-source venv/activate
+python -m venv venv
+. venv/bin/activate
 pip install -r dev-requirements.txt
-python -m unittest -v tests.test_plotlyauth.ProtectedViewsTest
+python -k ba001
 ```
 
-Note that Python 2.7.7 or greater is required.
+Note that Python 3.6 or greater is required.

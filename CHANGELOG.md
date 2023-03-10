@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2023-03-10
+### Removed
+Removed obsolete `PlotlyAuth`. `dash-auth` is now just responsible for `BasicAuth`.
+Drop Python 2 support. Minimum Python version is now 3.6.
+
 ## [1.4.1] - 2019-10-04
 ### Fixed
 Fixed a bug with PlotlyAuth not properly converting user data to json

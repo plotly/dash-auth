@@ -30,7 +30,15 @@ def test_ba001_basic_auth_login_flow(dash_br, dash_thread_server):
 
     dash_thread_server(app)
     base_url = dash_thread_server.url
-    assert requests.get(base_url).status_code == 401
+
+    def test_failed_views(url):
+        assert requests.get(url).status_code == 401
+        assert requests.get(url.strip("/") + "/_dash-layout").status_code == 403
+
+    test_failed_views(base_url)
+
+    for user, password in TEST_USERS["invalid"]:
+        test_failed_views(base_url.replace("//", f"//{user}:{password}@"))
 
     # Test login for each user:
     for user, password in TEST_USERS["valid"]:
