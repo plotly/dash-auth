@@ -29,7 +29,6 @@ password:your_pypi_password
 
 3. **Create a Python Build**
 ```
-$ cd ..
 $ python setup.py sdist bdist_wheel
 ```
 
