@@ -4,7 +4,7 @@ orbs:
   browser-tools: circleci/browser-tools@1.4.1
 
 jobs:
-  "python-3.6": &test-template
+  "python-36": &test-template
     docker:
       - image: cimg/python:3.6-node
         auth:
@@ -45,7 +45,7 @@ jobs:
             . venv/bin/activate
             pytest
 
-  "python-3.11":
+  "python-311":
     <<: *test-template
     docker:
       - image: cimg/python:3.6-node
@@ -56,5 +56,5 @@ jobs:
 workflows:
   test:
     jobs:
-      - "python-3.6"
-      - "python-3.11"
+      - "python-36"
+      - "python-311"
