@@ -30,17 +30,11 @@ class BasicAuth(Auth):
 
     def auth_wrapper(self, f):
         def wrap(*args, **kwargs):
-            if not self.is_authorized():
-                return flask.Response(status=403)
+            if self.is_authorized():
+                return f(*args, **kwargs)
+            return self.login_request()
 
-            response = f(*args, **kwargs)
-            return response
         return wrap
 
     def index_auth_wrapper(self, original_index):
-        def wrap(*args, **kwargs):
-            if self.is_authorized():
-                return original_index(*args, **kwargs)
-            else:
-                return self.login_request()
-        return wrap
+        return self.auth_wrapper(original_index)
