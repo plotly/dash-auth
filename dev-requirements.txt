@@ -2,3 +2,4 @@ dash[testing]>=2
 flask
 requests[security]
 flake8
+werkzeug

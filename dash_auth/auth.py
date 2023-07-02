@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 
 from dash import Dash
 from flask import request
+from werkzeug.routing import Map, Rule
 
 
 class Auth(ABC):
@@ -15,7 +16,8 @@ class Auth(ABC):
 
         The authentication check will pass if either
             * The endpoint is marked as public via
-              `app.server.config["PUBLIC_ENDPOINTS"]`
+              `app.server.config["PUBLIC_ROUTES"]`
+              (PUBLIC_ROUTES should follow the Flask route syntax)
             * The request is authorised by `Auth.is_authorised`
         """
 
@@ -23,8 +25,12 @@ class Auth(ABC):
 
         @server.before_request
         def before_request_auth():
+            public_paths_map = Map(
+                [Rule(p) for p in server.config.get("PUBLIC_ROUTES", [])]
+            )
+            public_paths_map_adapter = public_paths_map.bind("tmp")
             if not (
-                request.endpoint in server.config.get("PUBLIC_ENDPOINTS", [])
+                public_paths_map_adapter.test(request.path)
                 or self.is_authorized()
             ):
                 return self.login_request()
