@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Changed
+- Uses flask `before_request` to protect all endpoints rather than protecting routes present at instantiation time
+
+### Added
+- Possibility to whitelist endpoints by adding a `PUBLIC_ENDPOINTS` key in Flask `server.config`
+
 ## [2.0.0] - 2023-03-10
 ### Removed
 Removed obsolete `PlotlyAuth`. `dash-auth` is now just responsible for `BasicAuth`.
