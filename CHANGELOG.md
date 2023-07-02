@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Uses flask `before_request` to protect all endpoints rather than protecting routes present at instantiation time
 
 ### Added
-- Possibility to whitelist endpoints by adding a `PUBLIC_ENDPOINTS` key in Flask `server.config`
+- Possibility to whitelist endpoints by adding a `PUBLIC_ROUTES` key in Flask `server.config`
 
 ## [2.0.0] - 2023-03-10
 ### Removed
