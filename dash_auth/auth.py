@@ -30,7 +30,6 @@ class Auth(ABC):
                 return self.login_request()
             return None
 
-
     def is_authorized_hook(self, func):
         self._auth_hooks.append(func)
         return func
