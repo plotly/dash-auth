@@ -8,7 +8,9 @@ from werkzeug.routing import Map, MapAdapter, Rule
 
 # Add PUBLIC_ROUTES in the default Flask config
 default_config = Flask.default_config
-Flask.default_config = ImmutableDict(**default_config, **{"PUBLIC_ROUTES": Map([]).bind("")})
+Flask.default_config = ImmutableDict(
+    **default_config, **{"PUBLIC_ROUTES": Map([]).bind("")}
+)
 
 
 class Auth(ABC):
@@ -28,8 +30,12 @@ class Auth(ABC):
 
         @server.before_request
         def before_request_auth():
-            # Check whether the path matches a public route, or whether the request is authorised
-            if server.config["PUBLIC_ROUTES"].test(request.path) or self.is_authorized():
+            # Check whether the path matches a public route,
+            # or whether the request is authorised
+            if (
+                server.config["PUBLIC_ROUTES"].test(request.path)
+                or self.is_authorized()
+            ):
                 return None
 
             # Ask the user to log in
