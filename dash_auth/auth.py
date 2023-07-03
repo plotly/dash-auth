@@ -2,8 +2,13 @@ from __future__ import absolute_import
 from abc import ABC, abstractmethod
 
 from dash import Dash
-from flask import request
+from flask import Flask, request
+from werkzeug.datastructures import ImmutableDict
 from werkzeug.routing import Map, MapAdapter, Rule
+
+# Add PUBLIC_ROUTES in the default Flask config
+default_config = Flask.default_config
+Flask.default_config = ImmutableDict(**default_config, **{"PUBLIC_ROUTES": Map([]).bind("")})
 
 
 class Auth(ABC):
@@ -15,9 +20,7 @@ class Auth(ABC):
         """Add a before_request authentication check on all routes.
 
         The authentication check will pass if either
-            * The endpoint is marked as public via
-              `app.server.config["PUBLIC_ROUTES"]`
-              (PUBLIC_ROUTES should follow the Flask route syntax)
+            * The endpoint is marked as public via `add_public_routes`
             * The request is authorised by `Auth.is_authorised`
         """
 
@@ -25,25 +28,8 @@ class Auth(ABC):
 
         @server.before_request
         def before_request_auth():
-            public_routes = server.config.get("PUBLIC_ROUTES")
-
-            # Convert to MapAdapter if PUBLIC_ROUTES was set manually
-            # as a list of routes
-            if isinstance(public_routes, list):
-                public_routes = Map(
-                    [Rule(route) for route in public_routes]
-                ).bind("")
-                server.config["PUBLIC_ROUTES"] = public_routes
-
-            # Check whether the path matches a public route,
-            # or whether the request is authorised
-            if (
-                (
-                    public_routes is not None
-                    and public_routes.test(request.path)
-                )
-                or self.is_authorized()
-            ):
+            # Check whether the path matches a public route, or whether the request is authorised
+            if server.config["PUBLIC_ROUTES"].test(request.path) or self.is_authorized():
                 return None
 
             # Ask the user to log in
@@ -76,24 +62,6 @@ def add_public_routes(app: Dash, routes: list):
     The routes passed should follow the Flask route syntax.
     e.g. "/login", "/user/<user_id>/public"
     """
-
-    # Get the current public routes
-    public_routes = app.server.config.get("PUBLIC_ROUTES")
-
-    # If it doesn't exist, create it
-    if public_routes is None:
-        app.server.config["PUBLIC_ROUTES"] = (
-            Map([Rule(route) for route in routes]).bind("")
-        )
-
-    # If it was set manually as a list of routes, convert to MapAdapter
-    # and add new routes
-    elif isinstance(public_routes, list):
-        app.server.config["PUBLIC_ROUTES"] = (
-            Map([Rule(route) for route in public_routes + routes]).bind("")
-        )
-
-    # If it exists as a MapAdapter, add new routes
-    elif isinstance(public_routes, MapAdapter):
-        for route in routes:
-            public_routes.map.add(Rule(route))
+    public_routes: MapAdapter = app.server.config["PUBLIC_ROUTES"]
+    for route in routes:
+        public_routes.map.add(Rule(route))
