@@ -1,7 +1,7 @@
 from dash import Dash, Input, Output, dcc, html
 import requests
 
-from dash_auth import basic_auth
+from dash_auth import basic_auth, add_public_routes
 
 
 TEST_USERS = {
@@ -21,7 +21,7 @@ def test_ba001_basic_auth_login_flow(dash_br, dash_thread_server):
         dcc.Input(id="input", value="initial value"),
         html.Div(id="output")
     ])
-    app.server.config["PUBLIC_ROUTES"] = ["/home", "/user/<user_id>/public"]
+    add_public_routes(app, ["/home", "/user/<user_id>/public"])
 
     @app.callback(Output("output", "children"), Input("input", "value"))
     def update_output(new_value):
