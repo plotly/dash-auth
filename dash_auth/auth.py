@@ -71,7 +71,11 @@ class Auth(ABC):
 
 
 def add_public_routes(app: Dash, routes: list):
-    """Add routes to the public routes list."""
+    """Add routes to the public routes list.
+
+    The routes passed should follow the Flask route syntax.
+    e.g. "/login", "/user/<user_id>/public"
+    """
 
     # Get the current public routes
     public_routes = app.server.config.get("PUBLIC_ROUTES")
