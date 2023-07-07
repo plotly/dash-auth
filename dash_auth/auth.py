@@ -70,7 +70,7 @@ class Auth(ABC):
         pass
 
 
-def add_public_routes(app: Dash, routes: list[str]):
+def add_public_routes(app: Dash, routes: list):
     """Add routes to the public routes list."""
 
     # Get the current public routes
