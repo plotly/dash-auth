@@ -21,7 +21,7 @@ def test_ba001_basic_auth_login_flow(dash_br, dash_thread_server):
         dcc.Input(id="input", value="initial value"),
         html.Div(id="output")
     ])
-    app.server.config["PUBLIC_ROUTES"] = ["/user/<user_id>"]
+    app.server.config["PUBLIC_ROUTES"] = ["/home", "/user/<user_id>/public"]
 
     @app.callback(Output("output", "children"), Input("input", "value"))
     def update_output(new_value):
@@ -35,12 +35,17 @@ def test_ba001_basic_auth_login_flow(dash_br, dash_thread_server):
     def test_failed_views(url):
         assert requests.get(url).status_code == 401
         assert requests.get(url.strip("/") + "/_dash-layout").status_code == 401
-        assert requests.get(url.strip("/") + "/user/john123").status_code == 200
+
+    def test_successful_views(url):
+        assert requests.get(url.strip("/") + "/home").status_code == 200
+        assert requests.get(url.strip("/") + "/user/john123/public").status_code == 200
 
     test_failed_views(base_url)
+    test_successful_views(base_url)
 
     for user, password in TEST_USERS["invalid"]:
         test_failed_views(base_url.replace("//", f"//{user}:{password}@"))
+        test_successful_views(base_url.replace("//", f"//{user}:{password}@"))
 
     # Test login for each user:
     for user, password in TEST_USERS["valid"]:

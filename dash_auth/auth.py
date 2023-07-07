@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 
 from dash import Dash
 from flask import request
-from werkzeug.routing import Map, Rule
+from werkzeug.routing import Map, MapAdapter, Rule
 
 
 class Auth(ABC):
@@ -25,16 +25,29 @@ class Auth(ABC):
 
         @server.before_request
         def before_request_auth():
-            public_paths_map = Map(
-                [Rule(p) for p in server.config.get("PUBLIC_ROUTES", [])]
-            )
-            public_paths_map_adapter = public_paths_map.bind("tmp")
-            if not (
-                public_paths_map_adapter.test(request.path)
+            public_routes = server.config.get("PUBLIC_ROUTES")
+
+            # Convert to MapAdapter if PUBLIC_ROUTES was set manually
+            # as a list of routes
+            if isinstance(public_routes, list):
+                public_routes = Map(
+                    [Rule(route) for route in public_routes]
+                ).bind("")
+                server.config["PUBLIC_ROUTES"] = public_routes
+
+            # Check whether the path matches a public route,
+            # or whether the request is authorised
+            if (
+                (
+                    public_routes is not None
+                    and public_routes.test(request.path)
+                )
                 or self.is_authorized()
             ):
-                return self.login_request()
-            return None
+                return None
+
+            # Ask the user to log in
+            return self.login_request()
 
     def is_authorized_hook(self, func):
         self._auth_hooks.append(func)
@@ -55,3 +68,28 @@ class Auth(ABC):
     @abstractmethod
     def login_request(self):
         pass
+
+
+def add_public_routes(app: Dash, routes: list[str]):
+    """Add routes to the public routes list."""
+
+    # Get the current public routes
+    public_routes = app.server.config.get("PUBLIC_ROUTES")
+
+    # If it doesn't exist, create it
+    if public_routes is None:
+        app.server.config["PUBLIC_ROUTES"] = (
+            Map([Rule(route) for route in routes]).bind("")
+        )
+
+    # If it was set manually as a list of routes, convert to MapAdapter
+    # and add new routes
+    elif isinstance(public_routes, list):
+        app.server.config["PUBLIC_ROUTES"] = (
+            Map([Rule(route) for route in public_routes + routes]).bind("")
+        )
+
+    # If it exists as a MapAdapter, add new routes
+    elif isinstance(public_routes, MapAdapter):
+        for route in routes:
+            public_routes.map.add(Rule(route))
