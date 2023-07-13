@@ -21,13 +21,13 @@ def test_ba001_basic_auth_login_flow(dash_br, dash_thread_server):
         dcc.Input(id="input", value="initial value"),
         html.Div(id="output")
     ])
-    add_public_routes(app, ["/home", "/user/<user_id>/public"])
 
     @app.callback(Output("output", "children"), Input("input", "value"))
     def update_output(new_value):
         return new_value
 
-    basic_auth.BasicAuth(app, TEST_USERS["valid"])
+    basic_auth.BasicAuth(app, TEST_USERS["valid"], public_routes=["/home"])
+    add_public_routes(app, ["/user/<user_id>/public"])
 
     dash_thread_server(app)
     base_url = dash_thread_server.url

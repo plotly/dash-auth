@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from abc import ABC, abstractmethod
+from typing import Optional
 
 from dash import Dash
 from flask import Flask, request
@@ -14,9 +15,34 @@ Flask.default_config = ImmutableDict(
 
 
 class Auth(ABC):
-    def __init__(self, app: Dash, **_kwargs):
+    def __init__(
+        self,
+        app: Dash,
+        public_routes: Optional[list] = None,
+        authorization_hook=None,
+        _overwrite_index=None,
+    ):
+        """Auth base class for authentication in Dash.
+
+        :param app: Dash app
+        :param public_routes: list of public routes, routes should follow the
+            Flask route syntax
+        """
+
+        # Deprecated arguments
+        if authorization_hook is not None:
+            raise TypeError(
+                "Auth got an unexpected keyword argument: 'authorization_hook'"
+            )
+        if _overwrite_index is not None:
+            raise TypeError(
+                "Auth got an unexpected keyword argument: '_overwrite_index'"
+            )
+
         self.app = app
         self._protect()
+        if public_routes is not None:
+            add_public_routes(public_routes)
 
     def _protect(self):
         """Add a before_request authentication check on all routes.
