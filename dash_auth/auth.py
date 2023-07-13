@@ -42,7 +42,7 @@ class Auth(ABC):
         self.app = app
         self._protect()
         if public_routes is not None:
-            add_public_routes(public_routes)
+            add_public_routes(app, public_routes)
 
     def _protect(self):
         """Add a before_request authentication check on all routes.
