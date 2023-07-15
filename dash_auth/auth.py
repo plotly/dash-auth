@@ -3,15 +3,9 @@ from abc import ABC, abstractmethod
 from typing import Optional
 
 from dash import Dash
-from flask import Flask, request
-from werkzeug.datastructures import ImmutableDict
-from werkzeug.routing import Map, MapAdapter, Rule
+from flask import request
 
-# Add PUBLIC_ROUTES in the default Flask config
-default_config = Flask.default_config
-Flask.default_config = ImmutableDict(
-    **default_config, **{"PUBLIC_ROUTES": Map([]).bind("")}
-)
+from .public_routes import add_public_routes, PUBLIC_CALLBACKS, PUBLIC_ROUTES
 
 
 class Auth(ABC):
@@ -19,8 +13,7 @@ class Auth(ABC):
         self,
         app: Dash,
         public_routes: Optional[list] = None,
-        authorization_hook=None,
-        _overwrite_index=None,
+        **obsolete
     ):
         """Auth base class for authentication in Dash.
 
@@ -30,13 +23,9 @@ class Auth(ABC):
         """
 
         # Deprecated arguments
-        if authorization_hook is not None:
+        if obsolete:
             raise TypeError(
-                "Auth got an unexpected keyword argument: 'authorization_hook'"
-            )
-        if _overwrite_index is not None:
-            raise TypeError(
-                "Auth got an unexpected keyword argument: '_overwrite_index'"
+                f"Auth got unexpected keyword arguments: {list(obsolete)}"
             )
 
         self.app = app
@@ -56,15 +45,40 @@ class Auth(ABC):
 
         @server.before_request
         def before_request_auth():
-            # Check whether the path matches a public route,
-            # or whether the request is authorised
+
+            # Handle Dash's callback route:
+            # * Check whether the callback is marked as public
+            # * Check whether the callback is performed on route change in
+            #   which case the path should be checked against the public routes
+            if request.path == "/_dash-update-component":
+                body = request.get_json()
+
+                # Check whether the callback is marked as public
+                if body["output"] in server.config[PUBLIC_CALLBACKS]:
+                    return None
+
+                # Check whether the callback has an input using the pathname,
+                # such a callback will be a routing callback and the pathname
+                # should be checked against the public routes
+                pathname = next(
+                    (
+                        inp["value"] for inp in body["inputs"]
+                        if inp["property"] == "pathname"
+                    ),
+                    None,
+                )
+                if pathname and server.config[PUBLIC_ROUTES].test(pathname):
+                    return None
+
+            # If the route is not a callback route, check whether the path
+            # matches a public route, or whether the request is authorised
             if (
-                server.config["PUBLIC_ROUTES"].test(request.path)
+                server.config[PUBLIC_ROUTES].test(request.path)
                 or self.is_authorized()
             ):
                 return None
 
-            # Ask the user to log in
+            # Otherwise, ask the user to log in
             return self.login_request()
 
     def is_authorized_hook(self, func):
@@ -86,14 +100,3 @@ class Auth(ABC):
     @abstractmethod
     def login_request(self):
         pass
-
-
-def add_public_routes(app: Dash, routes: list):
-    """Add routes to the public routes list.
-
-    The routes passed should follow the Flask route syntax.
-    e.g. "/login", "/user/<user_id>/public"
-    """
-    public_routes: MapAdapter = app.server.config["PUBLIC_ROUTES"]
-    for route in routes:
-        public_routes.map.add(Rule(route))

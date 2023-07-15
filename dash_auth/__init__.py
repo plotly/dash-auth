@@ -1,3 +1,6 @@
-from .auth import add_public_routes  # noqa: F401
-from .basic_auth import BasicAuth  # noqa: F401
-from .version import __version__  # noqa: F401
+from .public_routes import add_public_routes, public_callback
+from .basic_auth import BasicAuth
+from .version import __version__
+
+
+__all__ = ["add_public_routes", "public_callback", "BasicAuth", "__version__"]
