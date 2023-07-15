@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+import inspect
 import os
 
 from dash import Dash, callback
@@ -74,7 +75,6 @@ def public_callback(*callback_args, **callback_kwargs):
     def decorator(func):
 
         wrapped_func = callback(*callback_args, **callback_kwargs)(func)
-        import inspect
         callback_id = next(
             (
                 k for k, v in GLOBAL_CALLBACK_MAP.items()
