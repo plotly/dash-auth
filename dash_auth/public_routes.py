@@ -60,7 +60,7 @@ def add_public_routes(app: Dash, routes: list):
     """
     public_routes: MapAdapter = app.server.config[PUBLIC_ROUTES]
 
-    if len(list(public_routes.map.iter_rules())) == 0:
+    if not public_routes.map._rules:
         routes = BASE_PUBLIC_ROUTES + routes
 
     for route in routes:
