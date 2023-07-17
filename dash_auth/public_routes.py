@@ -31,7 +31,7 @@ default_config = Flask.default_config
 Flask.default_config = ImmutableDict(
     **default_config,
     **{
-        PUBLIC_ROUTES: Map([Rule(r) for r in BASE_PUBLIC_ROUTES]).bind(""),
+        PUBLIC_ROUTES: Map([]).bind(""),
         PUBLIC_CALLBACKS: [],
     },
 )
@@ -59,6 +59,10 @@ def add_public_routes(app: Dash, routes: list):
     :param routes: list of public routes to be added
     """
     public_routes: MapAdapter = app.server.config[PUBLIC_ROUTES]
+
+    if len(list(public_routes.map.iter_rules())) == 0:
+        routes = BASE_PUBLIC_ROUTES + routes
+
     for route in routes:
         public_routes.map.add(Rule(route))
 
