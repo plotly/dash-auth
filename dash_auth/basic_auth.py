@@ -1,5 +1,5 @@
 import base64
-from typing import Optional, Union
+from typing import Union
 import flask
 from dash import Dash
 
