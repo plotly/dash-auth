@@ -8,10 +8,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 - Uses flask `before_request` to protect all endpoints rather than protecting routes present at instantiation time
 
-### Added
-- Possibility to whitelist routes with the `add_public_routes` utility function, the routes should follow Flask route syntax
-- NOTE: If you are using server-side callbacks on your public routes, you should use dash_auth's new `public_callback` rather than the default Dash callback
-
 ## [2.0.0] - 2023-03-10
 ### Removed
 Removed obsolete `PlotlyAuth`. `dash-auth` is now just responsible for `BasicAuth`.

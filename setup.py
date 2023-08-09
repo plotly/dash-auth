@@ -18,8 +18,7 @@ setup(
     long_description=long_description,
     install_requires=[
         'dash>=1.1.1',
-        'flask',
-        'werkzeug',
+        "flask",
     ],
     python_requires=">=3.6",
     include_package_data=True,
