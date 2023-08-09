@@ -9,8 +9,6 @@ class Auth(ABC):
         """Auth base class for authentication in Dash.
 
         :param app: Dash app
-        :param public_routes: list of public routes, routes should follow the
-            Flask route syntax
         """
 
         # Deprecated arguments
@@ -25,9 +23,8 @@ class Auth(ABC):
     def _protect(self):
         """Add a before_request authentication check on all routes.
 
-        The authentication check will pass if either
-            * The endpoint is marked as public via `add_public_routes`
-            * The request is authorised by `Auth.is_authorised`
+        The authentication check will pass if the request
+        is authorised by `Auth.is_authorised`
         """
 
         server = self.app.server

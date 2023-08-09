@@ -11,17 +11,14 @@ class BasicAuth(Auth):
         self,
         app: Dash,
         username_password_list: Union[list, dict],
-        public_routes: Optional[list] = None,
     ):
         """Add basic authentication to Dash.
 
         :param app: Dash app
         :param username_password_list: username:password list, either as a
             list of tuples or a dict
-        :param public_routes: list of public routes, routes should follow the
-            Flask route syntax
         """
-        Auth.__init__(self, app, public_routes=public_routes)
+        Auth.__init__(self, app)
         self._users = (
             username_password_list
             if isinstance(username_password_list, dict)
