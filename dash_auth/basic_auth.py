@@ -1,10 +1,23 @@
-from .auth import Auth
 import base64
+from typing import Union
 import flask
+from dash import Dash
+
+from .auth import Auth
 
 
 class BasicAuth(Auth):
-    def __init__(self, app, username_password_list):
+    def __init__(
+        self,
+        app: Dash,
+        username_password_list: Union[list, dict],
+    ):
+        """Add basic authentication to Dash.
+
+        :param app: Dash app
+        :param username_password_list: username:password list, either as a
+            list of tuples or a dict
+        """
         Auth.__init__(self, app)
         self._users = (
             username_password_list

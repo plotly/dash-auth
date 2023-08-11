@@ -23,3 +23,21 @@ python -k ba001
 ```
 
 Note that Python 3.6 or greater is required.
+
+## Usage
+
+### Basic Authentication
+
+To add basic authentication, add the following to your Dash app:
+
+```python
+from dash import Dash
+from dash_auth import BasicAuth
+
+app = Dash(__name__)
+USER_PWD = {
+    "username": "password",
+    "user2": "useSomethingMoreSecurePlease",
+}
+BasicAuth(app, USER_PWD)
+```
