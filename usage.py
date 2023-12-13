@@ -6,11 +6,15 @@ VALID_USERNAME_PASSWORD_PAIRS = {
     'hello': 'world'
 }
 
+def auth_func(username, password):
+    return "hello", "world"
+
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = Dash(__name__, external_stylesheets=external_stylesheets)
 auth = dash_auth.BasicAuth(
     app,
-    VALID_USERNAME_PASSWORD_PAIRS
+    VALID_USERNAME_PASSWORD_PAIRS,
+    auth_func
 )
 
 app.layout = html.Div([
