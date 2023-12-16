@@ -6,6 +6,7 @@ VALID_USERNAME_PASSWORD_PAIRS = {
     'hello': 'world'
 }
 
+
 # Authorization function defined by developer
 # (can be used instead of VALID_USERNAME_PASSWORD_PAIRS [Example 2 below])
 def authorization_function(username, password):
@@ -13,6 +14,7 @@ def authorization_function(username, password):
         return True
     else:
         return False
+
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = Dash(__name__, external_stylesheets=external_stylesheets)

@@ -18,25 +18,27 @@ class BasicAuth(Auth):
         :param app: Dash app
         :param username_password_list: username:password list, either as a
             list of tuples or a dict
-        :param auth_func: python function accepting two string arguments (username, password) 
-            and returning a boolean (True if the user has access otherwise False).
+        :param auth_func: python function accepting two string
+            arguments (username, password) and returning a
+            boolean (True if the user has access otherwise False).
         """
         Auth.__init__(self, app)
         self._auth_func = auth_func
         if self._auth_func is not None:
             if username_password_list is not None:
-                raise ValueError("BasicAuth can only use authorization function (auth_func kwarg) "
-                                 "or username_password_list, it cannot use both.")
+                raise ValueError("BasicAuth can only use authorization "
+                                 "function (auth_func kwarg) or "
+                                 "username_password_list, it cannot use both.")
         else:
             if username_password_list is None:
-                raise ValueError("BasicAuth requires username/password map or user-defined authorization function.")
+                raise ValueError("BasicAuth requires username/password map "
+                                 "or user-defined authorization function.")
             else:
                 self._users = (
                     username_password_list
                     if isinstance(username_password_list, dict)
                     else {k: v for k, v in username_password_list}
                 )
-        
 
     def is_authorized(self):
         header = flask.request.headers.get('Authorization', None)
