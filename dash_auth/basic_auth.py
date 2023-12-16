@@ -10,7 +10,7 @@ class BasicAuth(Auth):
     def __init__(
         self,
         app: Dash,
-        username_password_list: Union[list, dict],
+        username_password_list: Union[list, dict] = None,
         auth_func: Callable = None
     ):
         """Add basic authentication to Dash.
@@ -18,17 +18,25 @@ class BasicAuth(Auth):
         :param app: Dash app
         :param username_password_list: username:password list, either as a
             list of tuples or a dict
-        :param auth_func: python function accepting two arguments (username, password) 
-            and returning a tuple (username, password) which is checked against 
-            username_password_list.
+        :param auth_func: python function accepting two string arguments (username, password) 
+            and returning a boolean (True if the user has access otherwise False).
         """
         Auth.__init__(self, app)
-        self._users = (
-            username_password_list
-            if isinstance(username_password_list, dict)
-            else {k: v for k, v in username_password_list}
-        )
         self._auth_func = auth_func
+        if self._auth_func is not None:
+            if username_password_list is not None:
+                raise ValueError("BasicAuth can only use authorization function (auth_func kwarg) "
+                                 "or username_password_list, it cannot use both.")
+        else:
+            if username_password_list is None:
+                raise ValueError("BasicAuth requires username/password map or user-defined authorization function.")
+            else:
+                self._users = (
+                    username_password_list
+                    if isinstance(username_password_list, dict)
+                    else {k: v for k, v in username_password_list}
+                )
+        
 
     def is_authorized(self):
         header = flask.request.headers.get('Authorization', None)
@@ -39,10 +47,12 @@ class BasicAuth(Auth):
         username, password = username_password_utf8.split(':', 1)
         if self._auth_func is not None:
             try:
-                username, password = self._auth_func(username, password)
-            except:
-                pass
-        return self._users.get(username) == password
+                return self._auth_func(username, password)
+            except Exception as e:
+                print(e)
+                return False
+        else:
+            return self._users.get(username) == password
 
     def login_request(self):
         return flask.Response(
