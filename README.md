@@ -41,3 +41,20 @@ USER_PWD = {
 }
 BasicAuth(app, USER_PWD)
 ```
+
+One can also use an authorization python function instead of a dictionary/list of usernames and passwords:
+
+```python
+from dash import Dash
+from dash_auth import BasicAuth
+
+def authorization_function(username, password):
+    if (username == "hello") and (password == "world"):
+        return True
+    else:
+        return False
+
+
+app = Dash(__name__)
+BasicAuth(app, auth_func = authorization_function)
+```
