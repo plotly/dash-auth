@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 - Uses flask `before_request` to protect all endpoints rather than protecting routes present at instantiation time
 - Allows user to use user-defined authorization python function instead of a dictionary/list of usernames and passwords
+- Raise minimum Python version to 3.8, dropping support for 3.6 and 3.7
 
 ## [2.0.0] - 2023-03-10
 ### Removed
