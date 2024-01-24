@@ -16,6 +16,7 @@ setup(
     license='MIT',
     description='Dash Authorization Package.',
     long_description=long_description,
+    long_description_content_type="text/markdown",
     install_requires=[
         'dash>=1.1.1',
         "flask",
