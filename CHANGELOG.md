@@ -5,12 +5,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-### Changed
-- Uses flask `before_request` to protect all endpoints rather than protecting routes present at instantiation time
-
 ### Added
 - Possibility to whitelist routes with the `add_public_routes` utility function, the routes should follow Flask route syntax
 - NOTE: If you are using server-side callbacks on your public routes, you should use dash_auth's new `public_callback` rather than the default Dash callback
+
+## [2.1.0] - 2024-01-24
+### Changed
+- Uses flask `before_request` to protect all endpoints rather than protecting routes present at instantiation time
+- Allows user to use user-defined authorization python function instead of a dictionary/list of usernames and passwords
+- Raise minimum Python version to 3.8, dropping support for 3.6 and 3.7
 
 ## [2.0.0] - 2023-03-10
 ### Removed

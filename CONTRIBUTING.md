@@ -25,10 +25,11 @@ password:your_pypi_password
 - Check the recent commits and PRs and add anything notable to the `CHANGELOG.md` file
 - Bump the version number in `dash_auth/version.py`. Follow [Semantic Versioning 2.0.0](https://semver.org/)
 - Create a PR and tag @chriddyp for review
-- Once reviewed, merge into master.
+- Once reviewed, merge into main.
 
 3. **Create a Python Build**
 ```
+$ rm -rf dist build
 $ python setup.py sdist bdist_wheel
 ```
 
@@ -40,15 +41,14 @@ $ pip install twine
 
 Then, upload to PyPI using Twine.
 ```
-$ twine upload dist/dash_auth-VERSION.tar.gz
+$ twine upload dist/*
 ```
-Where `VERSION` refers to the version number of package. This file was created in Step 4.
 
 5. **Git Tag**
 Create a Git Tag with the version number:
 ```
 git tag -a 'v0.1.0' -m 'v0.1.0'
-git push origin master --follow-tags
+git push origin main --follow-tags
 ```
 
 6. **Test it out**
@@ -57,8 +57,3 @@ Note that sometimes PyPI's servers take a few minutes for installations to be re
 ```
 pip install dash-auth --upgrade
 ```
-
-7. **Update the version number in `dopsa`**
-We fix the version number in [`dash-on-premise-sample-app`](https://github.com/plotly/dash-on-premise-sample-app/).
-
-Create a PR to update that version in https://github.com/plotly/dash-on-premise-sample-app/blob/master/requirements.txt.

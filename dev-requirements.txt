@@ -3,3 +3,4 @@ requests[security]
 flake8
 flask
 werkzeug
+pytest
