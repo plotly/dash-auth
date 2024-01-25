@@ -6,7 +6,7 @@ from dash._callback import GLOBAL_CALLBACK_MAP
 from dash import get_app
 from flask import Flask
 from werkzeug.datastructures import ImmutableDict
-from werkzeug.routing import Map, MapAdapter, Rule
+from werkzeug.routing import Map, Rule
 
 # Add PUBLIC_ROUTES in the default Flask config
 DASH_PUBLIC_ASSETS_EXTENSIONS = "js,css"
@@ -59,7 +59,7 @@ def add_public_routes(app: Dash, routes: list):
     """
 
     # Make a copy to avoid modifying the default value inplace
-    existing_rules = app.server.config[PUBLIC_ROUTES].map._rules
+    existing_rules: list[Rule] = app.server.config[PUBLIC_ROUTES].map._rules
     public_routes = Map([]).bind("")
 
     if not existing_rules:
