@@ -57,13 +57,20 @@ def add_public_routes(app: Dash, routes: list):
     :param app: Dash app
     :param routes: list of public routes to be added
     """
-    public_routes: MapAdapter = app.server.config[PUBLIC_ROUTES]
 
-    if not public_routes.map._rules:
+    # Make a copy to avoid modifying the default value inplace
+    existing_rules = app.server.config[PUBLIC_ROUTES].map._rules
+    public_routes = Map([]).bind("")
+
+    if not existing_rules:
         routes = BASE_PUBLIC_ROUTES + routes
+    else:
+        routes = [r.rule for r in existing_rules] + routes
 
     for route in routes:
         public_routes.map.add(Rule(route))
+
+    app.server.config[PUBLIC_ROUTES] = public_routes
 
 
 def public_callback(*callback_args, **callback_kwargs):
