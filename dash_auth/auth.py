@@ -5,7 +5,9 @@ from typing import Optional
 from dash import Dash
 from flask import request
 
-from .public_routes import add_public_routes, PUBLIC_CALLBACKS, PUBLIC_ROUTES
+from .public_routes import (
+    add_public_routes, get_public_callbacks, get_public_routes
+)
 
 
 class Auth(ABC):
@@ -46,6 +48,8 @@ class Auth(ABC):
         @server.before_request
         def before_request_auth():
 
+            public_routes = get_public_routes(self.app)
+            public_callbacks = get_public_callbacks(self.app)
             # Handle Dash's callback route:
             # * Check whether the callback is marked as public
             # * Check whether the callback is performed on route change in
@@ -54,7 +58,7 @@ class Auth(ABC):
                 body = request.get_json()
 
                 # Check whether the callback is marked as public
-                if body["output"] in server.config[PUBLIC_CALLBACKS]:
+                if body["output"] in public_callbacks:
                     return None
 
                 # Check whether the callback has an input using the pathname,
@@ -67,15 +71,12 @@ class Auth(ABC):
                     ),
                     None,
                 )
-                if pathname and server.config[PUBLIC_ROUTES].test(pathname):
+                if pathname and public_routes.test(pathname):
                     return None
 
             # If the route is not a callback route, check whether the path
             # matches a public route, or whether the request is authorised
-            if (
-                server.config[PUBLIC_ROUTES].test(request.path)
-                or self.is_authorized()
-            ):
+            if public_routes.test(request.path) or self.is_authorized():
                 return None
 
             # Otherwise, ask the user to log in

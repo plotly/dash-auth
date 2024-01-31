@@ -4,11 +4,9 @@ import os
 from dash import Dash, callback
 from dash._callback import GLOBAL_CALLBACK_MAP
 from dash import get_app
-from flask import Flask
-from werkzeug.datastructures import ImmutableDict
-from werkzeug.routing import Map, Rule
+from werkzeug.routing import Map, MapAdapter, Rule
 
-# Add PUBLIC_ROUTES in the default Flask config
+
 DASH_PUBLIC_ASSETS_EXTENSIONS = "js,css"
 BASE_PUBLIC_ROUTES = [
     f"/assets/<path:path>.{ext}"
@@ -25,15 +23,6 @@ BASE_PUBLIC_ROUTES = [
 ]
 PUBLIC_ROUTES = "PUBLIC_ROUTES"
 PUBLIC_CALLBACKS = "PUBLIC_CALLBACKS"
-
-default_config = Flask.default_config
-Flask.default_config = ImmutableDict(
-    **default_config,
-    **{
-        PUBLIC_ROUTES: Map([]).bind(""),
-        PUBLIC_CALLBACKS: [],
-    },
-)
 
 
 def add_public_routes(app: Dash, routes: list):
@@ -58,14 +47,10 @@ def add_public_routes(app: Dash, routes: list):
     :param routes: list of public routes to be added
     """
 
-    # Make a copy to avoid modifying the default value inplace
-    existing_rules: list[Rule] = app.server.config[PUBLIC_ROUTES].map._rules
-    public_routes = Map([]).bind("")
+    public_routes = get_public_routes(app)
 
-    if not existing_rules:
+    if not public_routes.map._rules:
         routes = BASE_PUBLIC_ROUTES + routes
-    else:
-        routes = [r.rule for r in existing_rules] + routes
 
     for route in routes:
         public_routes.map.add(Rule(route))
@@ -94,7 +79,9 @@ def public_callback(*callback_args, **callback_kwargs):
         )
         try:
             app = get_app()
-            app.server.config[PUBLIC_CALLBACKS].append(callback_id)
+            app.server.config[PUBLIC_CALLBACKS] = (
+                get_public_callbacks(app) + [callback_id]
+            )
         except Exception:
             print(
                 "Could not set up the public callback as the Dash object "
@@ -107,3 +94,13 @@ def public_callback(*callback_args, **callback_kwargs):
         return wrap
 
     return decorator
+
+
+def get_public_routes(app: Dash) -> MapAdapter:
+    """Retrieve the public routes."""
+    return app.server.config.get(PUBLIC_ROUTES, Map([]).bind(""))
+
+
+def get_public_callbacks(app: Dash) -> list:
+    """Retrieve the public callbacks ids."""
+    return app.server.config.get(PUBLIC_CALLBACKS, [])
