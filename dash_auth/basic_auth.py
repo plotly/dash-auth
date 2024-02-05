@@ -1,5 +1,5 @@
 import base64
-from typing import Union, Callable
+from typing import Optional, Union, Callable
 import flask
 from dash import Dash
 
@@ -11,7 +11,8 @@ class BasicAuth(Auth):
         self,
         app: Dash,
         username_password_list: Union[list, dict] = None,
-        auth_func: Callable = None
+        auth_func: Callable = None,
+        public_routes: Optional[list] = None,
     ):
         """Add basic authentication to Dash.
 
@@ -21,18 +22,24 @@ class BasicAuth(Auth):
         :param auth_func: python function accepting two string
             arguments (username, password) and returning a
             boolean (True if the user has access otherwise False).
+        :param public_routes: list of public routes, routes should follow the
+            Flask route syntax
         """
-        Auth.__init__(self, app)
+        Auth.__init__(self, app, public_routes=public_routes)
         self._auth_func = auth_func
         if self._auth_func is not None:
             if username_password_list is not None:
-                raise ValueError("BasicAuth can only use authorization "
-                                 "function (auth_func kwarg) or "
-                                 "username_password_list, it cannot use both.")
+                raise ValueError(
+                    "BasicAuth can only use authorization function "
+                    "(auth_func kwarg) or username_password_list, "
+                    "it cannot use both."
+                )
         else:
             if username_password_list is None:
-                raise ValueError("BasicAuth requires username/password map "
-                                 "or user-defined authorization function.")
+                raise ValueError(
+                    "BasicAuth requires username/password map "
+                    "or user-defined authorization function."
+                )
             else:
                 self._users = (
                     username_password_list

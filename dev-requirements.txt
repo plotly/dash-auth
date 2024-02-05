@@ -2,4 +2,5 @@ dash[testing]>=2
 requests[security]
 flake8
 flask
+werkzeug
 pytest
