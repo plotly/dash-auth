@@ -80,9 +80,9 @@ def test_oa001_oidc_auth_login_flow_success(dash_br, dash_thread_server):
     def update_output5(new_value):
         return new_value
 
-    OIDCAuth(
-        app,
-        secret_key="Test",
+    oidc = OIDCAuth(app, secret_key="Test")
+    oidc.register_provider(
+        "oidc",
         token_endpoint_auth_method="client_secret_post",
         client_id="<client-id>",
         client_secret="<client-secret>",
@@ -113,10 +113,9 @@ def test_oa002_oidc_auth_login_fail(dash_thread_server):
     def update_output(new_value):
         return new_value
 
-    OIDCAuth(
-        app,
-        public_routes=["/public"],
-        secret_key="Test",
+    oidc = OIDCAuth(app, public_routes=["/public"], secret_key="Test")
+    oidc.register_provider(
+        "oidc",
         token_endpoint_auth_method="client_secret_post",
         client_id="<client-id>",
         client_secret="<client-secret>",
@@ -150,17 +149,17 @@ def test_oa003_oidc_auth_login_several_idp(dash_br, dash_thread_server):
     def update_output1(new_value):
         return new_value
 
-    auth = OIDCAuth(
-        app,
-        secret_key="Test",
+    oidc = OIDCAuth(app, secret_key="Test")
+    # Add a first provider
+    oidc.register_provider(
+        "idp1",
         token_endpoint_auth_method="client_secret_post",
         client_id="<client-id>",
         client_secret="<client-secret>",
         server_metadata_url="https://idp.com/oidc/2/.well-known/openid-configuration",
-        idp_name="idp1",
     )
     # Add a second provider
-    auth.register_provider(
+    oidc.register_provider(
         "idp2",
         token_endpoint_auth_method="client_secret_post",
         client_id="<client-id2>",

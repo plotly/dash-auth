@@ -24,16 +24,13 @@ class OIDCAuth(Auth):
         app: dash.Dash,
         secret_key: str = Optional[None],
         force_https_callback: Optional[Union[bool, str]] = None,
-        client_kwargs: Optional[dict] = None,
         login_route: str = "/oidc/<idp>/login",
         logout_route: str = "/oidc/logout",
         callback_route: str = "/oidc/<idp>/callback",
         idp_selection_route: str = None,
         log_signins: bool = False,
         public_routes: Optional[list] = None,
-        idp_name: str = "oidc",
         logout_page: str = None,
-        **kwargs,
     ):
         """Secure a Dash app through OpenID Connect.
 
@@ -119,11 +116,6 @@ class OIDCAuth(Auth):
         super().__init__(app)
 
         self.oauth = OAuth(app.server)
-        self.register_provider(
-            idp_name or "oidc",
-            client_kwargs=client_kwargs,
-            **kwargs
-        )
 
         # Check that the login and callback rules have an <idp> placeholder
         if not re.findall(r"/<idp>(?=/|$)", login_route):
@@ -154,14 +146,21 @@ class OIDCAuth(Auth):
             methods=["GET"],
         )
 
-    def register_provider(
-        self,
-        idp_name: str,
-        *,
-        client_kwargs: dict = None,
-        **kwargs,
-    ):
-        client_kwargs = client_kwargs or {}
+    def register_provider(self, idp_name: str, **kwargs):
+        """Register an OpenID Connect provider.
+
+        :param idp_name: The name of the provider
+        :param kwargs: Keyword arguments passed to OAuth.register.
+            See https://docs.authlib.org/en/latest/client/flask.html for
+            additional details.
+            Typical keyword arguments for OIDC include:
+            * client_id
+            * client_secret
+            * server_metadata_url
+            * token_endpoint_auth_method
+            * client_kwargs (defaults to {"scope": "openid email"})
+        """
+        client_kwargs = kwargs.pop("client_kwargs", {})
         client_kwargs.setdefault("scope", "openid email")
         self.oauth.register(
             idp_name, client_kwargs=client_kwargs, **kwargs
