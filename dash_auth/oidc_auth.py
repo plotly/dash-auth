@@ -2,7 +2,9 @@ import logging
 import os
 import re
 from numbers import Number
-from typing import Callable, Literal, Optional, Union, TYPE_CHECKING
+from typing import (
+    Callable, List, Literal, Optional, Union, TYPE_CHECKING
+)
 
 import dash
 from dash.development.base_component import Component as DashComponent
@@ -271,7 +273,7 @@ class OIDCAuth(Auth):
 
 
 ComponentPart = Union[DashComponent, str, Number]
-Component = Union[ComponentPart, list[ComponentPart]]
+Component = Union[ComponentPart, List[ComponentPart]]
 OutputVal = Union[Callable[[], Component], Component]
 CheckType = Literal["one_of", "all_of", "none_of"]
 
@@ -280,7 +282,7 @@ def list_groups(
     *,
     groups_key: str = "groups",
     groups_str_split: str = None,
-) -> Optional[list[str]]:
+) -> Optional[List[str]]:
     """List all the groups the user belongs to.
 
     :param groups_key: Groups key in the user data saved in the Flask session
@@ -302,7 +304,7 @@ def list_groups(
 
 
 def check_groups(
-    groups: Optional[list[str]] = None,
+    groups: Optional[List[str]] = None,
     *,
     groups_key: str = "groups",
     groups_str_split: str = None,
@@ -349,7 +351,7 @@ def protected(
     unauthenticated_output: Optional[OutputVal] = None,
     *,
     missing_permissions_output: Optional[OutputVal] = None,
-    groups: Optional[list[str]] = None,
+    groups: Optional[List[str]] = None,
     groups_key: str = "groups",
     groups_str_split: str = None,
     check_type: CheckType = "one_of",
@@ -407,7 +409,7 @@ def protected(
 
 def protected_callback(
     *callback_args,
-    groups: list[str] = None,
+    groups: List[str] = None,
     groups_key: str = "groups",
     groups_str_split: str = None,
     check_type: CheckType = "one_of",
