@@ -221,7 +221,8 @@ class OIDCAuth(Auth):
         session.clear()
         base_url = self.app.config.get("url_base_pathname") or "/"
         page = self.logout_page or f"""
-        <div style="display: flex; flex-direction: column; gap: 0.75rem; padding: 3rem 5rem;">
+        <div style="display: flex; flex-direction: column;
+        gap: 0.75rem; padding: 3rem 5rem;">
             <div>Logged out successfully</div>
             <div><a href="{base_url}">Go back</a></div>
         </div>
