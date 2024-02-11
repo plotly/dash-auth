@@ -25,7 +25,7 @@ class BasicAuth(Auth):
         :param public_routes: list of public routes, routes should follow the
             Flask route syntax
         """
-        Auth.__init__(self, app, public_routes=public_routes)
+        super().__init__(app, public_routes=public_routes)
         self._auth_func = auth_func
         if self._auth_func is not None:
             if username_password_list is not None:

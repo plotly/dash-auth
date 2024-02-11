@@ -90,11 +90,9 @@ class Auth(ABC):
     def is_authorized(self):
         pass
 
-    @abstractmethod
     def auth_wrapper(self, f):
         pass
 
-    @abstractmethod
     def index_auth_wrapper(self, f):
         pass
 
