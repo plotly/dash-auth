@@ -9,11 +9,7 @@ from dash_auth import oidc_auth
 
 
 def valid_authorize_redirect(*args, **kwargs):
-    search_params = "&".join(["=".join([str(k), str(v)]) for k, v in kwargs.items()])
-    redirect_uri = "/oidc/callback"
-    if search_params:
-        redirect_uri += f"?{search_params}"
-    return redirect(redirect_uri)
+    return redirect("/oidc/callback")
 
 
 def invalid_authorize_redirect(*args, **kwargs):
