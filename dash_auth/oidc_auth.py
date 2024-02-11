@@ -27,13 +27,12 @@ class OIDCAuth(Auth):
         secret_key: str = Optional[None],
         force_https_callback: Optional[Union[bool, str]] = None,
         client_kwargs: Optional[dict] = None,
-        authorize_redirect_kwargs: Optional[dict] = None,
-        authorize_token_kwargs: Optional[dict] = None,
         login_route: str = "/oidc/login",
         logout_route: str = "/oidc/logout",
         callback_route: str = "/oidc/callback",
         log_signins: bool = False,
         public_routes: Optional[list] = None,
+        registry_name: str = "oidc",
         **kwargs,
     ):
         """Secure a Dash app through OpenID Connect.
@@ -59,10 +58,6 @@ class OIDCAuth(Auth):
             an envvar with that name and force https callback if it exists.
         client_kwargs : dict, optional
             Keyword arguments passed to the OAuth client
-        authorize_redirect_kwargs : dict, optional
-            Keyword arguments passed to the authorize_redirect function
-        authorize_token_kwargs : dict, optional
-            Keyword arguments passed to the authorize_access_token
         login_route : str, optional
             The route for the login function, by default "/oidc/login".
         logout_route : str, optional
@@ -89,11 +84,6 @@ class OIDCAuth(Auth):
         else:
             self.force_https_callback = False
 
-        client_kwargs = client_kwargs or {}
-        client_kwargs.setdefault("scope", "openid email")
-        self.client_kwargs = client_kwargs
-        self.authorize_redirect_kwargs = authorize_redirect_kwargs or {}
-        self.authorize_token_kwargs = authorize_token_kwargs or {}
         self.login_route = login_route
         self.logout_route = logout_route
         self.callback_route = callback_route
@@ -122,22 +112,79 @@ class OIDCAuth(Auth):
 
         super().__init__(app)
 
-        oauth = OAuth(app.server)
-        self.oidc: Union[FlaskOAuth1App, FlaskOAuth2App] = oauth.register(
-            "oidc", client_kwargs=client_kwargs, **kwargs
-        )
-
-        app.server.add_url_rule(
-            login_route, view_func=self.login_request, methods=["GET"]
+        self.oauth = OAuth(app.server)
+        self.register_provider(
+            registry_name or "oidc",
+            client_kwargs=client_kwargs,
+            **kwargs
         )
         app.server.add_url_rule(
-            logout_route, view_func=self.logout, methods=["GET"]
+            login_route,
+            endpoint="oidc_login",
+            view_func=self.login_request,
+            methods=["GET"],
+        )
+        app.server.add_url_rule(
+            logout_route,
+            endpoint="oidc_logout",
+            view_func=self.logout,
+            methods=["GET"],
         )
         app.server.add_url_rule(
             callback_route,
             endpoint="oidc_callback",
-            view_func=self.callback, methods=["GET"],
+            view_func=self.callback,
+            methods=["GET"],
         )
+
+    def register_provider(
+        self,
+        registry_name: str,
+        *,
+        client_kwargs: dict = None,
+        **kwargs,
+    ):
+        client_kwargs = client_kwargs or {}
+        client_kwargs.setdefault("scope", "openid email")
+        self.oauth.register(
+            registry_name, client_kwargs=client_kwargs, **kwargs
+        )
+
+    @property
+    def registry_name(self):
+        """Get the registry name."""
+        base_name = (
+            list(self.oauth._registry)[0]
+            if len(self.oauth._registry) == 1
+            else None
+        )
+
+        if not has_request_context():
+            return base_name
+
+        return (
+            request.args.get("registry_name")
+            or session.get("registry_name")
+            or base_name
+        )
+
+    @property
+    def oauth_client(self):
+        """Get the OAuth client."""
+        registry_name = self.registry_name
+        client: Union[FlaskOAuth1App, FlaskOAuth2App] = (
+            self.oauth.create_client(registry_name) if registry_name else None
+        )
+        return client
+
+    @property
+    def oauth_kwargs(self):
+        """Get the OAuth kwargs."""
+        registry_name = self.registry_name
+        kwargs: dict = (
+            self.oauth._registry[registry_name][1] if registry_name else None
+        )
+        return kwargs
 
     def login_request(self):
         """Login the user."""
@@ -150,27 +197,43 @@ class OIDCAuth(Auth):
         else:
             redirect_uri = url_for("oidc_callback", **kwargs)
 
-        return self.oidc.authorize_redirect(
-            redirect_uri, **self.authorize_redirect_kwargs
+        oauth_client = self.oauth_client
+        if oauth_client is None:
+            return (
+                "Several OAuth providers are registered. Please choose one.",
+                400,
+            )
+
+        return oauth_client.authorize_redirect(
+            redirect_uri,
+            registry_name=self.registry_name,
+            **self.oauth_kwargs.get("authorize_redirect_kwargs", {}),
         )
 
     def logout(self):  # pylint: disable=C0116
         """Logout the user."""
         session.clear()
-        return redirect(self.app.config.get("url_base_pathname") or "/")
+        return "Logged out successfully", 200
 
     def callback(self):  # pylint: disable=C0116
         """Do the OIDC dance."""
+        oauth_client = self.oauth_client
+        if oauth_client is None:
+            return (
+                "Several OAuth providers are registered. Please choose one.",
+                400,
+            )
+
         try:
-            token = self.oidc.authorize_access_token(
-                **self.authorize_token_kwargs
+            token = oauth_client.authorize_access_token(
+                **self.oauth_kwargs.get("authorize_token_kwargs", {}),
             )
         except OAuthError as err:
             return str(err), 401
         user = token.get("userinfo")
         if user:
             session["user"] = user
-            if "offline_access" in self.client_kwargs["scope"]:
+            if "offline_access" in oauth_client.client_kwargs["scope"]:
                 refresh_token = token.get("refresh_token")
                 session["refresh_token"] = refresh_token
             if self.log_signins:
@@ -180,7 +243,12 @@ class OIDCAuth(Auth):
 
     def is_authorized(self):  # pylint: disable=C0116
         """Check whether ther user is authenticated."""
-        return request.path == self.callback_route or "user" in session
+        return (
+            request.path in [
+                self.login_route, self.logout_route, self.callback_route
+            ]
+            or "user" in session
+        )
 
 
 ComponentPart = Union[DashComponent, str, Number]

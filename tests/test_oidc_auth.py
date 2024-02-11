@@ -9,7 +9,11 @@ from dash_auth import oidc_auth
 
 
 def valid_authorize_redirect(*args, **kwargs):
-    return redirect("/oidc/callback")
+    search_params = "&".join(["=".join([str(k), str(v)]) for k, v in kwargs.items()])
+    redirect_uri = "/oidc/callback"
+    if search_params:
+        redirect_uri += f"?{search_params}"
+    return redirect(redirect_uri)
 
 
 def invalid_authorize_redirect(*args, **kwargs):
@@ -134,3 +138,55 @@ def test_oa002_oidc_auth_login_fail(dash_thread_server):
 
     test_unauthorized(base_url)
     test_authorized(os.path.join(base_url, "public"))
+
+
+@patch("authlib.integrations.flask_client.apps.FlaskOAuth2App.authorize_redirect", valid_authorize_redirect)
+@patch("authlib.integrations.flask_client.apps.FlaskOAuth2App.authorize_access_token", valid_authorize_access_token)
+def test_oa003_oidc_auth_login_several_idp(dash_br, dash_thread_server):
+    app = Dash(__name__)
+    app.layout = html.Div([
+        dcc.Input(id="input", value="initial value"),
+        html.Div(id="output1"),
+    ])
+
+    @app.callback(Output("output1", "children"), Input("input", "value"))
+    def update_output1(new_value):
+        return new_value
+
+    auth = oidc_auth.OIDCAuth(
+        app,
+        secret_key="Test",
+        token_endpoint_auth_method="client_secret_post",
+        client_id="<client-id>",
+        client_secret="<client-secret>",
+        server_metadata_url="https://idp.com/oidc/2/.well-known/openid-configuration",
+        registry_name="idp1",
+    )
+    # Add a second provider
+    auth.register_provider(
+        "idp2",
+        token_endpoint_auth_method="client_secret_post",
+        client_id="<client-id2>",
+        client_secret="<client-secret2>",
+        server_metadata_url="https://idp2.com/oidc/2/.well-known/openid-configuration",
+    )
+
+    dash_thread_server(app)
+    base_url = dash_thread_server.url
+
+    assert requests.get(base_url).status_code == 400
+
+    # Login with IDP1
+    assert requests.get(os.path.join(base_url, "oidc/login?registry_name=idp1")).status_code == 200
+
+    # Logout
+    assert requests.get(os.path.join(base_url, "oidc/logout")).status_code == 200
+
+    assert requests.get(base_url).status_code == 400
+
+    # Login with IDP2
+    assert requests.get(os.path.join(base_url, "oidc/login?registry_name=idp2")).status_code == 200
+
+    dash_br.driver.get(os.path.join(base_url, "oidc/login?registry_name=idp2"))
+    dash_br.driver.get(base_url)
+    dash_br.wait_for_text_to_equal("#output1", "initial value")
