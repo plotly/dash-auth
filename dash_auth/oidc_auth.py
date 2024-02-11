@@ -1,12 +1,14 @@
 import logging
 import os
+import re
 from typing import Optional, Union, TYPE_CHECKING
 
 import dash
 from authlib.integrations.base_client import OAuthError
 from authlib.integrations.flask_client import OAuth
 from dash_auth.auth import Auth
-from flask import redirect, request, session, url_for, has_request_context
+from flask import redirect, request, session, url_for
+from werkzeug.routing import Map, Rule
 
 if TYPE_CHECKING:
     from authlib.integrations.flask_client.apps import (
@@ -23,10 +25,10 @@ class OIDCAuth(Auth):
         secret_key: str = Optional[None],
         force_https_callback: Optional[Union[bool, str]] = None,
         client_kwargs: Optional[dict] = None,
-        login_route: str = "/oidc/login",
+        login_route: str = "/oidc/<idp>/login",
         logout_route: str = "/oidc/logout",
-        callback_route: str = "/oidc/callback",
-        idp_selection_redirect: str = None,
+        callback_route: str = "/oidc/<idp>/callback",
+        idp_selection_route: str = None,
         log_signins: bool = False,
         public_routes: Optional[list] = None,
         idp_name: str = "oidc",
@@ -57,11 +59,15 @@ class OIDCAuth(Auth):
         client_kwargs : dict, optional
             Keyword arguments passed to the OAuth client
         login_route : str, optional
-            The route for the login function, by default "/oidc/login".
+            The route for the login function, it requires a <idp>
+            placeholder, by default "/oidc/<idp>/login".
         logout_route : str, optional
             The route for the logout function, by default "/oidc/logout".
         callback_route : str, optional
-            The route for the OIDC redirect URI, by default "/oidc/callback".
+            The route for the OIDC redirect URI, it requires a <idp>
+            placeholder, by default "/oidc/<idp>/callback".
+        idp_selection_route : str, optional
+            The route for the IDP selection function, by default None
         log_signins : bool, optional
             Whether to log signins, by default False
         **kwargs
@@ -86,7 +92,7 @@ class OIDCAuth(Auth):
         self.logout_route = logout_route
         self.callback_route = callback_route
         self.log_signins = log_signins
-        self.idp_selection_redirect = idp_selection_redirect
+        self.idp_selection_route = idp_selection_route
         self.logout_page = logout_page
 
         if secret_key is not None:
@@ -118,6 +124,17 @@ class OIDCAuth(Auth):
             client_kwargs=client_kwargs,
             **kwargs
         )
+
+        # Check that the login and callback rules have an <idp> placeholder
+        if not re.findall(r"/<idp>(?=/|$)", login_route):
+            raise Exception(
+                "The login route must contain a <idp> placeholder."
+            )
+        if not re.findall(r"/<idp>(?=/|$)", callback_route):
+            raise Exception(
+                "The callback route must contain a <idp> placeholder."
+            )
+
         app.server.add_url_rule(
             login_route,
             endpoint="oidc_login",
@@ -150,66 +167,53 @@ class OIDCAuth(Auth):
             idp_name, client_kwargs=client_kwargs, **kwargs
         )
 
-    @property
-    def idp_name(self):
-        """Get the registry name."""
-        base_name = (
-            list(self.oauth._registry)[0]
-            if len(self.oauth._registry) == 1
-            else None
-        )
-
-        if not has_request_context():
-            return base_name
-
-        return (
-            request.args.get("idp_name")
-            or session.get("idp_name")
-            or base_name
-        )
-
-    @property
-    def oauth_client(self):
+    def get_oauth_client(self, idp: str):
         """Get the OAuth client."""
-        idp_name = self.idp_name
+        if not idp:
+            raise ValueError("`idp` should be set")
+
         client: Union[FlaskOAuth1App, FlaskOAuth2App] = (
-            self.oauth.create_client(idp_name) if idp_name else None
+            self.oauth.create_client(idp)
         )
         return client
 
-    @property
-    def oauth_kwargs(self):
+    def get_oauth_kwargs(self, idp: str = None):
         """Get the OAuth kwargs."""
-        idp_name = self.idp_name
+        if not idp:
+            raise ValueError("`idp` should be set")
+
         kwargs: dict = (
-            self.oauth._registry[idp_name][1] if idp_name else None
+            self.oauth._registry[idp][1]
         )
         return kwargs
 
-    def login_request(self):
+    def login_request(self, idp: str = None):
         """Login the user."""
+        if idp is None:
+            if len(self.oauth._clients) == 1:
+                idp = next(iter(self.oauth._clients))
+            elif self.idp_selection_route:
+                return redirect(self.idp_selection_route)
+            else:
+                return (
+                    "Several OAuth providers are registered. "
+                    "Please choose one.",
+                    400,
+                )
+
         kwargs = {"_external": True}
         if self.force_https_callback:
             kwargs["_scheme"] = "https"
+        redirect_uri = url_for("oidc_callback", idp=idp, **kwargs)
         if request.headers.get("X-Forwarded-Host"):
             host = request.headers.get("X-Forwarded-Host")
-            redirect_uri = f"https://{os.path.join(host, self.callback_route)}"
-        else:
-            redirect_uri = url_for("oidc_callback", **kwargs)
+            redirect_uri = redirect_uri.replace(request.host, host)
 
-        oauth_client = self.oauth_client
-        if oauth_client is None:
-            if self.idp_selection_redirect:
-                return redirect(self.idp_selection_redirect)
-            return (
-                "Several OAuth providers are registered. Please choose one.",
-                400,
-            )
-        session["idp_name"] = self.idp_name
-
+        oauth_client = self.get_oauth_client(idp)
+        oauth_kwargs = self.get_oauth_kwargs(idp)
         return oauth_client.authorize_redirect(
             redirect_uri,
-            **self.oauth_kwargs.get("authorize_redirect_kwargs", {}),
+            **oauth_kwargs.get("authorize_redirect_kwargs", {}),
         )
 
     def logout(self):  # pylint: disable=C0116
@@ -225,17 +229,20 @@ class OIDCAuth(Auth):
         """
         return page, 200
 
-    def callback(self):  # pylint: disable=C0116
+    def callback(self, idp: str = None):  # pylint: disable=C0116
         """Do the OIDC dance."""
-        oauth_client = self.oauth_client
-        oauth_kwargs = self.oauth_kwargs
-        del session["idp_name"]
-        if oauth_client is None:
-            return (
-                "Several OAuth providers are registered. Please choose one.",
-                400,
-            )
+        if idp is None:
+            if len(self.oauth._clients) == 1:
+                idp = next(iter(self.oauth._clients))
+            else:
+                return (
+                    "Several OAuth providers are registered. "
+                    "Please choose one.",
+                    400,
+                )
 
+        oauth_client = self.get_oauth_client(idp)
+        oauth_kwargs = self.get_oauth_kwargs(idp)
         try:
             token = oauth_client.authorize_access_token(
                 **oauth_kwargs.get("authorize_token_kwargs", {}),
@@ -246,8 +253,7 @@ class OIDCAuth(Auth):
         if user:
             session["user"] = user
             if "offline_access" in oauth_client.client_kwargs["scope"]:
-                refresh_token = token.get("refresh_token")
-                session["refresh_token"] = refresh_token
+                session["refresh_token"] = token.get("refresh_token")
             if self.log_signins:
                 logging.info("User %s is logging in.", user.get("email"))
 
@@ -255,15 +261,20 @@ class OIDCAuth(Auth):
 
     def is_authorized(self):  # pylint: disable=C0116
         """Check whether ther user is authenticated."""
-        return (
-            request.path in [
-                self.login_route,
-                self.logout_route,
-                self.callback_route,
-                self.idp_selection_redirect,
+
+        map_adapter = Map(
+            [
+                Rule(x)
+                for x in [
+                    self.login_route,
+                    self.logout_route,
+                    self.callback_route,
+                    self.idp_selection_route,
+                ]
+                if x
             ]
-            or "user" in session
-        )
+        ).bind("")
+        return map_adapter.test(request.path) or "user" in session
 
 
 def get_oauth(app: dash.Dash = None) -> OAuth:

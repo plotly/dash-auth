@@ -1,9 +1,9 @@
 import os
 from unittest.mock import patch
 
+import requests
 from dash import Dash, Input, Output, dcc, html
 from flask import redirect
-import requests
 
 from dash_auth import (
     protected_callback,
@@ -11,12 +11,13 @@ from dash_auth import (
 )
 
 
-def valid_authorize_redirect(*args, **kwargs):
-    return redirect("/oidc/callback")
+def valid_authorize_redirect(_, redirect_uri, *args, **kwargs):
+    return redirect("/" + redirect_uri.split("/", maxsplit=3)[-1])
 
 
-def invalid_authorize_redirect(*args, **kwargs):
-    return redirect("/oidc/callback?error=Unauthorized&error_description=something went wrong")
+def invalid_authorize_redirect(_, redirect_uri, *args, **kwargs):
+    base_url = "/" + redirect_uri.split("/", maxsplit=3)[-1]
+    return redirect(f"{base_url}?error=Unauthorized&error_description=something went wrong")
 
 
 def valid_authorize_access_token(*args, **kwargs):
@@ -90,10 +91,7 @@ def test_oa001_oidc_auth_login_flow_success(dash_br, dash_thread_server):
     dash_thread_server(app)
     base_url = dash_thread_server.url
 
-    def test_authorized(url):
-        assert requests.get(url).status_code == 200
-
-    test_authorized(base_url)
+    assert requests.get(base_url).status_code == 200
 
     dash_br.driver.get(base_url)
     dash_br.wait_for_text_to_equal("#output1", "initial value")
@@ -176,7 +174,7 @@ def test_oa003_oidc_auth_login_several_idp(dash_br, dash_thread_server):
     assert requests.get(base_url).status_code == 400
 
     # Login with IDP1
-    assert requests.get(os.path.join(base_url, "oidc/login?idp_name=idp1")).status_code == 200
+    assert requests.get(os.path.join(base_url, "oidc/idp1/login")).status_code == 200
 
     # Logout
     assert requests.get(os.path.join(base_url, "oidc/logout")).status_code == 200
@@ -184,8 +182,8 @@ def test_oa003_oidc_auth_login_several_idp(dash_br, dash_thread_server):
     assert requests.get(base_url).status_code == 400
 
     # Login with IDP2
-    assert requests.get(os.path.join(base_url, "oidc/login?idp_name=idp2")).status_code == 200
+    assert requests.get(os.path.join(base_url, "oidc/idp2/login")).status_code == 200
 
-    dash_br.driver.get(os.path.join(base_url, "oidc/login?idp_name=idp2"))
+    dash_br.driver.get(os.path.join(base_url, "oidc/idp2/login"))
     dash_br.driver.get(base_url)
     dash_br.wait_for_text_to_equal("#output1", "initial value")

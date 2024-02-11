@@ -34,6 +34,18 @@ class BasicAuth(Auth):
         :param user_groups: a dict or a function returning a dict
             Optional group for each user, allowing to protect routes and
             callbacks depending on user groups
+        :param secret_key: Flask secret key
+            A string to protect the Flask session, by default None.
+            It is required if you need to store the current user
+            in the session.
+            Generate a secret key in your Python session
+            with the following commands:
+            >>> import os
+            >>> import base64
+            >>> base64.b64encode(os.urandom(30)).decode('utf-8')
+            Note that you should not do this dynamically:
+            you should create a key and then assign the value of
+            that key in your code.
         """
         super().__init__(app, public_routes=public_routes)
         self._auth_func = auth_func

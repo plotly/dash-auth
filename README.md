@@ -235,8 +235,7 @@ def login_handler():
         idp = request.args.get("idp")
 
     if idp is not None:
-        print(idp, url_for("oidc_login", idp_name=idp))
-        return redirect(url_for("oidc_login", idp_name=idp))
+        return redirect(url_for("oidc_login", idp=idp))
 
     return """<div>
         <form>
