@@ -160,7 +160,7 @@ def test_oa003_oidc_auth_login_several_idp(dash_br, dash_thread_server):
         client_id="<client-id>",
         client_secret="<client-secret>",
         server_metadata_url="https://idp.com/oidc/2/.well-known/openid-configuration",
-        registry_name="idp1",
+        idp_name="idp1",
     )
     # Add a second provider
     auth.register_provider(
@@ -177,7 +177,7 @@ def test_oa003_oidc_auth_login_several_idp(dash_br, dash_thread_server):
     assert requests.get(base_url).status_code == 400
 
     # Login with IDP1
-    assert requests.get(os.path.join(base_url, "oidc/login?registry_name=idp1")).status_code == 200
+    assert requests.get(os.path.join(base_url, "oidc/login?idp_name=idp1")).status_code == 200
 
     # Logout
     assert requests.get(os.path.join(base_url, "oidc/logout")).status_code == 200
@@ -185,8 +185,8 @@ def test_oa003_oidc_auth_login_several_idp(dash_br, dash_thread_server):
     assert requests.get(base_url).status_code == 400
 
     # Login with IDP2
-    assert requests.get(os.path.join(base_url, "oidc/login?registry_name=idp2")).status_code == 200
+    assert requests.get(os.path.join(base_url, "oidc/login?idp_name=idp2")).status_code == 200
 
-    dash_br.driver.get(os.path.join(base_url, "oidc/login?registry_name=idp2"))
+    dash_br.driver.get(os.path.join(base_url, "oidc/login?idp_name=idp2"))
     dash_br.driver.get(base_url)
     dash_br.wait_for_text_to_equal("#output1", "initial value")

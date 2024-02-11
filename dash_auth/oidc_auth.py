@@ -30,9 +30,11 @@ class OIDCAuth(Auth):
         login_route: str = "/oidc/login",
         logout_route: str = "/oidc/logout",
         callback_route: str = "/oidc/callback",
+        idp_selection_redirect: str = None,
         log_signins: bool = False,
         public_routes: Optional[list] = None,
-        registry_name: str = "oidc",
+        idp_name: str = "oidc",
+        logout_page: str = None,
         **kwargs,
     ):
         """Secure a Dash app through OpenID Connect.
@@ -88,6 +90,8 @@ class OIDCAuth(Auth):
         self.logout_route = logout_route
         self.callback_route = callback_route
         self.log_signins = log_signins
+        self.idp_selection_redirect = idp_selection_redirect
+        self.logout_page = logout_page
 
         if secret_key is not None:
             app.server.secret_key = secret_key
@@ -114,7 +118,7 @@ class OIDCAuth(Auth):
 
         self.oauth = OAuth(app.server)
         self.register_provider(
-            registry_name or "oidc",
+            idp_name or "oidc",
             client_kwargs=client_kwargs,
             **kwargs
         )
@@ -139,7 +143,7 @@ class OIDCAuth(Auth):
 
     def register_provider(
         self,
-        registry_name: str,
+        idp_name: str,
         *,
         client_kwargs: dict = None,
         **kwargs,
@@ -147,11 +151,11 @@ class OIDCAuth(Auth):
         client_kwargs = client_kwargs or {}
         client_kwargs.setdefault("scope", "openid email")
         self.oauth.register(
-            registry_name, client_kwargs=client_kwargs, **kwargs
+            idp_name, client_kwargs=client_kwargs, **kwargs
         )
 
     @property
-    def registry_name(self):
+    def idp_name(self):
         """Get the registry name."""
         base_name = (
             list(self.oauth._registry)[0]
@@ -163,26 +167,26 @@ class OIDCAuth(Auth):
             return base_name
 
         return (
-            request.args.get("registry_name")
-            or session.get("registry_name")
+            request.args.get("idp_name")
+            or session.get("idp_name")
             or base_name
         )
 
     @property
     def oauth_client(self):
         """Get the OAuth client."""
-        registry_name = self.registry_name
+        idp_name = self.idp_name
         client: Union[FlaskOAuth1App, FlaskOAuth2App] = (
-            self.oauth.create_client(registry_name) if registry_name else None
+            self.oauth.create_client(idp_name) if idp_name else None
         )
         return client
 
     @property
     def oauth_kwargs(self):
         """Get the OAuth kwargs."""
-        registry_name = self.registry_name
+        idp_name = self.idp_name
         kwargs: dict = (
-            self.oauth._registry[registry_name][1] if registry_name else None
+            self.oauth._registry[idp_name][1] if idp_name else None
         )
         return kwargs
 
@@ -199,25 +203,36 @@ class OIDCAuth(Auth):
 
         oauth_client = self.oauth_client
         if oauth_client is None:
+            if self.idp_selection_redirect:
+                return redirect(self.idp_selection_redirect)
             return (
                 "Several OAuth providers are registered. Please choose one.",
                 400,
             )
+        session["idp_name"] = self.idp_name
 
         return oauth_client.authorize_redirect(
             redirect_uri,
-            registry_name=self.registry_name,
             **self.oauth_kwargs.get("authorize_redirect_kwargs", {}),
         )
 
     def logout(self):  # pylint: disable=C0116
         """Logout the user."""
         session.clear()
-        return "Logged out successfully", 200
+        base_url = self.app.config.get("url_base_pathname") or "/"
+        page = self.logout_page or f"""
+        <div style="display: flex; flex-direction: column; gap: 0.75rem; padding: 3rem 5rem;">
+            <div>Logged out successfully</div>
+            <div><a href="{base_url}">Go back</a></div>
+        </div>
+        """
+        return page, 200
 
     def callback(self):  # pylint: disable=C0116
         """Do the OIDC dance."""
         oauth_client = self.oauth_client
+        oauth_kwargs = self.oauth_kwargs
+        del session["idp_name"]
         if oauth_client is None:
             return (
                 "Several OAuth providers are registered. Please choose one.",
@@ -226,7 +241,7 @@ class OIDCAuth(Auth):
 
         try:
             token = oauth_client.authorize_access_token(
-                **self.oauth_kwargs.get("authorize_token_kwargs", {}),
+                **oauth_kwargs.get("authorize_token_kwargs", {}),
             )
         except OAuthError as err:
             return str(err), 401
@@ -245,7 +260,10 @@ class OIDCAuth(Auth):
         """Check whether ther user is authenticated."""
         return (
             request.path in [
-                self.login_route, self.logout_route, self.callback_route
+                self.login_route,
+                self.logout_route,
+                self.callback_route,
+                self.idp_selection_redirect,
             ]
             or "user" in session
         )
