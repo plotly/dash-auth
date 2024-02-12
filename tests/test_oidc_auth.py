@@ -5,7 +5,10 @@ from dash import Dash, Input, Output, dcc, html
 from flask import redirect
 import requests
 
-from dash_auth import oidc_auth
+from dash_auth import (
+    protected_callback,
+    OIDCAuth,
+)
 
 
 def valid_authorize_redirect(*args, **kwargs):
@@ -40,7 +43,7 @@ def test_oa001_oidc_auth_login_flow_success(dash_br, dash_thread_server):
     def update_output1(new_value):
         return new_value
 
-    @oidc_auth.protected_callback(
+    @protected_callback(
         Output("output2", "children"),
         Input("input", "value"),
         groups=["editor"],
@@ -49,7 +52,7 @@ def test_oa001_oidc_auth_login_flow_success(dash_br, dash_thread_server):
     def update_output2(new_value):
         return new_value
 
-    @oidc_auth.protected_callback(
+    @protected_callback(
         Output("output3", "children"),
         Input("input", "value"),
         groups=["admin"],
@@ -58,7 +61,7 @@ def test_oa001_oidc_auth_login_flow_success(dash_br, dash_thread_server):
     def update_output3(new_value):
         return new_value
 
-    @oidc_auth.protected_callback(
+    @protected_callback(
         Output("output4", "children"),
         Input("input", "value"),
         groups=["viewer"],
@@ -67,7 +70,7 @@ def test_oa001_oidc_auth_login_flow_success(dash_br, dash_thread_server):
     def update_output4(new_value):
         return new_value
 
-    @oidc_auth.protected_callback(
+    @protected_callback(
         Output("output5", "children"),
         Input("input", "value"),
         groups=["viewer", "editor"],
@@ -76,7 +79,7 @@ def test_oa001_oidc_auth_login_flow_success(dash_br, dash_thread_server):
     def update_output5(new_value):
         return new_value
 
-    oidc_auth.OIDCAuth(
+    OIDCAuth(
         app,
         secret_key="Test",
         token_endpoint_auth_method="client_secret_post",
@@ -112,7 +115,7 @@ def test_oa002_oidc_auth_login_fail(dash_thread_server):
     def update_output(new_value):
         return new_value
 
-    oidc_auth.OIDCAuth(
+    OIDCAuth(
         app,
         public_routes=["/public"],
         secret_key="Test",
@@ -149,7 +152,7 @@ def test_oa003_oidc_auth_login_several_idp(dash_br, dash_thread_server):
     def update_output1(new_value):
         return new_value
 
-    auth = oidc_auth.OIDCAuth(
+    auth = OIDCAuth(
         app,
         secret_key="Test",
         token_endpoint_auth_method="client_secret_post",
