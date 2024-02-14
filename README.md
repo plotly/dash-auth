@@ -175,15 +175,15 @@ from dash_auth import OIDCAuth
 
 app = Dash(__name__)
 
-OIDCAuth(
-    app,
+auth = OIDCAuth(app, secret_key="aStaticSecretKey!")
+auth.register_provider(
+    "idp",
     token_endpoint_auth_method="client_secret_post",
     # Replace the below values with your own
     # NOTE: Do not hardcode your client secret!
     client_id="<my-client-id>",
     client_secret="<my-client-secret>",
     server_metadata_url="<my-idp-.well-known-configuration>",
-    secret_key="aStaticSecretKey!",
 )
 ```
 
@@ -205,21 +205,20 @@ app.layout = html.Div([
     html.A("Logout", href="/oidc/logout"),
 ])
 
-oauth = OIDCAuth(
+auth = OIDCAuth(
     app,
+    secret_key="aStaticSecretKey!",
+    # Set the route at which the user will select the IDP they wish to login with
+    idp_selection_route="/login",
+)
+auth.register_provider(
+    "IDP 1",
     token_endpoint_auth_method="client_secret_post",
     client_id="<my-client-id>",
     client_secret="<my-client-secret>",
     server_metadata_url="<my-idp-.well-known-configuration>",
-    secret_key="aStaticSecretKey!",
-    # The default idp_name is "oidc", you can set it as required
-    idp_name="IDP 1",
-    # Set the route at which the user will select the IDP they wish to login with
-    idp_selection_redirect="/login",
-    callback_route="/callback",
 )
-
-oauth.register_provider(
+auth.register_provider(
     "IDP 2",
     token_endpoint_auth_method="client_secret_post",
     client_id="<my-client-id2>",

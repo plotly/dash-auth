@@ -76,12 +76,11 @@ class OIDCAuth(Auth):
             Raise an exception if the app.server.secret_key is not defined
         """
         super().__init__(app, public_routes=public_routes)
-        if force_https_callback is not None:
-            self.force_https_callback = (
-                os.getenv(force_https_callback) is not None
-                if isinstance(force_https_callback, str)
-                else force_https_callback
-            )
+
+        if isinstance(force_https_callback, str):
+            self.force_https_callback = force_https_callback in os.environ
+        elif force_https_callback is not None:
+            self.force_https_callback = force_https_callback
         else:
             self.force_https_callback = False
 
@@ -160,6 +159,11 @@ class OIDCAuth(Auth):
             * token_endpoint_auth_method
             * client_kwargs (defaults to {"scope": "openid email"})
         """
+        if not re.match(r"^[\w\-\. ]+$", idp_name):
+            raise ValueError(
+                "`idp_name` should only contain letters, numbers, hyphens, "
+                "underscores, periods and spaces"
+            )
         client_kwargs = kwargs.pop("client_kwargs", {})
         client_kwargs.setdefault("scope", "openid email")
         self.oauth.register(
@@ -176,7 +180,7 @@ class OIDCAuth(Auth):
         )
         return client
 
-    def get_oauth_kwargs(self, idp: str = None):
+    def get_oauth_kwargs(self, idp: str):
         """Get the OAuth kwargs."""
         if not idp:
             raise ValueError("`idp` should be set")
