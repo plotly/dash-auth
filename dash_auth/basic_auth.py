@@ -84,7 +84,7 @@ class BasicAuth(Auth):
         if self._auth_func is not None:
             try:
                 authorized = self._auth_func(username, password)
-            except Exception as e:
+            except Exception:
                 logging.exception("Error in authorization function.")
         else:
             authorized = self._users.get(username) == password
@@ -92,9 +92,13 @@ class BasicAuth(Auth):
             try:
                 flask.session["user"] = {"email": username, "groups": []}
                 if callable(self._user_groups):
-                    flask.session["user"]["groups"] = self._user_groups(username)
+                    flask.session["user"]["groups"] = self._user_groups(
+                        username
+                    )
                 elif self._user_groups:
-                    flask.session["user"]["groups"] = self._user_groups.get(username, [])
+                    flask.session["user"]["groups"] = self._user_groups.get(
+                        username, []
+                    )
             except RuntimeError:
                 logging.warning(
                     "Session is not available. Have you set a secret key?"
