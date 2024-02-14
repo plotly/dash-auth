@@ -252,7 +252,7 @@ class OIDCAuth(Auth):
             <div><a href="{base_url}">Go back</a></div>
         </div>
         """
-        return page, 200
+        return page
 
     def callback(self, idp: str):  # pylint: disable=C0116
         """Do the OIDC dance."""
