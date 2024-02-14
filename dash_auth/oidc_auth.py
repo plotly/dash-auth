@@ -190,6 +190,17 @@ class OIDCAuth(Auth):
         )
         return kwargs
 
+    def _create_redirect_uri(self, idp: str):
+        """Create the redirect uri based on callback endpoint and idp."""
+        kwargs = {"_external": True}
+        if self.force_https_callback:
+            kwargs["_scheme"] = "https"
+        redirect_uri = url_for("oidc_callback", idp=idp, **kwargs)
+        if request.headers.get("X-Forwarded-Host"):
+            host = request.headers.get("X-Forwarded-Host")
+            redirect_uri = redirect_uri.replace(request.host, host, 1)
+        return redirect_uri
+
     def login_request(self, idp: str = None):
         """Start the login process."""
 
@@ -211,14 +222,7 @@ class OIDCAuth(Auth):
                     400,
                 )
 
-        kwargs = {"_external": True}
-        if self.force_https_callback:
-            kwargs["_scheme"] = "https"
-        redirect_uri = url_for("oidc_callback", idp=idp, **kwargs)
-        if request.headers.get("X-Forwarded-Host"):
-            host = request.headers.get("X-Forwarded-Host")
-            redirect_uri = redirect_uri.replace(request.host, host)
-
+        redirect_uri = self._create_redirect_uri(idp)
         oauth_client = self.get_oauth_client(idp)
         oauth_kwargs = self.get_oauth_kwargs(idp)
         return oauth_client.authorize_redirect(
