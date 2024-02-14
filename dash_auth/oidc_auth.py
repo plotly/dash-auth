@@ -7,7 +7,7 @@ import dash
 from authlib.integrations.base_client import OAuthError
 from authlib.integrations.flask_client import OAuth
 from dash_auth.auth import Auth
-from flask import redirect, request, session, url_for
+from flask import Response, redirect, request, session, url_for
 from werkzeug.routing import Map, Rule
 
 if TYPE_CHECKING:
@@ -30,7 +30,8 @@ class OIDCAuth(Auth):
         idp_selection_route: str = None,
         log_signins: bool = False,
         public_routes: Optional[list] = None,
-        logout_page: str = None,
+        logout_page: Union[str, Response] = None,
+        secure_session: bool = False,
     ):
         """Secure a Dash app through OpenID Connect.
 
@@ -53,8 +54,6 @@ class OIDCAuth(Auth):
             This is useful when the HTTPS termination is upstream of the server
             If a string is passed, this will check for the existence of
             an envvar with that name and force https callback if it exists.
-        client_kwargs : dict, optional
-            Keyword arguments passed to the OAuth client
         login_route : str, optional
             The route for the login function, it requires a <idp>
             placeholder, by default "/oidc/<idp>/login".
@@ -67,8 +66,16 @@ class OIDCAuth(Auth):
             The route for the IDP selection function, by default None
         log_signins : bool, optional
             Whether to log signins, by default False
-        **kwargs
-            Additional keyword arguments are passed to oauth.register.
+        public_routes : list, optional
+            List of public routes, routes should follow the
+            Flask route syntax
+        logout_page : str or Response, optional
+            Page seen by the user after logging out,
+            by default None which will default to a simple logged out message
+        secure_session: bool, optional
+            Whether to ensure the session is secure, setting the flasck config
+            SESSION_COOKIE_SECURE and SESSION_COOKIE_HTTPONLY to True,
+            by default False
 
         Raises
         ------
@@ -111,6 +118,10 @@ class OIDCAuth(Auth):
                 that key in your code/via a secret.
                 """
             )
+
+        if secure_session:
+            app.server.config["SESSION_COOKIE_SECURE"] = True
+            app.server.config["SESSION_COOKIE_HTTPONLY"] = True
 
         super().__init__(app)
 
@@ -259,6 +270,7 @@ class OIDCAuth(Auth):
         user = token.get("userinfo")
         if user:
             session["user"] = user
+            session["idp"] = idp
             if "offline_access" in oauth_client.client_kwargs["scope"]:
                 session["refresh_token"] = token.get("refresh_token")
             if self.log_signins:
