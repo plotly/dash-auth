@@ -172,8 +172,8 @@ class OIDCAuth(Auth):
 
     def get_oauth_client(self, idp: str):
         """Get the OAuth client."""
-        if not idp:
-            raise ValueError("`idp` should be set")
+        if idp not in self.oauth._registry:
+            raise ValueError("`idp` should be a valid registered key")
 
         client: Union[FlaskOAuth1App, FlaskOAuth2App] = (
             self.oauth.create_client(idp)
@@ -182,8 +182,8 @@ class OIDCAuth(Auth):
 
     def get_oauth_kwargs(self, idp: str):
         """Get the OAuth kwargs."""
-        if not idp:
-            raise ValueError("`idp` should be set")
+        if idp not in self.oauth._registry:
+            raise ValueError("`idp` should be a valid registered key")
 
         kwargs: dict = (
             self.oauth._registry[idp][1]
@@ -191,10 +191,17 @@ class OIDCAuth(Auth):
         return kwargs
 
     def login_request(self, idp: str = None):
-        """Login the user."""
-        if idp is None:
-            if len(self.oauth._clients) == 1:
+        """Start the login process."""
+
+        # `idp` can be none here as login_request is called
+        # without arguments in the before_request hook
+        if idp not in self.oauth._registry:
+            # If only one provider is registered, we don't need to
+            # ask the user to pick one, just use the one
+            if len(self.oauth._registry) == 1:
                 idp = next(iter(self.oauth._clients))
+            # If there are several providers and a `idp_selection_route`
+            # was provided, redirect to it.
             elif self.idp_selection_route:
                 return redirect(self.idp_selection_route)
             else:
@@ -232,17 +239,10 @@ class OIDCAuth(Auth):
         """
         return page, 200
 
-    def callback(self, idp: str = None):  # pylint: disable=C0116
+    def callback(self, idp: str):  # pylint: disable=C0116
         """Do the OIDC dance."""
-        if idp is None:
-            if len(self.oauth._clients) == 1:
-                idp = next(iter(self.oauth._clients))
-            else:
-                return (
-                    "Several OAuth providers are registered. "
-                    "Please choose one.",
-                    400,
-                )
+        if idp not in self.oauth._registry:
+            return "`idp` should be a valid registered key", 400
 
         oauth_client = self.get_oauth_client(idp)
         oauth_kwargs = self.get_oauth_kwargs(idp)
