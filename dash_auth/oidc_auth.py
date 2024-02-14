@@ -306,7 +306,7 @@ def get_oauth(app: dash.Dash = None) -> OAuth:
     if app is None:
         app = dash.get_app()
 
-    oauth = getattr(app, "extensions", {}).get(
+    oauth = getattr(app.server, "extensions", {}).get(
         "authlib.integrations.flask_client"
     )
     if oauth is not None:
