@@ -123,8 +123,6 @@ class OIDCAuth(Auth):
             app.server.config["SESSION_COOKIE_SECURE"] = True
             app.server.config["SESSION_COOKIE_HTTPONLY"] = True
 
-        super().__init__(app)
-
         self.oauth = OAuth(app.server)
 
         # Check that the login and callback rules have an <idp> placeholder
@@ -184,7 +182,7 @@ class OIDCAuth(Auth):
     def get_oauth_client(self, idp: str):
         """Get the OAuth client."""
         if idp not in self.oauth._registry:
-            raise ValueError("`idp` should be a valid registered key")
+            raise ValueError(f"'{idp}' is not a valid registered idp")
 
         client: Union[FlaskOAuth1App, FlaskOAuth2App] = (
             self.oauth.create_client(idp)
@@ -194,7 +192,7 @@ class OIDCAuth(Auth):
     def get_oauth_kwargs(self, idp: str):
         """Get the OAuth kwargs."""
         if idp not in self.oauth._registry:
-            raise ValueError("`idp` should be a valid registered key")
+            raise ValueError(f"'{idp}' is not a valid registered idp")
 
         kwargs: dict = (
             self.oauth._registry[idp][1]
@@ -257,7 +255,7 @@ class OIDCAuth(Auth):
     def callback(self, idp: str):  # pylint: disable=C0116
         """Do the OIDC dance."""
         if idp not in self.oauth._registry:
-            return "`idp` should be a valid registered key", 400
+            return f"'{idp}' is not a valid registered idp", 400
 
         oauth_client = self.get_oauth_client(idp)
         oauth_kwargs = self.get_oauth_kwargs(idp)
