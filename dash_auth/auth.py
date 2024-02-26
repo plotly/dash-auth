@@ -83,18 +83,8 @@ class Auth(ABC):
             # Otherwise, ask the user to log in
             return self.login_request()
 
-    def is_authorized_hook(self, func):
-        self._auth_hooks.append(func)
-        return func
-
     @abstractmethod
     def is_authorized(self):
-        pass
-
-    def auth_wrapper(self, f):
-        pass
-
-    def index_auth_wrapper(self, f):
         pass
 
     @abstractmethod

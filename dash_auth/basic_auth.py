@@ -111,20 +111,3 @@ class BasicAuth(Auth):
             headers={'WWW-Authenticate': 'Basic realm="User Visible Realm"'},
             status=401
         )
-
-    def auth_wrapper(self, f):
-        def wrap(*args, **kwargs):
-            if not self.is_authorized():
-                return flask.Response(status=403)
-
-            response = f(*args, **kwargs)
-            return response
-        return wrap
-
-    def index_auth_wrapper(self, original_index):
-        def wrap(*args, **kwargs):
-            if self.is_authorized():
-                return original_index(*args, **kwargs)
-            else:
-                return self.login_request()
-        return wrap
