@@ -66,8 +66,9 @@ class Auth(ABC):
                 # should be checked against the public routes
                 pathname = next(
                     (
-                        inp["value"] for inp in body["inputs"]
-                        if inp["property"] == "pathname"
+                        inp.get("value") for inp in body["inputs"]
+                        if isinstance(inp, dict)
+                        and inp.get("property") == "pathname"
                     ),
                     None,
                 )
