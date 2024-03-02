@@ -1,17 +1,13 @@
 import logging
 import re
-from numbers import Number
-from typing import Callable, List, Literal, Optional, Union
+from typing import Any, Callable, List, Literal, Optional, Union
 
 import dash
-from dash.development.base_component import Component as DashComponent
 from dash.exceptions import PreventUpdate
 from flask import session, has_request_context
 
 
-ComponentPart = Union[DashComponent, str, Number]
-Component = Union[ComponentPart, List[ComponentPart]]
-OutputVal = Union[Callable[[], Component], Component]
+OutputVal = Union[Callable[[], Any], Any]
 CheckType = Literal["one_of", "all_of", "none_of"]
 
 
@@ -85,7 +81,7 @@ def check_groups(
 
 
 def protected(
-    unauthenticated_output: Optional[OutputVal] = None,
+    unauthenticated_output: OutputVal,
     *,
     missing_permissions_output: Optional[OutputVal] = None,
     groups: Optional[List[str]] = None,
@@ -97,13 +93,11 @@ def protected(
     of authentication and permissions.
 
     :param unauthenticated_output: Output when the user is not authenticated.
-        Note: needs to be a function with no argument or
-        a collection of Dash components.
+        Note: needs to be a function with no argument or static outputs.
     :param missing_permissions_output: Output when the user is authenticated
         but does not have the right permissions.
         It defaults to unauthenticated_output when not set.
-        Note: needs to be a function with no argument or
-        a collection of Dash components.
+        Note: needs to be a function with no argument or static outputs.
     :param groups: List of authorized user groups. If no groups are passed,
         the decorator will only check whether the user is authenticated.
     :param groups_key: Groups key in the user data saved in the Flask session
@@ -112,8 +106,6 @@ def protected(
     :param check_type: Type of check to perform.
         Either "one_of", "all_of" or "none_of"
     """
-    if unauthenticated_output is None:
-        unauthenticated_output = ""
 
     if missing_permissions_output is None:
         missing_permissions_output = unauthenticated_output
@@ -146,6 +138,8 @@ def protected(
 
 def protected_callback(
     *callback_args,
+    unauthenticated_output: Optional[OutputVal] = None,
+    missing_permissions_output: Optional[OutputVal] = None,
     groups: List[str] = None,
     groups_key: str = "groups",
     groups_str_split: str = None,
@@ -154,7 +148,21 @@ def protected_callback(
 ) -> Callable:
     """Protected Dash callback.
 
-    :param **: all args and kwargs passed to a dash callback
+    :param **: all args and kwargs passed to a Dash callback
+    :param unauthenticated_output: Output when the user is not authenticated.
+        **Note**: Needs to be a function with no argument or static outputs.
+        You can access the Dash callback context within the function call if
+        you need to use some of the inputs/states of the callback.
+        If left as None, it will simply raise PreventUpdate, stopping the
+        callback from processing.
+    :param missing_permissions_output: Output when the user is authenticated
+        but does not have the right permissions.
+        It defaults to unauthenticated_output when not set.
+        **Note**: Needs to be a function with no argument or static outputs.
+        You can access the Dash callback context within the function call if
+        you need to use some of the inputs/states of the callback.
+        If left as None, it will simply raise PreventUpdate, stopping the
+        callback from processing.
     :param groups: List of authorized user groups
     :param groups_key: Groups key in the user data saved in the Flask session
         e.g. session["user"] == {"email": "a.b@mail.com", "groups": ["admin"]}
@@ -181,8 +189,16 @@ def protected_callback(
 
         wrapped_func = dash.callback(*callback_args, **callback_kwargs)(
             protected(
-                unauthenticated_output=prevent_unauthenticated,
-                missing_permissions_output=prevent_unauthorised,
+                unauthenticated_output=(
+                    unauthenticated_output
+                    if unauthenticated_output is not None
+                    else prevent_unauthenticated
+                ),
+                missing_permissions_output=(
+                    missing_permissions_output
+                    if missing_permissions_output is not None
+                    else prevent_unauthorised
+                ),
                 groups=groups,
                 groups_key=groups_key,
                 groups_str_split=groups_str_split,
