@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Ability to define user groups in BasicAuth
 - Group-based permission and protection functions
 
+## [2.2.1] - 2024-03-01
 ### Fixed
 - Fix when looking for callback inputs that are not in the right format when checking for whitelisted routes
 
