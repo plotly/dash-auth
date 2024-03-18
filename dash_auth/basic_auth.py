@@ -86,6 +86,7 @@ class BasicAuth(Auth):
                 authorized = self._auth_func(username, password)
             except Exception:
                 logging.exception("Error in authorization function.")
+                return False
         else:
             authorized = self._users.get(username) == password
         if authorized:
