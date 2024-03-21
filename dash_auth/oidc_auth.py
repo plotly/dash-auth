@@ -17,6 +17,7 @@ if TYPE_CHECKING:
 
 UserGroups = Dict[str, List[str]]
 
+
 class OIDCAuth(Auth):
     """Implements auth via OpenID."""
 
