@@ -76,7 +76,7 @@ def check_groups(
             restricted_users = restricted_users(**restricted_users_lookup)
         if session['user'][user_session_key] in restricted_users:
             # User is restricted
-            return None
+            return False
     if callable(groups):
         groups = groups(**group_lookup)
     if groups is None:
