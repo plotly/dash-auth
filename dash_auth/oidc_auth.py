@@ -1,7 +1,7 @@
 import logging
 import os
 import re
-from typing import Optional, Union, TYPE_CHECKING
+from typing import Dict, List, Optional, Union, Callable, TYPE_CHECKING
 
 import dash
 from authlib.integrations.base_client import OAuthError
@@ -15,6 +15,7 @@ if TYPE_CHECKING:
         FlaskOAuth1App, FlaskOAuth2App
     )
 
+UserGroups = Dict[str, List[str]]
 
 class OIDCAuth(Auth):
     """Implements auth via OpenID."""
@@ -32,6 +33,10 @@ class OIDCAuth(Auth):
         public_routes: Optional[list] = None,
         logout_page: Union[str, Response] = None,
         secure_session: bool = False,
+        user_groups: Optional[
+            Union[UserGroups, Callable[[str], UserGroups]]
+        ] = None,
+        login_user_callback: Callable = None,
     ):
         """Secure a Dash app through OpenID Connect.
 
@@ -76,6 +81,9 @@ class OIDCAuth(Auth):
             Whether to ensure the session is secure, setting the flasck config
             SESSION_COOKIE_SECURE and SESSION_COOKIE_HTTPONLY to True,
             by default False
+        user_groups: a dict or a function returning a dict
+            Optional group for each user, allowing to protect routes and
+            callbacks depending on user groups
 
         Raises
         ------
@@ -97,6 +105,8 @@ class OIDCAuth(Auth):
         self.log_signins = log_signins
         self.idp_selection_route = idp_selection_route
         self.logout_page = logout_page
+        self._user_groups = user_groups
+        self.login_user_callback = login_user_callback
 
         if secret_key is not None:
             app.server.secret_key = secret_key
@@ -216,14 +226,13 @@ class OIDCAuth(Auth):
         # `idp` can be none here as login_request is called
         # without arguments in the before_request hook
         if idp not in self.oauth._registry:
+            # If a `idp_selection_route` was provided, redirect to it.
+            if self.idp_selection_route:
+                return redirect(self.idp_selection_route)
             # If only one provider is registered, we don't need to
             # ask the user to pick one, just use the one
-            if len(self.oauth._registry) == 1:
+            elif len(self.oauth._registry) == 1:
                 idp = next(iter(self.oauth._clients))
-            # If there are several providers and a `idp_selection_route`
-            # was provided, redirect to it.
-            elif self.idp_selection_route:
-                return redirect(self.idp_selection_route)
             else:
                 return (
                     "Several OAuth providers are registered. "
@@ -266,9 +275,19 @@ class OIDCAuth(Auth):
         except OAuthError as err:
             return str(err), 401
         user = token.get("userinfo")
-        if user:
+        if self.login_user_callback:
+            return self.login_user_callback(user, idp)
+        elif user:
             session["user"] = user
             session["idp"] = idp
+            if callable(self._user_groups):
+                session["user"]["groups"] = self._user_groups(
+                    user.get('email')
+                )
+            elif self._user_groups:
+                session["user"]["groups"] = self._user_groups.get(
+                    user.get('email'), []
+                )
             if "offline_access" in oauth_client.client_kwargs["scope"]:
                 session["refresh_token"] = token.get("refresh_token")
             if self.log_signins:
