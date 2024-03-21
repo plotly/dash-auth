@@ -37,11 +37,15 @@ def list_groups(
 
 
 def check_groups(
-    groups: Optional[List[str]] = None,
+    groups: Optional[Union[Callable, List[str]]] = None,
     *,
     groups_key: str = "groups",
     groups_str_split: str = None,
     check_type: CheckType = "one_of",
+    group_lookup: dict = {},
+    restricted_users: Optional[Union[Callable, List[str]]] = None,
+    restricted_users_lookup: dict = {},
+    user_session_key: str = 'email',
 ) -> Optional[bool]:
     """Check whether the current user is authenticated
     and has the specified groups.
@@ -67,6 +71,14 @@ def check_groups(
         # User is not authenticated
         return None
 
+    if restricted_users:
+        if callable(restricted_users):
+            restricted_users = restricted_users(**restricted_users_lookup)
+        if session['user'][user_session_key] in restricted_users:
+            # User is restricted
+            return None
+    if callable(groups):
+        groups = groups(**group_lookup)
     if groups is None:
         return True
 
@@ -84,10 +96,14 @@ def protected(
     unauthenticated_output: OutputVal,
     *,
     missing_permissions_output: Optional[OutputVal] = None,
-    groups: Optional[List[str]] = None,
+    groups: Optional[Union[Callable, List[str]]] = None,
     groups_key: str = "groups",
     groups_str_split: str = None,
     check_type: CheckType = "one_of",
+    group_lookup: dict = {},
+    restricted_users: Optional[Union[Callable, List[str]]] = None,
+    restricted_users_lookup: dict = {},
+    user_session_key: str = 'email',
 ) -> Callable:
     """Decorate a function or output to alter it depending on the state
     of authentication and permissions.
@@ -122,6 +138,10 @@ def protected(
                 groups_key=groups_key,
                 groups_str_split=groups_str_split,
                 check_type=check_type,
+                group_lookup=group_lookup,
+                restricted_users=restricted_users,
+                restricted_users_lookup=restricted_users_lookup,
+                user_session_key=user_session_key
             )
             if authorized is None:
                 return process_output(unauthenticated_output)
@@ -140,10 +160,14 @@ def protected_callback(
     *callback_args,
     unauthenticated_output: Optional[OutputVal] = None,
     missing_permissions_output: Optional[OutputVal] = None,
-    groups: List[str] = None,
+    groups: Optional[Union[Callable, List[str]]] = None,
     groups_key: str = "groups",
     groups_str_split: str = None,
     check_type: CheckType = "one_of",
+    group_lookup: dict = {},
+    restricted_users: Optional[Union[Callable, List[str]]] = None,
+    restricted_users_lookup: dict = {},
+    user_session_key: str = 'email',
     **callback_kwargs,
 ) -> Callable:
     """Protected Dash callback.
@@ -203,6 +227,10 @@ def protected_callback(
                 groups_key=groups_key,
                 groups_str_split=groups_str_split,
                 check_type=check_type,
+                group_lookup=group_lookup,
+                restricted_users=restricted_users,
+                restricted_users_lookup=restricted_users_lookup,
+                user_session_key=user_session_key
             )(func)
         )
 
