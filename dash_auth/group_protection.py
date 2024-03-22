@@ -335,7 +335,7 @@ def protect_layout(pg: dict = None) -> Callable:
     return decorator
 
 
-def protect_layouts() -> str:
+def protect_layouts(**kwargs) -> str:
     for pg in dash.page_registry.values():
-        pg["layout"] = protect_layout(pg)(pg["layout"])
+        pg["layout"] = protect_layout({**kwargs, **pg})(pg["layout"])
     return "your layouts are now protected"
