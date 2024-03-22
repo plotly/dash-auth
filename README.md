@@ -382,7 +382,9 @@ The following utilities are defined:
   and with the right group permissions.
 * `protect_layout`: A function that will protect a layout similar to how `protected_callback` works.
   * eg `dash.register_page('test', path_template='/test/<test>', layout=protect_layout({'groups': ['testing']})(Layout))`
-* `protect_layouts`: A function that will iterate through all pages and called `protect_layout` on the `layout`.
+* `protect_layouts`: A function that will iterate through all pages and called `protect_layout` on the `layout`, 
+  * passes `kwargs` to `protect_layout` if not already defined in the `layout`
+  * eg `protect_layouts(missing_permissions_output=html.Div("I'm sorry ,Dave, I'm afraid I can't do that"))`
 
 NOTE: user info is stored in the session so make sure you define a secret_key on the Flask server
 to use this feature.
