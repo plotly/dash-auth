@@ -79,12 +79,16 @@ class OIDCAuth(Auth):
             Page seen by the user after logging out,
             by default None which will default to a simple logged out message
         secure_session: bool, optional
-            Whether to ensure the session is secure, setting the flasck config
+            Whether to ensure the session is secure, setting the flask config
             SESSION_COOKIE_SECURE and SESSION_COOKIE_HTTPONLY to True,
             by default False
         user_groups: a dict or a function returning a dict
             Optional group for each user, allowing to protect routes and
             callbacks depending on user groups
+        login_user_callback: python function accepting two arguments
+            (userinfo, idp), where userinfo is normally a dict
+            (request form or results from the idp).
+            This must return a flask response or redirect.
 
         Raises
         ------
@@ -283,11 +287,11 @@ class OIDCAuth(Auth):
             session["idp"] = idp
             if callable(self._user_groups):
                 session["user"]["groups"] = self._user_groups(
-                    user.get('email')
+                    user.get("email")
                 )
             elif self._user_groups:
                 session["user"]["groups"] = self._user_groups.get(
-                    user.get('email'), []
+                    user.get("email"), []
                 )
             if "offline_access" in oauth_client.client_kwargs["scope"]:
                 session["refresh_token"] = token.get("refresh_token")

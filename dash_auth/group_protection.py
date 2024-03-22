@@ -42,20 +42,38 @@ def check_groups(
     groups_key: str = "groups",
     groups_str_split: str = None,
     check_type: CheckType = "one_of",
-    group_lookup: dict = {},
+    group_lookup: dict = None,
     restricted_users: Optional[Union[Callable, List[str]]] = None,
-    restricted_users_lookup: dict = {},
-    user_session_key: str = 'email',
+    restricted_users_lookup: dict = None,
+    user_session_key: str = "email",
 ) -> Optional[bool]:
     """Check whether the current user is authenticated
     and has the specified groups.
 
-    :param groups: List of groups to check for with check_type
+    :param groups: List of groups or a python function
+        to return a list of groups.
+        If this is a function, will be called with group_lookup dict as kwargs.
+        The result is used to check for with check_type
     :param groups_key: Groups key in the user data saved in the Flask session
         e.g. session["user"] == {"email": "a.b@mail.com", "groups": ["admin"]}
     :param groups_str_split: Used to split groups if provided as a string
     :param check_type: Type of check to perform.
         Either "one_of", "all_of" or "none_of"
+    :param group_lookup: A dictionary of kwargs to be passed
+        if groups is a function.
+        e.g. {"path": "/test"} will work with this as a
+        groups function: check_path(path)
+    :param restricted_users: List of restricted users or a python function
+        to return a list of users.
+         If this is a function, will be called with
+         restricted_users_lookup dict as kwargs.
+    :param restricted_users_lookup: A dictionary of kwargs to be passed
+        if restricted_users is a function.
+        e.g. {"path": "/test"} will work with this as a
+        restricted_users function: check_users_path(path)
+    :param user_session_key: String of a key in the session["user"] cookie
+        where the user will be used to determine whether they are
+        in the list of restricted_users. Defaults to "email".
     :return: None or boolean:
         * None if the user is not authenticated
         * True if the user is authenticated and has the right permissions
@@ -73,12 +91,14 @@ def check_groups(
 
     if restricted_users:
         if callable(restricted_users):
-            restricted_users = restricted_users(**restricted_users_lookup)
-        if session['user'][user_session_key] in restricted_users:
+            restricted_users = restricted_users(
+                **(restricted_users_lookup or {})
+            )
+        if session["user"][user_session_key] in restricted_users:
             # User is restricted
             return False
     if callable(groups):
-        groups = groups(**group_lookup)
+        groups = groups(**(group_lookup or {}))
     if groups is None:
         return True
 
@@ -100,10 +120,10 @@ def protected(
     groups_key: str = "groups",
     groups_str_split: str = None,
     check_type: CheckType = "one_of",
-    group_lookup: dict = {},
+    group_lookup: dict = None,
     restricted_users: Optional[Union[Callable, List[str]]] = None,
-    restricted_users_lookup: dict = {},
-    user_session_key: str = 'email',
+    restricted_users_lookup: dict = None,
+    user_session_key: str = "email",
 ) -> Callable:
     """Decorate a function or output to alter it depending on the state
     of authentication and permissions.
@@ -114,13 +134,31 @@ def protected(
         but does not have the right permissions.
         It defaults to unauthenticated_output when not set.
         Note: needs to be a function with no argument or static outputs.
-    :param groups: List of authorized user groups. If no groups are passed,
+    :param groups: List of authorized user groups
+        or a python function to return a list of groups.
+        If this is a function, will be called with group_lookup dict as kwargs.
+        If no groups are passed,
         the decorator will only check whether the user is authenticated.
     :param groups_key: Groups key in the user data saved in the Flask session
         e.g. session["user"] == {"email": "a.b@mail.com", "groups": ["admin"]}
     :param groups_str_split: Used to split groups if provided as a string
     :param check_type: Type of check to perform.
         Either "one_of", "all_of" or "none_of"
+    :param group_lookup: A dictionary of kwargs to be passed
+        if groups is a function.
+        e.g. {"path": "/test"} will work with this as a
+        groups function: check_path(path)
+    :param restricted_users: List of restricted users or a python function
+        to return a list of users.
+         If this is a function, will be called with
+         restricted_users_lookup dict as kwargs.
+    :param restricted_users_lookup: A dictionary of kwargs to be passed
+        if restricted_users is a function.
+        e.g. {"path": "/test"} will work with this as a
+        restricted_users function: check_users_path(path)
+    :param user_session_key: String of a key in the session["user"] cookie
+        where the user will be used to determine whether they are
+        in the list of restricted_users. Defaults to "email".
     """
 
     if missing_permissions_output is None:
@@ -141,7 +179,7 @@ def protected(
                 group_lookup=group_lookup,
                 restricted_users=restricted_users,
                 restricted_users_lookup=restricted_users_lookup,
-                user_session_key=user_session_key
+                user_session_key=user_session_key,
             )
             if authorized is None:
                 return process_output(unauthenticated_output)
@@ -164,10 +202,10 @@ def protected_callback(
     groups_key: str = "groups",
     groups_str_split: str = None,
     check_type: CheckType = "one_of",
-    group_lookup: dict = {},
+    group_lookup: dict = None,
     restricted_users: Optional[Union[Callable, List[str]]] = None,
-    restricted_users_lookup: dict = {},
-    user_session_key: str = 'email',
+    restricted_users_lookup: dict = None,
+    user_session_key: str = "email",
     **callback_kwargs,
 ) -> Callable:
     """Protected Dash callback.
@@ -188,11 +226,28 @@ def protected_callback(
         If left as None, it will simply raise PreventUpdate, stopping the
         callback from processing.
     :param groups: List of authorized user groups
+        or a python function to return a list of groups.
+        If this is a function, will be called with group_lookup dict as kwargs.
     :param groups_key: Groups key in the user data saved in the Flask session
         e.g. session["user"] == {"email": "a.b@mail.com", "groups": ["admin"]}
     :param groups_str_split: Used to split groups if provided as a string
     :param check_type: Type of check to perform.
         Either "one_of", "all_of" or "none_of"
+    :param group_lookup: A dictionary of kwargs to be passed
+        if groups is a function.
+        e.g. {"path": "/test"} will work with this as a
+        groups function: check_path(path)
+    :param restricted_users: List of restricted users or a python function
+        to return a list of users.
+         If this is a function, will be called with
+         restricted_users_lookup dict as kwargs.
+    :param restricted_users_lookup: A dictionary of kwargs to be passed
+        if restricted_users is a function.
+        e.g. {"path": "/test"} will work with this as a
+        restricted_users function: check_users_path(path)
+    :param user_session_key: String of a key in the session["user"] cookie
+        where the user will be used to determine whether they are
+        in the list of restricted_users. Defaults to "email".
     """
 
     def decorator(func):
@@ -230,7 +285,7 @@ def protected_callback(
                 group_lookup=group_lookup,
                 restricted_users=restricted_users,
                 restricted_users_lookup=restricted_users_lookup,
-                user_session_key=user_session_key
+                user_session_key=user_session_key,
             )(func)
         )
 
