@@ -252,6 +252,121 @@ if __name__ == "__main__":
     app.run_server(debug=True)
 ```
 
+#### Mixed Logins
+
+To utilize OIDC and legacy logins, you need to provide a `idp_selection_route`, here is an example flow
+using `Flask-Login`. 
+The `login_user_callback` is also utilized so that you can configure the session cookies to 
+be a similar format, or log the OIDC user into the `Flask-Login`
+
+```python
+from dash import Dash, html
+from dash_auth import OIDCAuth
+from flask import request, redirect, url_for, session
+from flask_login import current_user, LoginManager, login_user, UserMixin
+
+app = Dash(__name__)
+
+login_manager = LoginManager()
+login_manager.init_app(app.server)
+class User(UserMixin):
+    pass
+
+@login_manager.user_loader
+def user_loader(username):
+    user = User()
+    user.id = username
+    return user
+
+def all_login_method(user_info, idp=None):
+    if idp:
+        session["user"] = user_info
+        session["idp"] = idp
+        session['user']['groups'] = ['this', 'is', 'a', 'testing']
+        user = User()
+        user.id = user_info['email']
+        login_user(user)
+    else:
+        user = User()
+        user.id = user_info.get('user')
+        login_user(user)
+        session['user'] = {}
+        session['user']['groups'] = ['nah']
+        session['user']['email'] = user_info.get('user')
+    return redirect(app.config.get("url_base_pathname") or "/")
+
+def layout():
+    if request:
+        if current_user:
+            try:
+                return html.Div([
+                    html.Div(f"Hello {current_user.id}!"),
+                    html.Button(id='change_users', children='change restrictions'),
+                    html.Button(id='test', children='you cant use me'),
+                    html.A("Logout", href="/oidc/logout"),
+                ])
+            except:
+                pass
+        if 'user' in session:
+            return html.Div([
+                html.Div(f"""Hello {session['user'].get('email')}!
+                        You have access to these groups: {session['user'].get('groups')}"""),
+                html.Button(id='change_users', children='change restrictions'),
+                html.Button(id='test', children='you cant use me'),
+                html.A("Logout", href="/oidc/logout"),
+            ])
+    return html.Div([
+        html.Div("Hello world!"),
+        html.Button(id='change_users', children='change restrictions'),
+        html.Button(id='test', children='you cant use me'),
+        html.A("Logout", href="/oidc/logout"),
+    ])
+
+app.layout = layout
+
+auth = OIDCAuth(
+    app,
+    secret_key="aStaticSecretKey!",
+    # Set the route at which the user will select the IDP they wish to login with
+    idp_selection_route="/login",
+    login_user_callback=all_login_method
+)
+auth.register_provider(
+    "IDP 1",
+    token_endpoint_auth_method="client_secret_post",
+    client_id="<my-client-id>",
+    client_secret="<my-client-secret>",
+    server_metadata_url="<my-idp-.well-known-configuration>",
+)
+
+@app.server.route("/login", methods=["GET", "POST"])
+def login_handler():
+    if request.method == 'POST':
+        form_data = request.form
+    else:
+        form_data = request.args
+
+    if form_data.get('user') and form_data.get('password'):
+        return all_login_method(form_data)
+
+    if form_data.get('IDP 1'):
+        return redirect(url_for("oidc_login", idp='IDP 1'))
+
+    return """<div>
+        <form method="POST">
+            <div>How do you wish to sign in:</div>
+            <button type="submit" name="IDP 1" value="true">Microsoft</button>
+            <div><input name="user"/>
+            <input name="password"/></div>
+            <input type="submit" value="Login">
+        </form>
+    </div>"""
+
+
+if __name__ == "__main__":
+    app.run_server(debug=True)
+```
+
 ### User-group-based permissions
 
 `dash_auth` provides a convenient way to secure parts of your app based on user groups.
@@ -265,6 +380,9 @@ The following utilities are defined:
   or missing group permission.
 * `protected_callback`: A callback that only runs if the user is authenticated
   and with the right group permissions.
+* `protect_layout`: A function that will protect a layout similar to how `protected_callback` works.
+  * eg `dash.register_page('test', path_template='/test/<test>', layout=protect_layout({'groups': ['testing']})(Layout))`
+* `protect_layouts`: A function that will iterate through all pages and called `protect_layout` on the `layout`.
 
 NOTE: user info is stored in the session so make sure you define a secret_key on the Flask server
 to use this feature.
@@ -309,3 +427,38 @@ BasicAuth(
     secret_key="Test!",
 )
 ```
+
+### User-based restrictions
+
+`dash_auth` also allows for certain users to be restricted from content and callbacks,
+even when they are assigned to a group which grants them access. 
+This allows for more granular control. This is done by passing a list of users to `restricted_users`.
+To check if a user is in the list, it needs the key from the `session["user"]` to compare, 
+this is defaulted as `"email"`.
+
+eg
+```python
+"""
+where session['user'] = {'email': 'me@email.com'}
+the below callback will not work
+"""
+
+@protected_callback(
+    Output('test', 'children'),
+    Input('test', 'n_clicks'),
+    prevent_initial_call=True,
+    restricted_users=['me@email.com']
+)
+def testing(n):
+    return 'I was clicked'
+```
+
+### Additional flexibility
+
+`dash_auth` has functions enabled for `groups` and `restricted_users`, this allows for dynamic 
+control after application spinup.
+
+When using the functions, the following dictionaries will be passed respectively as `kwargs` to 
+the function you provide:
+ - `group_lookup`: `{'path': '/test'}` => `pull_groups(path)`
+ - `restricted_users_lookup`: `{'path': '/test'}` => `pull_users(path)`

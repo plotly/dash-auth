@@ -5,6 +5,7 @@ from typing import Any, Callable, List, Literal, Optional, Union
 import dash
 from dash.exceptions import PreventUpdate
 from flask import session, has_request_context
+from dash import html
 
 
 OutputVal = Union[Callable[[], Any], Any]
@@ -295,3 +296,46 @@ def protected_callback(
         return wrap
 
     return decorator
+
+
+def protect_layout(pg: dict = None) -> Callable:
+    """
+    Protected Dash layout.
+
+    :param pg: Dict normally a dash page registry,
+        for this purpose all pertinent kwargs will be passed
+        to the check_groups function
+    """
+    if not pg:
+        pg = {}
+
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            # check authorization
+            authorized = check_groups(
+                groups=pg.get("groups"),
+                groups_key=pg.get("groups_key", "groups"),
+                groups_str_split=pg.get("groups_str_split"),
+                check_type=pg.get("check_type") or "one_of",
+                group_lookup=pg.get("group_lookup"),
+                restricted_users=pg.get("restricted_users"),
+                restricted_users_lookup=pg.get("restricted_users_lookup"),
+                user_session_key=pg.get("user_session_key", "email"),
+            )
+            if authorized:
+                return func(*args, **kwargs)
+            if pg.get("missing_permissions_output"):
+                if callable(pg.get("missing_permissions_output")):
+                    return pg.get("missing_permissions_output")()
+                return pg.get("missing_permissions_output")
+            return html.Div("Sorry, you do not have access to this content")
+
+        return wrapper
+
+    return decorator
+
+
+def protect_layouts() -> str:
+    for pg in dash.page_registry.values():
+        pg["layout"] = protect_layout(pg)(pg["layout"])
+    return "your layouts are now protected"
