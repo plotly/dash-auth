@@ -57,10 +57,12 @@ class BasicAuth(Auth):
             If not provided, this will set the page_container_test to True,
             meaning all pathname callbacks will be judged.
         """
-        super().__init__(app, public_routes=public_routes,
-                         auth_protect_layouts=auth_protect_layouts,
-                        auth_protect_layouts_kwargs=auth_protect_layouts_kwargs,
-                         page_container=page_container
+        super().__init__(
+            app,
+            public_routes=public_routes,
+            auth_protect_layouts=auth_protect_layouts,
+            auth_protect_layouts_kwargs=auth_protect_layouts_kwargs,
+            page_container=page_container,
         )
         self._auth_func = auth_func
         self._user_groups = user_groups
@@ -88,12 +90,12 @@ class BasicAuth(Auth):
                 )
 
     def is_authorized(self):
-        header = flask.request.headers.get('Authorization', None)
+        header = flask.request.headers.get("Authorization", None)
         if not header:
             return False
-        username_password = base64.b64decode(header.split('Basic ')[1])
-        username_password_utf8 = username_password.decode('utf-8')
-        username, password = username_password_utf8.split(':', 1)
+        username_password = base64.b64decode(header.split("Basic ")[1])
+        username_password_utf8 = username_password.decode("utf-8")
+        username, password = username_password_utf8.split(":", 1)
         authorized = False
         if self._auth_func is not None:
             try:
@@ -122,7 +124,7 @@ class BasicAuth(Auth):
 
     def login_request(self):
         return flask.Response(
-            'Login Required',
-            headers={'WWW-Authenticate': 'Basic realm="User Visible Realm"'},
-            status=401
+            "Login Required",
+            headers={"WWW-Authenticate": 'Basic realm="User Visible Realm"'},
+            status=401,
         )

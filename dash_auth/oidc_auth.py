@@ -107,10 +107,13 @@ class OIDCAuth(Auth):
         """
         if idp_selection_route:
             public_routes = [idp_selection_route, *public_routes]
-        super().__init__(app, public_routes=public_routes,
-                         auth_protect_layouts=auth_protect_layouts,
-                         auth_protect_layouts_kwargs=auth_protect_layouts_kwargs,
-                         page_container=page_container)
+        super().__init__(
+            app,
+            public_routes=public_routes,
+            auth_protect_layouts=auth_protect_layouts,
+            auth_protect_layouts_kwargs=auth_protect_layouts_kwargs,
+            page_container=page_container,
+        )
 
         if isinstance(force_https_callback, str):
             self.force_https_callback = force_https_callback in os.environ

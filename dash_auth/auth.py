@@ -6,7 +6,9 @@ from dash import Dash
 from flask import request
 
 from .public_routes import (
-    add_public_routes, get_public_callbacks, get_public_routes
+    add_public_routes,
+    get_public_callbacks,
+    get_public_routes,
 )
 from .group_protection import protect_layouts
 
@@ -19,7 +21,7 @@ class Auth(ABC):
         auth_protect_layouts: Optional[Union[dict, bool]] = False,
         auth_protect_layouts_kwargs: Optional[dict] = None,
         page_container: Optional[str] = None,
-        **obsolete
+        **obsolete,
     ):
         """Auth base class for authentication in Dash.
 
@@ -48,7 +50,10 @@ class Auth(ABC):
         if public_routes is not None:
             add_public_routes(app, public_routes)
         if self.auth_protect_layouts:
-            protect_layouts(public_routes=get_public_routes(self.app), **(auth_protect_layouts_kwargs or {}))
+            protect_layouts(
+                public_routes=get_public_routes(self.app),
+                **(auth_protect_layouts_kwargs or {}),
+            )
 
     def _protect(self):
         """Add a before_request authentication check on all routes.
@@ -79,19 +84,21 @@ class Auth(ABC):
 
                 pathname = next(
                     (
-                        inp.get("value") for inp in body["inputs"]
+                        inp.get("value")
+                        for inp in body["inputs"]
                         if isinstance(inp, dict)
-                           and inp.get("property") == "pathname"
+                        and inp.get("property") == "pathname"
                     ),
                     None,
                 )
                 if self.page_container:
                     page_container_test = next(
                         (
-                            out for out in body["outputs"]
+                            out
+                            for out in body["outputs"]
                             if isinstance(out, dict)
-                               and out.get('id') == self.page_container
-                               and out.get("property") == "children"
+                            and out.get("id") == self.page_container
+                            and out.get("property") == "children"
                         ),
                         None,
                     )
@@ -102,7 +109,11 @@ class Auth(ABC):
                 # such a callback will be a routing callback and the pathname
                 # should be checked against the public routes
                 if not self.auth_protect_layouts:
-                    if pathname and page_container_test and public_routes.test(pathname):
+                    if (
+                        pathname
+                        and page_container_test
+                        and public_routes.test(pathname)
+                    ):
                         return None
                 else:
                     # protected by layout
