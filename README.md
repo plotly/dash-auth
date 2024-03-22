@@ -464,3 +464,21 @@ When using the functions, the following dictionaries will be passed respectively
 the function you provide:
  - `group_lookup`: `{'path': '/test'}` => `pull_groups(path)`
  - `restricted_users_lookup`: `{'path': '/test'}` => `pull_users(path)`
+
+### Restricting layouts
+
+`dash_auth` by default will cater your page layouts that are in your public routes or where the user is authenticated.
+However, it is possible to lock down layouts by passing these additional arguments to `OIDCAuth` or `BasicAuth` methods:
+
+```python
+auth_protect_layouts=True,
+auth_protect_layouts_kwargs=dict(missing_permissions_output=html.Div('you cant get me')),
+page_container='_pages_content'
+```
+
+Passing `auth_protect_layouts` tells the app to invoke the `protect_layouts` with the `public_routes` passed to 
+not protect the layouts of public routes.
+Passing `auth_protect_layouts_kwargs` is the same are the additional `kwargs` passed to the function
+By default, the app will check any non-public callback that has the `pathname` as an input, 
+when you pass `page_container` as the `id` of your container element for a page container,
+it will only check the route if it is an output.

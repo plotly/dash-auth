@@ -38,6 +38,9 @@ class OIDCAuth(Auth):
             Union[UserGroups, Callable[[str], UserGroups]]
         ] = None,
         login_user_callback: Callable = None,
+        auth_protect_layouts: Optional[bool] = False,
+        auth_protect_layouts_kwargs: Optional[dict] = None,
+        page_container: Optional[str] = None,
     ):
         """Secure a Dash app through OpenID Connect.
 
@@ -89,13 +92,25 @@ class OIDCAuth(Auth):
             (userinfo, idp), where userinfo is normally a dict
             (request form or results from the idp).
             This must return a flask response or redirect.
+        :param auth_protect_layouts: bool, defaults to False.
+            If true, runs protect_layout()
+        :param auth_protect_layouts_kwargs: dict, if provided is passed to the
+            protect_layout as kwargs
+        :param page_container: string, id of the page container in the app.
+            If not provided, this will set the page_container_test to True,
+            meaning all pathname callbacks will be judged.
 
         Raises
         ------
         Exception
             Raise an exception if the app.server.secret_key is not defined
         """
-        super().__init__(app, public_routes=public_routes)
+        if idp_selection_route:
+            public_routes = [idp_selection_route, *public_routes]
+        super().__init__(app, public_routes=public_routes,
+                         auth_protect_layouts=auth_protect_layouts,
+                         auth_protect_layouts_kwargs=auth_protect_layouts_kwargs,
+                         page_container=page_container)
 
         if isinstance(force_https_callback, str):
             self.force_https_callback = force_https_callback in os.environ

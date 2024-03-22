@@ -336,6 +336,14 @@ def protect_layout(pg: dict = None) -> Callable:
 
 
 def protect_layouts(**kwargs) -> str:
-    for pg in dash.page_registry.values():
-        pg["layout"] = protect_layout({**kwargs, **pg})(pg["layout"])
-    return "your layouts are now protected"
+    if 'pages_folder' in dash.get_app().config:
+        for pg in dash.page_registry.values():
+            if kwargs.get('public_routes'):
+                if isinstance(kwargs.get('public_routes'), list):
+                    if not (pg['path'] in kwargs.get('public_routes') or pg.get('path_template') in kwargs.get('public_routes')):
+                        pg["layout"] = protect_layout({**kwargs, **pg})(pg["layout"])
+                elif not (kwargs.get('public_routes').test(pg.get('path_template')) or kwargs.get('public_routes').test(pg['path'])):
+                    pg["layout"] = protect_layout({**kwargs, **pg})(pg["layout"])
+            else:
+                pg["layout"] = protect_layout({**kwargs, **pg})(pg["layout"])
+        return "your layouts are now protected"

@@ -19,7 +19,10 @@ class BasicAuth(Auth):
         user_groups: Optional[
             Union[UserGroups, Callable[[str], UserGroups]]
         ] = None,
-        secret_key: str = None
+        secret_key: str = None,
+        auth_protect_layouts: Optional[bool] = False,
+        auth_protect_layouts_kwargs: Optional[dict] = None,
+        page_container: Optional[str] = None,
     ):
         """Add basic authentication to Dash.
 
@@ -46,8 +49,19 @@ class BasicAuth(Auth):
             Note that you should not do this dynamically:
             you should create a key and then assign the value of
             that key in your code.
+        :param auth_protect_layouts: bool, defaults to False.
+            If true, runs protect_layout()
+        :param auth_protect_layouts_kwargs: dict, if provided is passed to the
+            protect_layout as kwargs
+        :param page_container: string, id of the page container in the app.
+            If not provided, this will set the page_container_test to True,
+            meaning all pathname callbacks will be judged.
         """
-        super().__init__(app, public_routes=public_routes)
+        super().__init__(app, public_routes=public_routes,
+                         auth_protect_layouts=auth_protect_layouts,
+                        auth_protect_layouts_kwargs=auth_protect_layouts_kwargs,
+                         page_container=page_container
+        )
         self._auth_func = auth_func
         self._user_groups = user_groups
         if secret_key is not None:
