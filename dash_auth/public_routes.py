@@ -20,6 +20,7 @@ BASE_PUBLIC_ROUTES = [
     "/_dash-dependencies",
     "/_favicon.ico",
     "/_reload-hash",
+    "/favicon.ico",
 ]
 PUBLIC_ROUTES = "PUBLIC_ROUTES"
 PUBLIC_CALLBACKS = "PUBLIC_CALLBACKS"
