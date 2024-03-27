@@ -1,7 +1,7 @@
 import logging
 import os
 import re
-from typing import Optional, Union, TYPE_CHECKING
+from typing import Dict, List, Optional, Union, Callable, TYPE_CHECKING
 
 import dash
 from authlib.integrations.base_client import OAuthError
@@ -14,6 +14,8 @@ if TYPE_CHECKING:
     from authlib.integrations.flask_client.apps import (
         FlaskOAuth1App, FlaskOAuth2App
     )
+
+UserGroups = Dict[str, List[str]]
 
 
 class OIDCAuth(Auth):
@@ -32,6 +34,13 @@ class OIDCAuth(Auth):
         public_routes: Optional[list] = None,
         logout_page: Union[str, Response] = None,
         secure_session: bool = False,
+        user_groups: Optional[
+            Union[UserGroups, Callable[[str], UserGroups]]
+        ] = None,
+        login_user_callback: Callable = None,
+        auth_protect_layouts: Optional[bool] = False,
+        auth_protect_layouts_kwargs: Optional[dict] = None,
+        page_container: Optional[str] = None,
     ):
         """Secure a Dash app through OpenID Connect.
 
@@ -73,16 +82,38 @@ class OIDCAuth(Auth):
             Page seen by the user after logging out,
             by default None which will default to a simple logged out message
         secure_session: bool, optional
-            Whether to ensure the session is secure, setting the flasck config
+            Whether to ensure the session is secure, setting the flask config
             SESSION_COOKIE_SECURE and SESSION_COOKIE_HTTPONLY to True,
             by default False
+        user_groups: a dict or a function returning a dict
+            Optional group for each user, allowing to protect routes and
+            callbacks depending on user groups
+        login_user_callback: python function accepting two arguments
+            (userinfo, idp), where userinfo is normally a dict
+            (request form or results from the idp).
+            This must return a flask response or redirect.
+        :param auth_protect_layouts: bool, defaults to False.
+            If true, runs protect_layout()
+        :param auth_protect_layouts_kwargs: dict, if provided is passed to the
+            protect_layout as kwargs
+        :param page_container: string, id of the page container in the app.
+            If not provided, this will set the page_container_test to True,
+            meaning all pathname callbacks will be judged.
 
         Raises
         ------
         Exception
             Raise an exception if the app.server.secret_key is not defined
         """
-        super().__init__(app, public_routes=public_routes)
+        if idp_selection_route:
+            public_routes = [idp_selection_route, *public_routes]
+        super().__init__(
+            app,
+            public_routes=public_routes,
+            auth_protect_layouts=auth_protect_layouts,
+            auth_protect_layouts_kwargs=auth_protect_layouts_kwargs,
+            page_container=page_container,
+        )
 
         if isinstance(force_https_callback, str):
             self.force_https_callback = force_https_callback in os.environ
@@ -97,6 +128,8 @@ class OIDCAuth(Auth):
         self.log_signins = log_signins
         self.idp_selection_route = idp_selection_route
         self.logout_page = logout_page
+        self._user_groups = user_groups
+        self.login_user_callback = login_user_callback
 
         if secret_key is not None:
             app.server.secret_key = secret_key
@@ -216,14 +249,13 @@ class OIDCAuth(Auth):
         # `idp` can be none here as login_request is called
         # without arguments in the before_request hook
         if idp not in self.oauth._registry:
+            # If a `idp_selection_route` was provided, redirect to it.
+            if self.idp_selection_route:
+                return redirect(self.idp_selection_route)
             # If only one provider is registered, we don't need to
             # ask the user to pick one, just use the one
-            if len(self.oauth._registry) == 1:
+            elif len(self.oauth._registry) == 1:
                 idp = next(iter(self.oauth._clients))
-            # If there are several providers and a `idp_selection_route`
-            # was provided, redirect to it.
-            elif self.idp_selection_route:
-                return redirect(self.idp_selection_route)
             else:
                 return (
                     "Several OAuth providers are registered. "
@@ -266,9 +298,19 @@ class OIDCAuth(Auth):
         except OAuthError as err:
             return str(err), 401
         user = token.get("userinfo")
-        if user:
+        if self.login_user_callback:
+            return self.login_user_callback(user, idp)
+        elif user:
             session["user"] = user
             session["idp"] = idp
+            if callable(self._user_groups):
+                session["user"]["groups"] = self._user_groups(
+                    user.get("email")
+                )
+            elif self._user_groups:
+                session["user"]["groups"] = self._user_groups.get(
+                    user.get("email"), []
+                )
             if "offline_access" in oauth_client.client_kwargs["scope"]:
                 session["refresh_token"] = token.get("refresh_token")
             if self.log_signins:
