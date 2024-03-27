@@ -298,46 +298,34 @@ def protected_callback(
     return decorator
 
 
-def protect_layout(pg: dict = None) -> Callable:
-    """
-    Protected Dash layout.
+def filter_kwargs(expected_keys, **kwargs):
+    return {
+        key: value for key, value in kwargs.items() if key in expected_keys
+    }
 
-    :param pg: Dict normally a dash page registry,
-        for this purpose all pertinent kwargs will be passed
-        to the check_groups function
-    """
-    if not pg:
-        pg = {}
 
-    def decorator(func):
-        def wrapper(*args, **kwargs):
-            # check authorization
-            authorized = check_groups(
-                groups=pg.get("groups"),
-                groups_key=pg.get("groups_key", "groups"),
-                groups_str_split=pg.get("groups_str_split"),
-                check_type=pg.get("check_type") or "one_of",
-                group_lookup=pg.get("group_lookup"),
-                restricted_users=pg.get("restricted_users"),
-                restricted_users_lookup=pg.get("restricted_users_lookup"),
-                user_session_key=pg.get("user_session_key", "email"),
-            )
-            if authorized:
-                return func(*args, **kwargs)
-            if pg.get("missing_permissions_output"):
-                if callable(pg.get("missing_permissions_output")):
-                    return pg.get("missing_permissions_output")()
-                return pg.get("missing_permissions_output")
-            return html.Div("Sorry, you do not have access to this content")
-
-        return wrapper
-
-    return decorator
+expected_keys = [
+    "unauthenticated_output",
+    "missing_permissions_output",
+    "groups",
+    "groups_key",
+    "groups_str_split",
+    "check_type",
+    "group_lookup",
+    "restricted_users",
+    "restricted_users_lookup",
+    "user_session_key",
+]
 
 
 def protect_layouts(**kwargs) -> str:
     if "pages_folder" in dash.get_app().config:
         for pg in dash.page_registry.values():
+            filtered_kwargs = filter_kwargs(expected_keys, **{**kwargs, **pg})
+            if filtered_kwargs.get("unauthenticated_output") is None:
+                filtered_kwargs["unauthenticated_output"] = html.Div(
+                    "you do not have access to this content"
+                )
             if kwargs.get("public_routes"):
                 if isinstance(kwargs.get("public_routes"), list):
                     if not (
@@ -345,16 +333,14 @@ def protect_layouts(**kwargs) -> str:
                         or pg.get("path_template")
                         in kwargs.get("public_routes")
                     ):
-                        pg["layout"] = protect_layout({**kwargs, **pg})(
+                        pg["layout"] = protected(**filtered_kwargs)(
                             pg["layout"]
                         )
                 elif not (
                     kwargs.get("public_routes").test(pg.get("path_template"))
                     or kwargs.get("public_routes").test(pg["path"])
                 ):
-                    pg["layout"] = protect_layout({**kwargs, **pg})(
-                        pg["layout"]
-                    )
+                    pg["layout"] = protected(**filtered_kwargs)(pg["layout"])
             else:
-                pg["layout"] = protect_layout({**kwargs, **pg})(pg["layout"])
+                pg["layout"] = protected(**filtered_kwargs)(pg["layout"])
         return "your layouts are now protected"

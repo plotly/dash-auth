@@ -6,7 +6,6 @@ from .group_protection import (
     protected,
     protected_callback,
     protect_layouts,
-    protect_layout,
 )
 
 # oidc auth requires authlib, install with `pip install dash-auth[oidc]`
@@ -22,7 +21,6 @@ __all__ = [
     "check_groups",
     "list_groups",
     "get_oauth",
-    "protect_layout",
     "protect_layouts",
     "protected",
     "protected_callback",

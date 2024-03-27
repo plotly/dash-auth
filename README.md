@@ -380,10 +380,8 @@ The following utilities are defined:
   or missing group permission.
 * `protected_callback`: A callback that only runs if the user is authenticated
   and with the right group permissions.
-* `protect_layout`: A function that will protect a layout similar to how `protected_callback` works.
-  * eg `dash.register_page('test', path_template='/test/<test>', layout=protect_layout({'groups': ['testing']})(Layout))`
-* `protect_layouts`: A function that will iterate through all pages and called `protect_layout` on the `layout`, 
-  * passes `kwargs` to `protect_layout` if not already defined in the `layout`
+* `protect_layouts`: A function that will iterate through all pages and called `protected` on the `layout`, 
+  * passes `kwargs` to `protected` if not already defined in the `layout`
   * eg `protect_layouts(missing_permissions_output=html.Div("I'm sorry, Dave, I'm afraid I can't do that"))`
 
 NOTE: user info is stored in the session so make sure you define a secret_key on the Flask server
@@ -476,7 +474,7 @@ auth_protect_layouts_kwargs=dict(missing_permissions_output=html.Div('you cant g
 page_container='_pages_content'
 ```
 
-Passing `auth_protect_layouts` tells the app to invoke the `protect_layouts` with the `public_routes` passed to 
+Passing `auth_protect_layouts` tells the app to invoke the `protected` with the `public_routes` passed to 
 not protect the layouts of public routes.
 Passing `auth_protect_layouts_kwargs` is the same are the additional `kwargs` passed to the function
 By default, the app will check any non-public callback that has the `pathname` as an input, 
