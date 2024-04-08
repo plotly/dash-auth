@@ -324,7 +324,7 @@ def protect_layouts(**kwargs) -> str:
             filtered_kwargs = filter_kwargs(expected_keys, **{**kwargs, **pg})
             if filtered_kwargs.get("unauthenticated_output") is None:
                 filtered_kwargs["unauthenticated_output"] = html.Div(
-                    "you do not have access to this content"
+                    "You do not have access to this content."
                 )
             if kwargs.get("public_routes"):
                 if isinstance(kwargs.get("public_routes"), list):
