@@ -254,7 +254,7 @@ class OIDCAuth(Auth):
                 return redirect(self.idp_selection_route)
             # If only one provider is registered, we don't need to
             # ask the user to pick one, just use the one
-            elif len(self.oauth._registry) == 1:
+            if len(self.oauth._registry) == 1:
                 idp = next(iter(self.oauth._clients))
             else:
                 return (
