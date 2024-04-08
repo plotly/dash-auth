@@ -1,6 +1,7 @@
 import logging
 import re
 from typing import Any, Callable, List, Literal, Optional, Union
+from werkzeug.routing import MapAdapter
 
 import dash
 from dash.exceptions import PreventUpdate
@@ -125,6 +126,7 @@ def protected(
     restricted_users: Optional[Union[Callable, List[str]]] = None,
     restricted_users_lookup: dict = None,
     user_session_key: str = "email",
+    **_kwargs
 ) -> Callable:
     """Decorate a function or output to alter it depending on the state
     of authentication and permissions.
@@ -297,50 +299,29 @@ def protected_callback(
 
     return decorator
 
-
-def filter_kwargs(expected_keys, **kwargs):
-    return {
-        key: value for key, value in kwargs.items() if key in expected_keys
-    }
-
-
-expected_keys = [
-    "unauthenticated_output",
-    "missing_permissions_output",
-    "groups",
-    "groups_key",
-    "groups_str_split",
-    "check_type",
-    "group_lookup",
-    "restricted_users",
-    "restricted_users_lookup",
-    "user_session_key",
-]
-
-
-def protect_layouts(**kwargs) -> str:
+def protect_layouts(public_routes: Union[List[str], MapAdapter] = None, **kwargs) -> str:
     if "pages_folder" in dash.get_app().config:
         for pg in dash.page_registry.values():
-            filtered_kwargs = filter_kwargs(expected_keys, **{**kwargs, **pg})
-            if filtered_kwargs.get("unauthenticated_output") is None:
-                filtered_kwargs["unauthenticated_output"] = html.Div(
+            new_kwargs = {**kwargs, **pg}
+            if new_kwargs.get("unauthenticated_output") is None:
+                new_kwargs["unauthenticated_output"] = html.Div(
                     "You do not have access to this content."
                 )
-            if kwargs.get("public_routes"):
-                if isinstance(kwargs.get("public_routes"), list):
+            if public_routes:
+                if isinstance(public_routes, list):
                     if not (
-                        pg["path"] in kwargs.get("public_routes")
+                        pg["path"] in public_routes
                         or pg.get("path_template")
-                        in kwargs.get("public_routes")
+                        in public_routes
                     ):
-                        pg["layout"] = protected(**filtered_kwargs)(
+                        pg["layout"] = protected(**new_kwargs)(
                             pg["layout"]
                         )
                 elif not (
-                    kwargs.get("public_routes").test(pg.get("path_template"))
-                    or kwargs.get("public_routes").test(pg["path"])
+                    public_routes.test(pg.get("path_template"))
+                    or public_routes.test(pg["path"])
                 ):
-                    pg["layout"] = protected(**filtered_kwargs)(pg["layout"])
+                    pg["layout"] = protected(**new_kwargs)(pg["layout"])
             else:
-                pg["layout"] = protected(**filtered_kwargs)(pg["layout"])
+                pg["layout"] = protected(**new_kwargs)(pg["layout"])
         return "your layouts are now protected"

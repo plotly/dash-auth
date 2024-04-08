@@ -306,11 +306,11 @@ class OIDCAuth(Auth):
             if callable(self._user_groups):
                 session["user"]["groups"] = self._user_groups(
                     user.get("email")
-                )
+                ) + (session["user"].get("groups") or [])
             elif self._user_groups:
                 session["user"]["groups"] = self._user_groups.get(
                     user.get("email"), []
-                )
+                ) + (session["user"].get("groups") or [])
             if "offline_access" in oauth_client.client_kwargs["scope"]:
                 session["refresh_token"] = token.get("refresh_token")
             if self.log_signins:
