@@ -35,7 +35,7 @@ class OIDCAuth(Auth):
         logout_page: Union[str, Response] = None,
         secure_session: bool = False,
         user_groups: Optional[
-            Union[UserGroups, Callable[[str], UserGroups]]
+            Union[UserGroups, Callable[[str], List[str]]]
         ] = None,
         login_user_callback: Callable = None,
         auth_protect_layouts: Optional[bool] = False,
