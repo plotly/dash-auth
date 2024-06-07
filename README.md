@@ -1,5 +1,11 @@
 ## Dash Authorization and Login
 
+<div align="center">
+  <a href="https://dash.plotly.com/project-maintenance">
+    <img src="https://dash.plotly.com/assets/images/maintained-by-community.png" width="400px" alt="Maintained by the Plotly Community">
+  </a>
+</div>
+
 Docs: [https://dash.plotly.com/authentication](https://dash.plotly.com/authentication)
 
 License: MIT
