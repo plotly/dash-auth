@@ -133,7 +133,7 @@ def test_oa002_oidc_auth_login_fail(dash_thread_server):
         assert requests.get(url).status_code == 200
 
     test_unauthorized(base_url)
-    test_authorized(os.path.join(base_url, "public"))
+    test_authorized('/'.join([base_url, "public"]))
 
 
 @patch("authlib.integrations.flask_client.apps.FlaskOAuth2App.authorize_redirect", valid_authorize_redirect)
@@ -173,16 +173,16 @@ def test_oa003_oidc_auth_login_several_idp(dash_br, dash_thread_server):
     assert requests.get(base_url).status_code == 400
 
     # Login with IDP1
-    assert requests.get(os.path.join(base_url, "oidc/idp1/login")).status_code == 200
+    assert requests.get('/'.join([base_url, "oidc/idp1/login"])).status_code == 200
 
     # Logout
-    assert requests.get(os.path.join(base_url, "oidc/logout")).status_code == 200
+    assert requests.get('/'.join([base_url, "oidc/logout"])).status_code == 200
 
     assert requests.get(base_url).status_code == 400
 
     # Login with IDP2
-    assert requests.get(os.path.join(base_url, "oidc/idp2/login")).status_code == 200
+    assert requests.get('/'.join([base_url, "oidc/idp2/login"])).status_code == 200
 
-    dash_br.driver.get(os.path.join(base_url, "oidc/idp2/login"))
+    dash_br.driver.get('/'.join([base_url, "oidc/idp2/login"]))
     dash_br.driver.get(base_url)
     dash_br.wait_for_text_to_equal("#output1", "initial value")
