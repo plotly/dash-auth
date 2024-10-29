@@ -155,7 +155,12 @@ class OIDCAuth(Auth):
             methods=["GET"],
         )
 
-    def register_provider(self, idp_name: str, additional_session_params: dict = None, **kwargs):
+    def register_provider(
+        self,
+        idp_name: str,
+        additional_session_params: dict = None,
+        **kwargs
+    ):
         """Register an OpenID Connect provider.
 
         :param idp_name: The name of the provider
@@ -180,7 +185,9 @@ class OIDCAuth(Auth):
             idp_name, client_kwargs=client_kwargs, **kwargs
         )
         if additional_session_params:
-            self._additional_session_params[idp_name] = additional_session_params
+            self._additional_session_params[idp_name] = (
+                additional_session_params
+            )
 
     def get_oauth_client(self, idp: str):
         """Get the OAuth client."""
