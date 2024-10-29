@@ -255,7 +255,7 @@ class OIDCAuth(Auth):
         """
         return page
 
-    def callback(self, idp: str, params: dict = None):  # pylint: disable=C0116
+    def callback(self, idp: str):  # pylint: disable=C0116
         """Do the OIDC dance."""
         if idp not in self.oauth._registry:
             return f"'{idp}' is not a valid registered idp", 400
