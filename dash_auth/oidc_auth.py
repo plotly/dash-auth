@@ -97,6 +97,7 @@ class OIDCAuth(Auth):
         self.log_signins = log_signins
         self.idp_selection_route = idp_selection_route
         self.logout_page = logout_page
+        self._additional_session_params = {}
 
         if secret_key is not None:
             app.server.secret_key = secret_key
@@ -154,7 +155,7 @@ class OIDCAuth(Auth):
             methods=["GET"],
         )
 
-    def register_provider(self, idp_name: str, **kwargs):
+    def register_provider(self, idp_name: str, additional_session_params: dict = None, **kwargs):
         """Register an OpenID Connect provider.
 
         :param idp_name: The name of the provider
@@ -178,6 +179,8 @@ class OIDCAuth(Auth):
         self.oauth.register(
             idp_name, client_kwargs=client_kwargs, **kwargs
         )
+        if additional_session_params:
+            self._additional_session_params[idp_name] = additional_session_params
 
     def get_oauth_client(self, idp: str):
         """Get the OAuth client."""
@@ -252,7 +255,7 @@ class OIDCAuth(Auth):
         """
         return page
 
-    def callback(self, idp: str):  # pylint: disable=C0116
+    def callback(self, idp: str, params: dict = None):  # pylint: disable=C0116
         """Do the OIDC dance."""
         if idp not in self.oauth._registry:
             return f"'{idp}' is not a valid registered idp", 400
@@ -273,6 +276,10 @@ class OIDCAuth(Auth):
                 session["refresh_token"] = token.get("refresh_token")
             if self.log_signins:
                 logging.info("User %s is logging in.", user.get("email"))
+
+        additional_params = self._additional_session_params.get(idp)
+        if additional_params:
+            session["user"].update(additional_params)
 
         return redirect(self.app.config.get("url_base_pathname") or "/")
 
