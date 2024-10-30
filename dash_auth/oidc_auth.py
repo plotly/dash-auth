@@ -97,7 +97,6 @@ class OIDCAuth(Auth):
         self.log_signins = log_signins
         self.idp_selection_route = idp_selection_route
         self.logout_page = logout_page
-        self._additional_session_params = {}
 
         if secret_key is not None:
             app.server.secret_key = secret_key
@@ -158,7 +157,6 @@ class OIDCAuth(Auth):
     def register_provider(
         self,
         idp_name: str,
-        additional_session_params: dict = None,
         **kwargs
     ):
         """Register an OpenID Connect provider.
@@ -184,10 +182,6 @@ class OIDCAuth(Auth):
         self.oauth.register(
             idp_name, client_kwargs=client_kwargs, **kwargs
         )
-        if additional_session_params:
-            self._additional_session_params[idp_name] = (
-                additional_session_params
-            )
 
     def get_oauth_client(self, idp: str):
         """Get the OAuth client."""
@@ -263,32 +257,34 @@ class OIDCAuth(Auth):
         return page
 
     def callback(self, idp: str):  # pylint: disable=C0116
-        """Do the OIDC dance."""
+        """Handle the OIDC dance and post-login actions."""
         if idp not in self.oauth._registry:
             return f"'{idp}' is not a valid registered idp", 400
 
         oauth_client = self.get_oauth_client(idp)
         oauth_kwargs = self.get_oauth_kwargs(idp)
         try:
-            token = oauth_client.authorize_access_token(
-                **oauth_kwargs.get("authorize_token_kwargs", {}),
+            self.token = oauth_client.authorize_access_token(
+                **oauth_kwargs.get("authorize_token_kwargs", {})
             )
         except OAuthError as err:
             return str(err), 401
-        user = token.get("userinfo")
+
+        user = self.token.get("userinfo")
+        return self.after_logged_in(user, idp)
+
+    def after_logged_in(self, user: dict | None, idp: str):
+        """Post-login actions after successful OIDC authentication."""
         if user:
             session["user"] = user
             session["idp"] = idp
-            if "offline_access" in oauth_client.client_kwargs["scope"]:
-                session["refresh_token"] = token.get("refresh_token")
+            if "offline_access" in self.oauth._registry[idp][1].get("client_kwargs").get("scope"):
+                session["refresh_token"] = self.token.get("refresh_token")
             if self.log_signins:
                 logging.info("User %s is logging in.", user.get("email"))
 
-        additional_params = self._additional_session_params.get(idp)
-        if additional_params:
-            session["user"].update(additional_params)
-
         return redirect(self.app.config.get("url_base_pathname") or "/")
+
 
     def is_authorized(self):  # pylint: disable=C0116
         """Check whether ther user is authenticated."""
