@@ -269,7 +269,7 @@ class OIDCAuth(Auth):
         user = token.get("userinfo")
         return self.after_logged_in(user, idp, token)
 
-    def after_logged_in(self, user: dict | None, idp: str,  token: dict):
+    def after_logged_in(self, user: dict, idp: str,  token: dict):
         """
         Post-login actions after successful OIDC authentication.
         For example, allows to pass custom attributes to the user session:
