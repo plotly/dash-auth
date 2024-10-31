@@ -154,11 +154,7 @@ class OIDCAuth(Auth):
             methods=["GET"],
         )
 
-    def register_provider(
-        self,
-        idp_name: str,
-        **kwargs
-    ):
+    def register_provider(self, idp_name: str, **kwargs):
         """Register an OpenID Connect provider.
 
         :param idp_name: The name of the provider
@@ -264,27 +260,26 @@ class OIDCAuth(Auth):
         oauth_client = self.get_oauth_client(idp)
         oauth_kwargs = self.get_oauth_kwargs(idp)
         try:
-            self.token = oauth_client.authorize_access_token(
-                **oauth_kwargs.get("authorize_token_kwargs", {})
+            token = oauth_client.authorize_access_token(
+                **oauth_kwargs.get("authorize_token_kwargs", {}),
             )
         except OAuthError as err:
             return str(err), 401
 
-        user = self.token.get("userinfo")
-        return self.after_logged_in(user, idp)
+        user = token.get("userinfo")
+        return self.after_logged_in(user, idp, token)
 
-    def after_logged_in(self, user: dict | None, idp: str):
+    def after_logged_in(self, user: dict | None, idp: str,  token: dict):
         """Post-login actions after successful OIDC authentication."""
         if user:
             session["user"] = user
             session["idp"] = idp
-            if "offline_access" in self.oauth._registry[idp][1].get("client_kwargs").get("scope"):
-                session["refresh_token"] = self.token.get("refresh_token")
+            if "offline_access" in self.get_oauth_client(idp).client_kwargs["scope"]:
+                session["refresh_token"] = token.get("refresh_token")
             if self.log_signins:
                 logging.info("User %s is logging in.", user.get("email"))
 
         return redirect(self.app.config.get("url_base_pathname") or "/")
-
 
     def is_authorized(self):  # pylint: disable=C0116
         """Check whether ther user is authenticated."""
