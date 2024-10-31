@@ -270,11 +270,20 @@ class OIDCAuth(Auth):
         return self.after_logged_in(user, idp, token)
 
     def after_logged_in(self, user: dict | None, idp: str,  token: dict):
-        """Post-login actions after successful OIDC authentication."""
+        """
+        Post-login actions after successful OIDC authentication.
+        For example, allows to pass custom attributes to the user session:
+        class MyOIDCAuth(OIDCAuth):
+            def after_logged_in(self, user, idp, token):
+                if user:
+                    user["params"] = value1
+                return super().after_logged_in(user, idp, token)
+        """
         if user:
             session["user"] = user
             session["idp"] = idp
-            if "offline_access" in self.get_oauth_client(idp).client_kwargs["scope"]:
+            oauth_scope = self.get_oauth_client(idp).client_kwargs["scope"]
+            if "offline_access" in oauth_scope:
                 session["refresh_token"] = token.get("refresh_token")
             if self.log_signins:
                 logging.info("User %s is logging in.", user.get("email"))
