@@ -253,7 +253,7 @@ class OIDCAuth(Auth):
         return page
 
     def callback(self, idp: str):  # pylint: disable=C0116
-        """Do the OIDC dance."""
+        """Handle the OIDC dance and post-login actions."""
         if idp not in self.oauth._registry:
             return f"'{idp}' is not a valid registered idp", 400
 
@@ -265,11 +265,25 @@ class OIDCAuth(Auth):
             )
         except OAuthError as err:
             return str(err), 401
+
         user = token.get("userinfo")
+        return self.after_logged_in(user, idp, token)
+
+    def after_logged_in(self, user: Optional[dict], idp: str,  token: dict):
+        """
+        Post-login actions after successful OIDC authentication.
+        For example, allows to pass custom attributes to the user session:
+        class MyOIDCAuth(OIDCAuth):
+            def after_logged_in(self, user, idp, token):
+                if user:
+                    user["params"] = value1
+                return super().after_logged_in(user, idp, token)
+        """
         if user:
             session["user"] = user
             session["idp"] = idp
-            if "offline_access" in oauth_client.client_kwargs["scope"]:
+            oauth_scope = self.get_oauth_client(idp).client_kwargs["scope"]
+            if "offline_access" in oauth_scope:
                 session["refresh_token"] = token.get("refresh_token")
             if self.log_signins:
                 logging.info("User %s is logging in.", user.get("email"))
