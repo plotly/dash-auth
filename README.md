@@ -24,6 +24,18 @@ python -k ba001
 
 Note that Python 3.8 or greater is required.
 
+## Installation
+
+```bash
+pip install dash-auth
+```
+
+for additional OIDC support:
+
+```bash
+pip install "dash-auth[oidc]"
+```
+
 ## Usage
 
 ### Basic Authentication
