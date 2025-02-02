@@ -233,7 +233,9 @@ class OIDCAuth(Auth):
 
         redirect_uri = self._create_redirect_uri(idp)
         oauth_client = self.get_oauth_client(idp)
-        authorize_kwargs = self.get_oauth_kwargs(idp).get("authorize_redirect_kwargs", {})
+        authorize_kwargs = self.get_oauth_kwargs(idp).get(
+            "authorize_redirect_kwargs", {}
+        )
         authorize_kwargs.update(dict(request.values))
 
         return oauth_client.authorize_redirect(
