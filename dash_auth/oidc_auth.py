@@ -57,6 +57,9 @@ class OIDCAuth(Auth):
         login_route : str, optional
             The route for the login function, it requires a <idp>
             placeholder, by default "/oidc/<idp>/login".
+            NOTE: Query parameters at this login route will be passed on to
+            the IDP authorization endpoint, e.g., add a `login_hint` by
+            redirecting to /oidc/my-idp/login?login_hint=my@email.com
         logout_route : str, optional
             The route for the logout function, by default "/oidc/logout".
         callback_route : str, optional
@@ -233,10 +236,13 @@ class OIDCAuth(Auth):
 
         redirect_uri = self._create_redirect_uri(idp)
         oauth_client = self.get_oauth_client(idp)
-        oauth_kwargs = self.get_oauth_kwargs(idp)
+        authorize_kwargs = self.get_oauth_kwargs(idp).get(
+            "authorize_redirect_kwargs", {}
+        )
+        authorize_kwargs.update(dict(request.values))
+
         return oauth_client.authorize_redirect(
-            redirect_uri,
-            **oauth_kwargs.get("authorize_redirect_kwargs", {}),
+            redirect_uri, **authorize_kwargs
         )
 
     def logout(self):  # pylint: disable=C0116
