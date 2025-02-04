@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Added
+- Allow to define a custom user management via the `after_logged_in` method #156
+
+### Changed
+- Updated the `public_callback` to work in more cases
+
 ## [2.3.0] - 2024-03-18
 ### Added
 - OIDCAuth allows to authenticate via OIDC
