@@ -246,6 +246,9 @@ def login_handler():
         idp = request.args.get("idp")
 
     if idp is not None:
+        # NOTE: You can pass additional query parameters to the authorization
+        # URL by setting them on thd oidc_login route
+        # e.g., url_for("oidc_login", idp=idp, login_hint="my@email.com")
         return redirect(url_for("oidc_login", idp=idp))
 
     return """<div>
