@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Allow to define a custom user management via the `after_logged_in` method #156
 
 ### Changed
-- Updated the `public_callback` to work in more cases
+- Updated the `public_callback` to work in more cases #163
 
 ## [2.3.0] - 2024-03-18
 ### Added
