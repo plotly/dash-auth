@@ -57,6 +57,9 @@ class OIDCAuth(Auth):
         login_route : str, optional
             The route for the login function, it requires a <idp>
             placeholder, by default "/oidc/<idp>/login".
+            NOTE: Query parameters at this login route will be passed on to
+            the IDP authorization endpoint, e.g., add a `login_hint` by
+            redirecting to /oidc/my-idp/login?login_hint=my@email.com
         logout_route : str, optional
             The route for the logout function, by default "/oidc/logout".
         callback_route : str, optional
