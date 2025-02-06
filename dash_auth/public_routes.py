@@ -1,9 +1,8 @@
-import inspect
+import logging
 import os
 
-from dash import Dash, callback
-from dash._callback import GLOBAL_CALLBACK_MAP
-from dash import get_app
+from dash import Dash, Input, Output, callback, get_app
+from dash._utils import create_callback_id
 from werkzeug.routing import Map, MapAdapter, Rule
 
 
@@ -70,12 +69,10 @@ def public_callback(*callback_args, **callback_kwargs):
     def decorator(func):
 
         wrapped_func = callback(*callback_args, **callback_kwargs)(func)
-        callback_id = next(
-            (
-                k for k, v in GLOBAL_CALLBACK_MAP.items()
-                if inspect.getsource(v["callback"]) == inspect.getsource(func)
-            ),
-            None,
+        all_args = [*callback_args, *callback_kwargs.values()]
+        callback_id = create_callback_id(
+            [x for x in all_args if isinstance(x, Output)],
+            [x for x in all_args if isinstance(x, Input)],
         )
         try:
             app = get_app()
@@ -83,7 +80,7 @@ def public_callback(*callback_args, **callback_kwargs):
                 get_public_callbacks(app) + [callback_id]
             )
         except Exception:
-            print(
+            logging.info(
                 "Could not set up the public callback as the Dash object "
                 "has not yet been instantiated."
             )
