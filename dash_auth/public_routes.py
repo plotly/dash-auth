@@ -1,7 +1,9 @@
 import logging
 import os
 
-from dash import Dash, Input, Output, callback, get_app
+from dash import Dash, Output, callback, get_app
+from dash._callback import handle_grouped_callback_args
+from dash._grouping import flatten_grouping
 from dash._utils import create_callback_id
 from werkzeug.routing import Map, MapAdapter, Rule
 
@@ -69,10 +71,20 @@ def public_callback(*callback_args, **callback_kwargs):
     def decorator(func):
 
         wrapped_func = callback(*callback_args, **callback_kwargs)(func)
-        all_args = [*callback_args, *callback_kwargs.values()]
+        output, inputs, _, _, _ = handle_grouped_callback_args(
+            callback_args, callback_kwargs
+        )
+        if isinstance(output, Output):
+            # Insert callback with scalar (non-multi) Output
+            output = output
+            has_output = True
+        else:
+            # Insert callback as multi Output
+            output = flatten_grouping(output)
+            has_output = len(output) > 0
+
         callback_id = create_callback_id(
-            [x for x in all_args if isinstance(x, Output)],
-            [x for x in all_args if isinstance(x, Input)],
+            output, inputs, no_output=not has_output
         )
         try:
             app = get_app()
