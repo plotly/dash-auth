@@ -115,7 +115,7 @@ app.layout = html.Div(
 )
 
 if __name__ == "__main__":
-    app.run_server(debug=True)
+    app.run(debug=True)
 ```
 
 ---
@@ -261,7 +261,7 @@ def login_handler():
 
 
 if __name__ == "__main__":
-    app.run_server(debug=True)
+    app.run(debug=True)
 ```
 
 ### User-group-based permissions
