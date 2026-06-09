@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Sync dev dependencies
+        run: uv sync --group dev
+
+      - name: Ruff
+        run: |
+          uv run ruff check dash_auth
+          uv run ruff format --check dash_auth
+
+      - name: Mypy
+        run: uv run mypy --package dash_auth
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
+        dash-constraint: [">=3,<4", ">=4"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - uses: browser-actions/setup-chrome@v1
+
+      - name: Install
+        run: |
+          pip install \
+            "dash[testing]${{ matrix.dash-constraint }}" \
+            -e ".[oidc]" \
+            pytest
+
+      - name: Test
+        run: pytest --headless
+
+  all-checks-pass:
+    if: always()
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check all jobs passed
+        run: |
+          if [[ "${{ needs.lint.result }}" != "success" || "${{ needs.test.result }}" != "success" ]]; then
+            exit 1
+          fi
