@@ -62,7 +62,7 @@ def public_callback(*callback_args, **callback_kwargs):
     """Public Dash callback.
 
     This works by adding the callback id (from the callback map) to a list
-    of whitelisted callbacks in the Flask server's config.
+    of allowlisted callbacks in the Flask server's config.
 
     :param **: all args and kwargs passed to a dash callback
     """

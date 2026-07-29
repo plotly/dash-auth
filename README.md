@@ -67,7 +67,7 @@ BasicAuth(app, auth_func = authorization_function)
 
 ### Public routes
 
-You can whitelist routes from authentication with the `add_public_routes` utility function,
+You can allowlist routes from authentication with the `add_public_routes` utility function,
 or by passing a `public_routes` argument to the Auth constructor.
 The public routes should follow [Flask's route syntax](https://flask.palletsprojects.com/en/2.3.x/quickstart/#routing).
 
