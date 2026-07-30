@@ -1,26 +1,31 @@
 from dash import Dash, Input, Output, dcc, html
 import requests
-
+import pytest
 from dash_auth import BasicAuth, add_public_routes, protected
 
-
 TEST_USERS = {
-    "valid": [
-        ["hello", "world"],
-        ["hello2", "wo:rld"]
-    ],
-    "invalid": [
-        ["hello", "password"]
-    ],
+    "valid": [["hello", "world"], ["hello2", "wo:rld"]],
+    "invalid": [["hello", "password"]],
 }
 
 
-def test_ba001_basic_auth_login_flow(dash_br, dash_thread_server):
-    app = Dash(__name__)
-    app.layout = html.Div([
-        dcc.Input(id="input", value="initial value"),
-        html.Div(id="output")
-    ])
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {},
+        {"url_base_pathname": "/app/"},
+        {"url_base_pathname": "/sub/app/"},
+        {
+            "routes_pathname_prefix": "/app/",
+            "requests_pathname_prefix": "/app/",
+        },
+    ],
+)
+def test_ba001_basic_auth_login_flow(dash_br, dash_thread_server, kwargs):
+    app = Dash(__name__, **kwargs)
+    app.layout = html.Div(
+        [dcc.Input(id="input", value="initial value"), html.Div(id="output")]
+    )
 
     @app.callback(Output("output", "children"), Input("input", "value"))
     def update_output(new_value):
@@ -30,15 +35,25 @@ def test_ba001_basic_auth_login_flow(dash_br, dash_thread_server):
     add_public_routes(app, ["/user/<user_id>/public"])
 
     dash_thread_server(app)
-    base_url = dash_thread_server.url
+    path_prefix = (
+        app.config.get("url_base_pathname", "")
+        or app.config.get("requests_pathname_prefix", "")
+        or app.config.get("routes_pathname_prefix", "")
+    )
+    base_url = dash_thread_server.url + path_prefix
 
     def test_failed_views(url):
         assert requests.get(url).status_code == 401
 
     def test_successful_views(url):
-        assert requests.get(url.strip("/") + "/_dash-layout").status_code == 200
-        assert requests.get(url.strip("/") + "/home").status_code == 200
-        assert requests.get(url.strip("/") + "/user/john123/public").status_code == 200
+        assert (
+            requests.get(url.rstrip("/") + "/_dash-layout").status_code == 200
+        )
+        assert requests.get(url.rstrip("/") + "/home").status_code == 200
+        assert (
+            requests.get(url.rstrip("/") + "/user/john123/public").status_code
+            == 200
+        )
 
     test_failed_views(base_url)
     test_successful_views(base_url)
@@ -60,12 +75,23 @@ def test_ba001_basic_auth_login_flow(dash_br, dash_thread_server):
         dash_br.wait_for_text_to_equal("#output", "initial value")
 
 
-def test_ba002_basic_auth_groups(dash_br, dash_thread_server):
-    app = Dash(__name__)
-    app.layout = html.Div([
-        dcc.Input(id="input", value="initial value"),
-        html.Div(id="output")
-    ])
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {},
+        {"url_base_pathname": "/app/"},
+        {"url_base_pathname": "/sub/app/"},
+        {
+            "routes_pathname_prefix": "/app/",
+            "requests_pathname_prefix": "/app/",
+        },
+    ],
+)
+def test_ba002_basic_auth_groups(dash_br, dash_thread_server, kwargs):
+    app = Dash(__name__, **kwargs)
+    app.layout = html.Div(
+        [dcc.Input(id="input", value="initial value"), html.Div(id="output")]
+    )
 
     @app.callback(
         Output("output", "children"),
@@ -89,7 +115,12 @@ def test_ba002_basic_auth_groups(dash_br, dash_thread_server):
     )
 
     dash_thread_server(app)
-    base_url = dash_thread_server.url
+    path_prefix = (
+        app.config.get("url_base_pathname", "")
+        or app.config.get("requests_pathname_prefix", "")
+        or app.config.get("routes_pathname_prefix", "")
+    )
+    base_url = dash_thread_server.url + path_prefix
 
     for user, password in TEST_USERS["valid"]:
         # login using the URL instead of the alert popup
