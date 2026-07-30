@@ -24,11 +24,25 @@ python -k ba001
 
 Note that Python 3.8 or greater is required.
 
+
+## Installation
+
+```bash
+pip install dash-auth
+```
+
+for additional OIDC support:
+
+```bash
+pip install "dash-auth[oidc]"
+```
+
 > Please note that Plotly will continue to merge bug fixes to this package,
 > but will no longer accept new features as we consider this package feature-complete.
 > For those looking for a more advanced authentication offering from Plotly,
 > Dash Enterprise offers authentication middleware for Dash apps.
 > Learn more at: https://plotly.com/dash/authentication/
+
 
 ## Usage
 
