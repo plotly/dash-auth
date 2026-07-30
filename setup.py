@@ -27,6 +27,7 @@ setup(
     },
     python_requires=">=3.8",
     include_package_data=True,
+    entrypoints={"dash_hooks": ["current_user_hook = current_user_hook"]},
     url='https://plotly.com/dash',
     classifiers=[
         'Development Status :: 5 - Production/Stable',
