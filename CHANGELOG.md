@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.3.8] - 2026-11-18
+
+### Fixed
+- `protected_callback(..., background=True)` no longer denies every user. The group check ran inside the background job process, which has no session, so even users in the allowed groups always got the fallback output. The check now runs when the request arrives (on the start request and every poll), and a denied user gets the fallback without a job ever being started. Group-protected background callbacks are refused over the WebSocket, since Dash only sends background callbacks over HTTP
+- A denied user's fallback output for a `protected_callback(..., background=True)` now handles pattern-matching (`ALL`/`ALLSMALLER`) and `allow_duplicate` outputs. Before, a wildcard output returned a `500` and an `allow_duplicate` output came back under the wrong property name
+
 ## [1.3.7] - 2026-11-11
 
 ### Fixed

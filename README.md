@@ -26,6 +26,7 @@ How this fork compares to upstream [`dash-auth`](https://github.com/plotly/dash-
 | Protected / public callbacks | ✅ | ✅ |
 | Async callbacks | ❌ | ✅ <sup>2</sup> |
 | Authenticated WebSocket callbacks | ❌ | ✅ <sup>3</sup> |
+| Group-protected background callbacks | ❌ | ✅ <sup>4</sup> |
 
 ✅ supported · ❌ not supported
 
@@ -34,6 +35,8 @@ How this fork compares to upstream [`dash-auth`](https://github.com/plotly/dash-
 <sup>2</sup> Supported on **every** backend, Flask included — you don't need Quart or FastAPI, just the `async` extra (bundled as `dash-auth-async[async]`, which pulls in `dash[async]`).
 
 <sup>3</sup> Provided by the Quart and FastAPI backends only. WebSocket auth is a no-op on Flask, which has no WebSocket callback transport.
+
+<sup>4</sup> `protected_callback(..., background=True)` checks the user's groups when the request arrives — on the start request and every poll — so a denied user gets the fallback output without a job ever being started. The job itself runs in a separate process with no session, which is why the check can't live inside it (upstream checks there, so a background job always sees "no user" and is denied). Needs a background manager, e.g. `dash[diskcache]`. These callbacks are refused over the WebSocket; Dash only sends background callbacks over HTTP.
 
 
 For local testing, install [uv](https://docs.astral.sh/uv/getting-started/installation/), then install the dev dependencies and run individual tests:

@@ -8,9 +8,22 @@ from collections.abc import Callable
 from typing import Any, Literal
 
 import dash
+from dash import get_app
+
+# The helpers Dash uses internally to key its callback map and serialise
+# responses; no public API equivalent.
+from dash._grouping import flatten_grouping  # noqa: PLC2701
+from dash._no_update import NoUpdate  # noqa: PLC2701 — Dash's no_update check
+from dash._utils import (  # noqa: PLC2701
+    clean_property_name,
+    create_callback_id,
+    stringify_id,
+    to_json,
+)
+from dash.dependencies import Output, handle_grouped_callback_args
 from dash.exceptions import PreventUpdate
 
-from .backends import get_active_backend
+from .backends import detect_backend, get_active_backend
 from .websocket_auth import _WS_AUTH_USER
 
 OutputVal = Callable[[], Any] | Any
@@ -273,24 +286,32 @@ def protected_callback(  # noqa: PLR0913 — public decorator with many optional
     """
 
     def decorator(func):
-        wrapped_func = dash.callback(*callback_args, **callback_kwargs)(
-            protected(
-                unauthenticated_output=(
-                    unauthenticated_output
-                    if unauthenticated_output is not None
-                    else functools.partial(_prevent_unauthenticated, func.__name__)
-                ),
-                missing_permissions_output=(
-                    missing_permissions_output
-                    if missing_permissions_output is not None
-                    else functools.partial(_prevent_unauthorised, func.__name__)
-                ),
-                groups=groups,
-                groups_key=groups_key,
-                groups_str_split=groups_str_split,
-                check_type=check_type,
-            )(func)
+        guard = protected(
+            unauthenticated_output=(
+                unauthenticated_output
+                if unauthenticated_output is not None
+                else functools.partial(_prevent_unauthenticated, func.__name__)
+            ),
+            missing_permissions_output=(
+                missing_permissions_output
+                if missing_permissions_output is not None
+                else functools.partial(_prevent_unauthorised, func.__name__)
+            ),
+            groups=groups,
+            groups_key=groups_key,
+            groups_str_split=groups_str_split,
+            check_type=check_type,
         )
+        if callback_kwargs.get("background"):
+            # A background job runs in another process with no session, so the
+            # gate can't run inside it (it would always deny). Gate at HTTP
+            # dispatch instead -- Auth._authorize, on the start request and
+            # every poll -- and register the job unwrapped. Registered first so
+            # a failure leaves no ungated callback behind.
+            _register_background_gate(callback_args, callback_kwargs, guard(_proceed))
+            wrapped_func = dash.callback(*callback_args, **callback_kwargs)(func)
+        else:
+            wrapped_func = dash.callback(*callback_args, **callback_kwargs)(guard(func))
 
         def wrap(*args, **kwargs):
             return wrapped_func(*args, **kwargs)
@@ -298,3 +319,121 @@ def protected_callback(  # noqa: PLR0913 — public decorator with many optional
         return wrap
 
     return decorator
+
+
+BACKGROUND_GATES = "PROTECTED_BACKGROUND_CALLBACKS"
+
+
+def _proceed() -> object:
+    """Target for the dispatch-time gate: reached only when authorised.
+
+    Returns:
+        The ``_PROCEED`` sentinel.
+    """
+    return _PROCEED
+
+
+def _register_background_gate(callback_args, callback_kwargs, gate: Callable) -> None:
+    """Record ``gate`` for a background callback, keyed like ``public_callback``.
+
+    Raises:
+        RuntimeError: when no Dash app exists yet. Fails loudly because the job
+            itself is registered ungated -- silently skipping the gate (as
+            ``public_callback`` may skip its whitelist) would leave it open.
+    """
+    output, inputs, _state, _indices, _prevent = handle_grouped_callback_args(
+        callback_args, callback_kwargs
+    )
+    # Same id Dash computes in register_callback, so dispatch lookups match.
+    flat_output = output if isinstance(output, Output) else flatten_grouping(output)
+    callback_id = create_callback_id(flat_output, inputs, no_output=not flat_output)
+    try:
+        app = get_app()
+    except Exception as err:
+        raise RuntimeError(
+            "protected_callback(background=True) must be registered after the "
+            "Dash app is created: the group check runs at request dispatch."
+        ) from err
+    backend = detect_backend(app.server)
+    gates = backend.read_config(app.server, BACKGROUND_GATES, {})
+    backend.store_config(
+        app.server, BACKGROUND_GATES, {**gates, callback_id: (gate, output)}
+    )
+
+
+def has_background_gate(app, output: str | None) -> bool:
+    """Whether ``output`` is a group-protected background callback.
+
+    Returns:
+        True when a dispatch-time gate is registered for that callback id.
+    """
+    backend = detect_backend(app.server)
+    return output in backend.read_config(app.server, BACKGROUND_GATES, {})
+
+
+def background_gate_response(app, body: dict | None) -> Any:
+    """Run a background callback's group gate for an authorised request.
+
+    Called from ``Auth._authorize`` under the request context, where
+    ``_current_user()`` can read the session -- unlike the job process.
+
+    Returns:
+        None to let the request proceed (start or poll the job), ``("", 204)``
+        when the fallback raised ``PreventUpdate`` or updates nothing, or a Dash
+        callback response carrying the fallback output -- so a denied user
+        never spawns a job.
+    """
+    if not body:  # _authorize already rejects bodiless callback requests
+        return None
+    backend = detect_backend(app.server)
+    entry = backend.read_config(app.server, BACKGROUND_GATES, {}).get(
+        body.get("output")
+    )
+    if entry is None:
+        return None
+    gate, output = entry
+    try:
+        fallback = gate()
+    except PreventUpdate:
+        return "", 204
+    if fallback is _PROCEED:
+        return None
+    response = _callback_response(output, body.get("outputs"), fallback)
+    if not response:  # Dash answers an all-no_update result with 204 too
+        return "", 204
+    return (
+        to_json({"multi": True, "response": response}),
+        200,
+        {"Content-Type": "application/json"},
+    )
+
+
+def _callback_response(output: Any, outputs: Any, value: Any) -> dict:
+    """Map ``value`` onto the request's output specs, as Dash's own dispatch does.
+
+    Mirrors ``dash._callback._prepare_response``: a wildcard (``ALL``/
+    ``ALLSMALLER``) output's spec is a list, matched item-by-item against a list
+    value; ``prop@hash`` (``allow_duplicate``) is reduced to ``prop``.
+
+    Returns:
+        ``{component_id: {prop: value}}``; empty when nothing is updated.
+    """
+    if isinstance(output, Output):
+        value, outputs = [value], [outputs]
+    elif NoUpdate.is_no_update(value):
+        return {}
+    else:
+        value = flatten_grouping(
+            list(value) if isinstance(value, tuple) else value, output
+        )
+    response: dict = {}
+    for val, spec in zip(value, outputs, strict=True):
+        if NoUpdate.is_no_update(val):
+            continue
+        # A wildcard output's spec is a list, matched item-by-item to a list value.
+        vals, specs = (val, spec) if isinstance(spec, list) else ([val], [spec])
+        for vali, speci in zip(vals, specs, strict=True):
+            if not NoUpdate.is_no_update(vali):
+                prop = clean_property_name(speci["property"])
+                response.setdefault(stringify_id(speci["id"]), {})[prop] = vali
+    return response

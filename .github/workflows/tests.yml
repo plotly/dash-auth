@@ -13,13 +13,13 @@ jobs:
       matrix:
         python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
         # Explicitly carve out the "Early Dash 4" dead-zone
-        dash-constraint: ["dash[testing]>=3,<4", "dash[testing]>=4,<4.2.0", "dash[testing]>=4.2.0"]
+        dash-constraint: ["dash[testing]>=3,<4", "dash[testing]>=4,<4.2.0", "dash[testing,diskcache]>=4.2.0"]
         include:
           - dash-constraint: "dash[testing]>=3,<4"
             extra-flags: ".[oidc,async]"
           - dash-constraint: "dash[testing]>=4,<4.2.0"
             extra-flags: ".[oidc,async]" # No async extras yet!
-          - dash-constraint: "dash[testing]>=4.2.0"
+          - dash-constraint: "dash[testing,diskcache]>=4.2.0"
             extra-flags: ".[oidc,fastapi,quart,async]"
 
     steps:
@@ -60,7 +60,7 @@ jobs:
       - name: Install
         run: |
           pip install \
-            "dash[testing]>=4.2.0" \
+            "dash[testing,diskcache]>=4.2.0" \
             -e ".[oidc,fastapi,quart]" \
             pytest pytest-cov websocket-client
 
