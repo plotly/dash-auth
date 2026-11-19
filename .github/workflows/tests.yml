@@ -61,7 +61,7 @@ jobs:
         run: |
           pip install \
             "dash[testing,diskcache]>=4.2.0" \
-            -e ".[oidc,fastapi,quart]" \
+            -e ".[oidc,fastapi,quart,async]" \
             pytest pytest-cov websocket-client
 
       - name: Test with coverage

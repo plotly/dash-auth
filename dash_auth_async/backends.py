@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import inspect
+import json
 import re
 from abc import ABC, abstractmethod
 from collections.abc import Callable, MutableMapping
@@ -42,6 +43,30 @@ except ImportError:
 # dash-auth-async owns its own request ContextVar, set in its own ASGI
 # middleware — independent of Dash's private get_current_request.
 _current_request_var: ContextVar = ContextVar("dash_auth_request", default=None)
+
+
+def _parse_callback_body(raw: bytes | str, content_encoding: str) -> Any:
+    """Parse a callback request body exactly as Dash's dispatch will.
+
+    The renderer gzips large payloads (``compress_payload``) and Dash inflates
+    them when ``"gzip"`` is in ``Content-Encoding``; parsing the raw bytes
+    instead saw no body and refused even logged-in users. Uses Dash's own
+    decompressor (size-capped against gzip bombs).
+
+    Returns:
+        The parsed JSON, or None when it cannot be parsed (the caller fails
+        closed).
+    """
+    try:
+        if "gzip" in content_encoding:
+            from dash._compression import (  # noqa: PLC0415, PLC2701 — dash>=4.x only
+                decompress_payload,
+            )
+
+            return decompress_payload(raw if isinstance(raw, bytes) else raw.encode())
+        return json.loads(raw) if raw else None
+    except Exception:  # unparseable (or dash without compression) == no body
+        return None
 
 
 def _set_dash_request(request: Any) -> Any:
@@ -314,9 +339,12 @@ class FlaskBackend(Backend):
 
         @server.before_request
         def before_request_auth():
+            req = flask.request
             body = (
-                flask.request.get_json(silent=True)
-                if needs_body(flask.request.path)
+                _parse_callback_body(
+                    req.get_data(cache=True), req.headers.get("Content-Encoding", "")
+                )
+                if needs_body(req.path)
                 else None
             )
             return decide(flask.request.path, body)
@@ -401,9 +429,13 @@ class QuartBackend(Backend):
 
         @server.before_request
         async def before_request_auth():
+            req = quart.request
             body = (
-                await quart.request.get_json(silent=True)
-                if needs_body(quart.request.path)
+                _parse_callback_body(
+                    await req.get_data(cache=True),
+                    req.headers.get("Content-Encoding", ""),
+                )
+                if needs_body(req.path)
                 else None
             )
             result = decide(quart.request.path, body)
@@ -830,17 +862,18 @@ class FastAPIBackend(Backend):
                         raw = await request.body()
                         body_replayed = False
 
-                        # Must be a coroutine to satisfy the ASGI `receive`
-                        # interface, even though this replay never awaits.
-                        async def downstream_receive():  # noqa: RUF029
+                        async def downstream_receive():
                             nonlocal body_replayed
                             if body_replayed:
-                                # Body already delivered; further reads see a
-                                # disconnect, per the ASGI contract — not the
-                                # same body event replayed forever (which would
-                                # spin an app that polls receive() to detect
-                                # client disconnect).
-                                return {"type": "http.disconnect"}
+                                # Body already delivered (and drained from the
+                                # real stream), so the real receive() now blocks
+                                # until the client actually disconnects. Faking
+                                # a disconnect here made StreamingResponse's
+                                # disconnect listener cancel every stream.
+                                # A second body read past this point therefore
+                                # waits for the disconnect instead of failing
+                                # fast; nothing downstream re-reads the body.
+                                return await receive()
                             body_replayed = True
                             return {
                                 "type": "http.request",
@@ -848,10 +881,9 @@ class FastAPIBackend(Backend):
                                 "more_body": False,
                             }
 
-                        try:
-                            body = await request.json()
-                        except Exception:  # unparseable == no body
-                            body = None
+                        body = _parse_callback_body(
+                            raw, request.headers.get("content-encoding", "")
+                        )
 
                     result = decide(request.url.path, body)
                     if inspect.isawaitable(result):

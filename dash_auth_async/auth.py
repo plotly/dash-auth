@@ -13,7 +13,7 @@ from .backends import (
     register_backend,
     set_active_backend,
 )
-from .group_protection import background_gate_response, has_background_gate
+from .group_protection import dispatch_gate_response, refuses_ws
 from .public_routes import (
     add_public_routes,
     get_public_callbacks,
@@ -117,8 +117,12 @@ class Auth(ABC):
             if not body or not isinstance(body, dict):
                 return self.login_request()
 
-            # Check whether the callback is marked as public
-            if body.get("output") in public_callbacks:
+            # Public callbacks pass, and so do multiplexed stream downlink/cancel
+            # requests: they carry no output to check, Dash binds them to this
+            # page's signed endId (403 otherwise), and frames reach that topic
+            # only from uplinks that already passed this check -- so anonymous
+            # pages can read their public streams without exposing anyone else's.
+            if body.get("output") in public_callbacks or _is_stream_transport(body):
                 return None
 
             # A routing callback (one registered with a pathname input) is
@@ -132,7 +136,7 @@ class Auth(ABC):
             if path == self._callback_path():
                 # Group-protected background callbacks are gated here, not in
                 # their job process (which has no session to read).
-                return background_gate_response(self.app, body)
+                return dispatch_gate_response(self.app, body)
             return None
 
         # Otherwise, ask the user to log in
@@ -165,7 +169,7 @@ class Auth(ABC):
         # (its gate runs in _authorize, over HTTP). The renderer never sends
         # background callbacks over the socket, so refuse them here rather
         # than let a crafted message run the job without the group check.
-        if has_background_gate(self.app, payload.get("output")):
+        if refuses_ws(self.app, payload.get("output")):
             return False
 
         return user is not None
@@ -218,3 +222,18 @@ class Auth(ABC):
     @abstractmethod
     def login_request(self):
         """Return the response that challenges an unauthenticated client."""
+
+
+def _is_stream_transport(body: dict) -> bool:
+    """Whether ``body`` is a Dash stream downlink poll or cancel, not a callback.
+
+    Mirrors how Dash dispatches them (``body.get(...) is not None``, checked
+    before any callback): a null value is not stream transport to Dash, so it
+    must not be to us either.
+
+    Returns:
+        True for ``streamDownlink``/``streamCancel`` bodies without an ``output``.
+    """
+    return "output" not in body and (
+        body.get("streamDownlink") is not None or body.get("streamCancel") is not None
+    )

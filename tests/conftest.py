@@ -2,6 +2,7 @@ from typing import Any
 
 import dash.testing.application_runners as _runners
 import pytest
+from dash._callback import GLOBAL_CALLBACK_LIST, GLOBAL_CALLBACK_MAP
 
 from dash_auth_async import backends
 
@@ -104,3 +105,19 @@ def reset_active_backend():
     """
     yield
     backends._active_backend = None
+
+
+@pytest.fixture
+def isolated_callback_registry():
+    """Drop callbacks registered by the test from Dash's process-global registry.
+
+    Streaming callbacks left behind make every later Dash app without shared
+    storage fail at setup (dash validates all global callbacks), so they must
+    not leak into other tests.
+    """
+    saved_map = dict(GLOBAL_CALLBACK_MAP)
+    saved_list = list(GLOBAL_CALLBACK_LIST)
+    yield
+    GLOBAL_CALLBACK_MAP.clear()
+    GLOBAL_CALLBACK_MAP.update(saved_map)
+    GLOBAL_CALLBACK_LIST[:] = saved_list

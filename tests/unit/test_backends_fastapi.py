@@ -262,10 +262,16 @@ def test_auth_hook_short_circuits_after_parsing_body():
     assert seen == [{"output": "x", "inputs": []}]
 
 
-def test_downstream_receive_emits_disconnect_after_body():
-    # The replayed receive must deliver the cached body once, then signal
-    # http.disconnect — an app that polls receive() after the body (to detect
-    # disconnect) must not get the same body event forever.
+def _drive_replay(client_messages):
+    """Run the auth middleware over a fake request; collect the inner app's reads.
+
+    ``client_messages`` is what the real ``receive`` yields in order; once it is
+    exhausted the real receive blocks, as a live connection's does.
+
+    Returns:
+        The messages the inner app received: the replayed body, then whatever
+        its second ``receive()`` returned within 0.2s (``"blocked"`` if none).
+    """
     import asyncio
 
     from fastapi import FastAPI
@@ -282,10 +288,12 @@ def test_downstream_receive_emits_disconnect_after_body():
 
     async def inner_app(scope, receive, send):
         received.append(await receive())  # cached body
-        received.append(await receive())  # past the body → disconnect
+        try:
+            received.append(await asyncio.wait_for(receive(), 0.2))
+        except asyncio.TimeoutError:  # builtin TimeoutError only from 3.11
+            received.append("blocked")
 
     middleware = auth_middleware_cls(inner_app)
-
     scope = {
         "type": "http",
         "method": "POST",
@@ -293,13 +301,13 @@ def test_downstream_receive_emits_disconnect_after_body():
         "headers": [(b"content-type", b"application/json")],
         "query_string": b"",
     }
+    pending = list(client_messages)
 
     async def receive():
-        return {
-            "type": "http.request",
-            "body": b'{"output": "x", "inputs": []}',
-            "more_body": False,
-        }
+        if pending:
+            return pending.pop(0)
+        await asyncio.Event().wait()  # connection still open: block forever
+        return None
 
     async def send(_message):
         pass
@@ -308,10 +316,26 @@ def test_downstream_receive_emits_disconnect_after_body():
         await middleware(scope, receive, send)
 
     asyncio.run(drive())
+    return received
 
-    assert received[0]["type"] == "http.request"
-    assert received[0]["body"] == b'{"output": "x", "inputs": []}'
+
+BODY = {"type": "http.request", "body": b'{"output": "x"}', "more_body": False}
+
+
+def test_downstream_receive_replays_body_then_forwards_real_disconnect():
+    received = _drive_replay([BODY, {"type": "http.disconnect"}])
+
+    assert received[0] == BODY
     assert received[1] == {"type": "http.disconnect"}
+
+
+def test_downstream_receive_does_not_fake_disconnect_while_connected():
+    """RED before fix: a fabricated http.disconnect after the body made
+    StreamingResponse's disconnect listener cancel every streaming response
+    (Dash 4.5 streaming callbacks and the stream downlink were cut short)."""
+    received = _drive_replay([BODY])
+
+    assert received == [BODY, "blocked"]
 
 
 def test_setup_session_adds_session_middleware_once():

@@ -125,10 +125,9 @@ def public_callback(*callback_args, **callback_kwargs):
                 "has not yet been instantiated."
             )
 
-        def wrap(*args, **kwargs):
-            return wrapped_func(*args, **kwargs)
-
-        return wrap
+        # Return Dash's result as-is: a plain forwarding def would erase the
+        # coroutine/generator kind of the user's function.
+        return wrapped_func
 
     return decorator
 

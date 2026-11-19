@@ -27,6 +27,7 @@ How this fork compares to upstream [`dash-auth`](https://github.com/plotly/dash-
 | Async callbacks | ❌ | ✅ <sup>2</sup> |
 | Authenticated WebSocket callbacks | ❌ | ✅ <sup>3</sup> |
 | Group-protected background callbacks | ❌ | ✅ <sup>4</sup> |
+| Protected / public streaming callbacks | ❌ | ✅ <sup>5</sup> |
 
 ✅ supported · ❌ not supported
 
@@ -37,6 +38,8 @@ How this fork compares to upstream [`dash-auth`](https://github.com/plotly/dash-
 <sup>3</sup> Provided by the Quart and FastAPI backends only. WebSocket auth is a no-op on Flask, which has no WebSocket callback transport.
 
 <sup>4</sup> `protected_callback(..., background=True)` checks the user's groups when the request arrives — on the start request and every poll — so a denied user gets the fallback output without a job ever being started. The job itself runs in a separate process with no session, which is why the check can't live inside it (upstream checks there, so a background job always sees "no user" and is denied). Needs a background manager, e.g. `dash[diskcache]`. These callbacks are refused over the WebSocket; Dash only sends background callbacks over HTTP.
+
+<sup>5</sup> Dash 4.5+ streaming callbacks (`async def` callbacks that `yield`) work with `protected_callback` and `public_callback`. Dash consumes a stream outside the request, where no session is readable, so the caller is captured while Dash dispatches the callback and the group check runs with that user when the stream starts — over inline HTTP, the shared-storage downlink and the WebSocket alike. An allowed user receives every chunk; a denied user gets the fallback output as a stream frame. Public streams also reach anonymous visitors when the app uses shared storage. Sync generators are rejected by Dash itself. Note that Dash ties a stream's frames to the page that started it, not to the logged-in user: a page that is still open after logout keeps receiving frames from streams it started while logged in, until they finish.
 
 
 For local testing, install [uv](https://docs.astral.sh/uv/getting-started/installation/), then install the dev dependencies and run individual tests:
