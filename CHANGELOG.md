@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.4.1] - 2026-11-20
+
+### Fixed
+- `OIDCAuth` logout now stops the protected streams the session started. A stream's user is captured when it starts, so clearing the session did not reach it: a page still open after logout (another tab, or a logout from elsewhere) kept receiving frames until the stream finished. Each logged-in session now carries a random id (`session["_sid"]`, minted at login, or on the next request for sessions from before this release); logout marks it revoked in the app's shared storage for 24 hours, and the protected stream checks it at most once a second, sending the `unauthenticated_output` and ending once it is set. If the check itself fails, the stream stops (fails closed); if writing the mark fails, logout still completes. WebSocket streams already ended on logout, which closes the socket
+
 ## [1.4.0] - 2026-11-19
 
 ### Added

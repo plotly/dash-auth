@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dash-auth-async"
-version = "1.4.0"
+version = "1.4.1"
 description = "Dash Authorization Package."
 readme = "README.md"
 requires-python = ">=3.10"
