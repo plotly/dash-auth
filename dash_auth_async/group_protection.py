@@ -6,6 +6,7 @@ import inspect
 import logging
 import re
 import threading
+import time
 from collections.abc import Callable
 from typing import Any, Literal
 
@@ -25,7 +26,9 @@ from dash._utils import (  # noqa: PLC2701
 from dash.dependencies import Output, handle_grouped_callback_args
 from dash.exceptions import MissingCallbackContextException, PreventUpdate
 
+from . import stream_revocation
 from .backends import detect_backend, get_active_backend
+from .stream_revocation import SESSION_ID_KEY
 from .websocket_auth import _WS_AUTH_USER
 
 OutputVal = Callable[[], Any] | Any
@@ -201,7 +204,11 @@ def protected(  # noqa: PLR0913 — public decorator with many optional knobs
 
             @functools.wraps(output)
             async def agen_wrap(*args, **kwargs):
-                _adopt_dispatch_user()
+                sid = _adopt_dispatch_user()
+                logged_out = _logout_watch(sid)
+                if next(logged_out):
+                    yield evaluate(unauthenticated_output)
+                    return
                 fallback = gate()
                 if fallback is not _PROCEED:
                     yield fallback
@@ -210,6 +217,11 @@ def protected(  # noqa: PLR0913 — public decorator with many optional knobs
                 # close the user's generator now so its cleanup runs promptly.
                 async with contextlib.aclosing(output(*args, **kwargs)) as chunks:
                     async for chunk in chunks:
+                        # Not gate(): it may still see the stale request
+                        # session; the logout is only visible in the store.
+                        if next(logged_out):
+                            yield evaluate(unauthenticated_output)
+                            return
                         yield chunk
 
             return agen_wrap
@@ -371,6 +383,7 @@ def _proceed() -> object:
 
 
 _USER_NAMESPACE = "dash_auth_async_user"
+_SID_NAMESPACE = "dash_auth_async_sid"
 _user_capture_lock = threading.Lock()
 _user_capture_installed = False
 logger = logging.getLogger(__name__)
@@ -391,8 +404,26 @@ def _capture_user(_ctx) -> dict | None:
         return None
 
 
+def _capture_session_id(_ctx) -> str | None:
+    """``custom_data`` hook: the caller's revocable session id, if any.
+
+    Only readable under an HTTP request; over a WebSocket the logout closes the
+    socket itself (``close_authenticated_ws``), which ends its streams.
+
+    Returns:
+        The session id, or None (no request, no session, or no id).
+    """
+    backend = get_active_backend()
+    if not backend.has_request_context():
+        return None
+    try:
+        return backend.session.get(SESSION_ID_KEY)
+    except RuntimeError:  # no session configured on this server
+        return None
+
+
 def _install_user_capture_hook() -> None:
-    """Register ``_capture_user`` once per process (Dash hooks are global)."""
+    """Register the dispatch-capture hooks once per process (they are global)."""
     global _user_capture_installed  # noqa: PLW0603 — once-per-process guard
     hooks = getattr(dash, "hooks", None)
     if hooks is None:  # dash<3: no hooks, and no streaming callbacks either
@@ -400,10 +431,11 @@ def _install_user_capture_hook() -> None:
     with _user_capture_lock:
         if not _user_capture_installed:
             hooks.custom_data(_USER_NAMESPACE)(_capture_user)
+            hooks.custom_data(_SID_NAMESPACE)(_capture_session_id)
             _user_capture_installed = True
 
 
-def _adopt_dispatch_user() -> None:
+def _adopt_dispatch_user() -> str | None:
     """Make the user captured at dispatch the caller for this stream.
 
     Dash runs ``custom_data`` hooks while it still has the request (or WS)
@@ -411,16 +443,44 @@ def _adopt_dispatch_user() -> None:
     captured user as the off-request user lets ``_current_user()`` see it
     wherever the stream is consumed. Outside a Dash dispatch (no ctx, or the
     hook did not run) this changes nothing.
+
+    Returns:
+        The session id captured at dispatch, or None.
     """
     try:
         custom_data = dash.callback_context.custom_data
     # No ctx yet (LookupError), ctx outside a callback, or dash<3 (AttributeError).
     except (LookupError, MissingCallbackContextException, AttributeError):
-        return
+        return None
     if _USER_NAMESPACE in custom_data:
         # No reset needed: the value lives in the context of the task (or
         # copied step context) driving this one stream, which ends with it.
         _WS_AUTH_USER.set(custom_data[_USER_NAMESPACE])
+    return custom_data.get(_SID_NAMESPACE)
+
+
+def _logout_watch(sid: str | None):
+    """Yield, once per stream frame, whether ``sid`` has logged out.
+
+    Checks the store at most every ``CHECK_INTERVAL`` seconds and answers
+    False in between. Once revoked, stays revoked.
+
+    Yields:
+        True when the stream must stop.
+    """
+    if not sid:  # no revocable session (e.g. BasicAuth): nothing to watch
+        while True:
+            yield False
+    app = get_app()
+    next_check = 0.0
+    while True:
+        now = time.monotonic()
+        if now >= next_check:
+            if stream_revocation.is_session_revoked(app, sid):
+                while True:
+                    yield True
+            next_check = now + stream_revocation.CHECK_INTERVAL
+        yield False
 
 
 def _register_dispatch_gate(callback_args, callback_kwargs, gate: Callable) -> None:

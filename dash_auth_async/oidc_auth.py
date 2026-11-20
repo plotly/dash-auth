@@ -16,6 +16,11 @@ from dash_auth_async.auth import Auth
 from dash_auth_async.public_routes import get_url_base
 
 from .backends import Backend, detect_backend
+from .stream_revocation import (
+    SESSION_ID_KEY,
+    ensure_session_id,
+    revoke_session_streams,
+)
 from .websocket_auth import WS_CLIENT_COOKIE, close_authenticated_ws
 
 if TYPE_CHECKING:
@@ -332,6 +337,9 @@ class OIDCAuth(Auth):
         # The open socket's user is a handshake-time snapshot the cleared
         # session can't reach: retire it so the logout applies there too.
         close_authenticated_ws(self.request.cookies.get(WS_CLIENT_COOKIE))
+        # Same for protected HTTP streams the session started: their user is
+        # captured at dispatch, so mark the session id revoked for them to see.
+        revoke_session_streams(self.app, self.session.get(SESSION_ID_KEY))
         self.session.clear()
         base_url = get_url_base(self.app) or "/"
         page = (
@@ -425,6 +433,7 @@ class OIDCAuth(Auth):
         if user:
             self.session["user"] = user
             self.session["idp"] = idp
+            ensure_session_id(self.session)
             oauth_scope = self.get_oauth_client(idp).client_kwargs["scope"]
             if "offline_access" in oauth_scope:
                 self.session["refresh_token"] = token.get("refresh_token")
@@ -451,7 +460,14 @@ class OIDCAuth(Auth):
                 if x
             ]
         ).bind("")
-        return map_adapter.test(self.backend.current_path()) or "user" in self.session
+        if map_adapter.test(self.backend.current_path()):
+            return True
+        if "user" not in self.session:
+            return False
+        # Sessions from before revocable ids (or from an after_logged_in
+        # override that skips super()) get one here, so logout can revoke them.
+        ensure_session_id(self.session)
+        return True
 
 
 def get_oauth(app: dash.Dash | None = None) -> "OAuth | QuartOAuth":
